@@ -75,6 +75,8 @@ function defaultState() {
     history: [],
     notes: {},
     photos: {},
+    overrides: {},
+    hidden: [],
     ai: { key: '', model: '', provider: '', oaKey: '', oaBase: '', oaText: '', oaImage: '', oaQuality: 'medium', oaModels: [], oaInfo: '' },
     weekStart: mondayOf(new Date())
   };
@@ -88,7 +90,7 @@ function load() {
     if (raw) {
       const s = JSON.parse(raw);
       const d = defaultState();
-      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {}, photos: s.photos || {} });
+      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {}, photos: s.photos || {}, overrides: s.overrides || {}, hidden: s.hidden || [] });
     }
   } catch (e) { /* stockage indisponible */ }
   return defaultState();
@@ -98,8 +100,10 @@ function save() {
 }
 
 /* ---------- Données dérivées ---------- */
-function allRecipes() { return RECIPES.concat(state.custom); }
-function recipeById(id) { return allRecipes().find((r) => r.id === id); }
+/* Recettes de base (avec les modifications faites à la main), puis recettes personnelles */
+function baseRecipe(r) { const o = state.overrides && state.overrides[r.id]; return o ? Object.assign({}, r, o, { edited: true }) : r; }
+function allRecipes() { const hidden = state.hidden || []; return RECIPES.filter((r) => !hidden.includes(r.id)).map(baseRecipe).concat(state.custom); }
+function recipeById(id) { const b = RECIPES.find((r) => r.id === id); return b ? baseRecipe(b) : state.custom.find((r) => r.id === id); }
 function ing(key) { return INGREDIENTS[key] || state.customIngs[key] || { n: key, a: 'au' }; }
 function recipeTags(r) { const t = new Set(); r.i.forEach(([k]) => (ing(k).t || []).forEach((x) => t.add(x))); return t; }
 function exclusionTags() {
@@ -508,6 +512,7 @@ function renderProfile() {
     <p class="muted small" style="margin:-8px 0 0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>
     ${keyForm()}
 
+    ${(state.hidden || []).length ? `<div class="row between"><span class="muted small">${state.hidden.length} ${plural(state.hidden.length, 'recette masquée', 'recettes masquées')}</span><button class="link" data-act="unhide-all">Tout réafficher</button></div>` : ''}
     <div class="box" style="margin-top:20px">
       <span class="muted small">Résumé : ${allergies.length ? 'sans ' + esc(allergies.join(', ').toLowerCase()) : 'aucune allergie'} · ${esc(diet || '')}</span>
       <button class="btn" data-act="reset" style="border-color:var(--accent);color:var(--accent)">Tout réinitialiser</button>
@@ -569,7 +574,8 @@ function recipeSheet(sh) {
       <div>${r.i.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}</div>
       ${stepsHtml(r)}
       ${notesHtml(r)}
-      ${r.custom ? `<div class="row" style="gap:16px"><button class="link" data-act="edit-recipe" data-v="${r.id}">Modifier</button><button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button></div>` : ''}
+      <div class="row" style="gap:16px;flex-wrap:wrap"><button class="link" data-act="edit-recipe" data-v="${r.id}">Modifier la recette</button>${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
+      ${r.edited ? '<p class="muted small" style="margin:-8px 0 0">Recette modifiée par toi.</p>' : ''}
     </div>
     <div class="sheet-foot">
       ${m ? `<button class="btn" data-act="toggle-menu" data-v="${r.id}">Retirer du menu</button>` : `<button class="btn primary" data-act="add-from-sheet" data-v="${r.id}">Ajouter au menu · ${servings} pers.</button>`}
@@ -601,7 +607,9 @@ function editorSheet(sh) {
         <div style="grid-column:1 / span 3"><label class="lbl" for="ed-ia-${idx}">Rayon</label><select class="input" id="ed-ia-${idx}" name="ia-${idx}" style="font-size:14px;padding:6px 0">${aisleOpts(row.a)}</select></div>
       </div>`).join('')}
       <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-ing">+ Ajouter un ingrédient</button>
-      <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…">${esc(d.st)}</textarea></div>
+      <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…" style="min-height:200px">${esc(d.st)}</textarea></div>
+      <div><label class="lbl" for="ed-tips">Astuces (une par ligne)</label><textarea class="input" id="ed-tips" name="tips" placeholder="Facultatif">${esc(d.tips || '')}</textarea></div>
+      ${sh.base ? '<p class="muted small" style="margin:0">Tes modifications sont gardées sur ce téléphone. Tu pourras toujours rétablir la recette d’origine.</p>' : ''}
       ${ingredientDatalist()}
     </form>
     <div class="sheet-foot"><button class="btn" data-act="close-sheet">Annuler</button><button class="btn primary" data-act="ed-save">Enregistrer</button></div>
@@ -612,7 +620,7 @@ function readEditorForm() {
   if (!form) return;
   const d = ui.sheet.draft;
   const fd = new FormData(form);
-  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.st = fd.get('st') || '';
+  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.st = fd.get('st') || ''; d.tips = fd.get('tips') || '';
   d.i.forEach((row, idx) => {
     const name = fd.get('in-' + idx) || '';
     const changedName = name !== row.name;
@@ -665,9 +673,9 @@ async function copyList() {
   toast(ok ? 'Liste copiée : colle-la dans un message' : 'Copie impossible sur cet appareil');
 }
 
-function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, i: [{ name: '', q: '', u: 'g', a: 'au' }], st: '' }; }
+function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, i: [{ name: '', q: '', u: 'g', a: 'au' }], st: '', tips: '' }; }
 function draftFrom(r) {
-  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, i: r.i.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })), st: (r.st || []).join('\n') };
+  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, i: r.i.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })), st: stepsOf(r).join('\n'), tips: tipsOf(r).join('\n') };
 }
 function saveDraft() {
   readEditorForm();
@@ -686,12 +694,19 @@ function saveDraft() {
     const q = parseFloat(String(row.q).replace(',', '.'));
     return [key, isFinite(q) && q > 0 ? q : 1, row.u || 'pc'];
   });
-  const rec = {
-    id: ui.sheet.editId || 'c_' + uid(), custom: true, n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1,
-    s: [], eq: [], p: clampInt(parseInt(d.p, 10) || 4, 1, 50), i, st: d.st.split('\n').map((s) => s.trim()).filter(Boolean)
-  };
-  if (ui.sheet.editId) state.custom = state.custom.map((r) => (r.id === rec.id ? rec : r));
-  else state.custom.push(rec);
+  const lines = (txt) => String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean);
+  const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 50), i, st: lines(d.st), tips: lines(d.tips) };
+  let rec;
+  if (ui.sheet.base) {
+    // Recette du carnet modifiée à la main : la version modifiée est gardée sur le téléphone
+    state.overrides[ui.sheet.editId] = fields;
+    rec = recipeById(ui.sheet.editId);
+  } else {
+    const old = state.custom.find((r) => r.id === ui.sheet.editId) || {};
+    rec = Object.assign({}, old, fields, { id: ui.sheet.editId || 'c_' + uid(), custom: true, s: old.s || [], eq: old.eq || [] });
+    if (ui.sheet.editId) state.custom = state.custom.map((r) => (r.id === rec.id ? rec : r));
+    else state.custom.push(rec);
+  }
   save();
   ui.sheet = { kind: 'recipe', id: rec.id, servings: state.profile.persons };
   toast('Recette enregistrée');
@@ -759,7 +774,14 @@ function handle(act, v, el) {
     case 'copy': copyList(); return;
     case 'rm-pantry': state.pantry = state.pantry.filter((x) => x !== v); break;
     case 'new-recipe': ui.sheet = { kind: 'editor', draft: newDraft() }; renderOverlays(); return;
-    case 'edit-recipe': { const r = recipeById(v); if (!r) return; ui.sheet = { kind: 'editor', editId: v, draft: draftFrom(r) }; renderOverlays(); return; }
+    case 'edit-recipe': { const r = recipeById(v); if (!r) return; ui.sheet = { kind: 'editor', editId: v, base: !r.custom, draft: draftFrom(r) }; renderOverlays(); return; }
+    case 'restore-recipe':
+      confirmBox('Revenir à la recette d’origine ? Tes modifications seront perdues.', 'Rétablir', () => { delete state.overrides[v]; ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || p.persons }; toast('Recette d’origine rétablie'); });
+      return;
+    case 'hide-recipe':
+      confirmBox('Masquer cette recette du carnet ? Tu pourras la faire réapparaître depuis le Profil.', 'Masquer', () => { state.hidden = (state.hidden || []).concat(v); removeFromMenu(v); state.favorites = state.favorites.filter((x) => x !== v); ui.sheet = null; toast('Recette masquée'); });
+      return;
+    case 'unhide-all': state.hidden = []; toast('Toutes les recettes sont de nouveau visibles'); break;
     case 'delete-recipe':
       confirmBox('Supprimer définitivement cette recette ?', 'Supprimer', () => {
         state.custom = state.custom.filter((r) => r.id !== v); removeFromMenu(v); state.favorites = state.favorites.filter((x) => x !== v); ui.sheet = null; toast('Recette supprimée');

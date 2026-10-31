@@ -9,10 +9,6 @@
  "soupe_poireaux": "leek and potato soup",
  "bolognaise": "spaghetti bolognese",
  "chili_con_carne": "chili con carne",
- "chili_sin_carne": {
-  "q": "vegetarian chili",
-  "pick": 2
- },
  "quiche_lorraine": "quiche lorraine",
  "quiche_poireaux_chevre": "leek quiche",
  "saumon_brocoli": "salmon fillet broccoli",
@@ -21,7 +17,6 @@
   "pick": 2
  },
  "ratatouille": "ratatouille dish",
- "salade_nicoise": "salade niçoise",
  "croque_monsieur": "croque monsieur",
  "hachis_parmentier": {
   "q": [
@@ -30,10 +25,6 @@
   ],
   "pick": 3
  },
- "lasagnes_epinards": {
-  "q": "spinach lasagne",
-  "pick": 2
- },
  "pates_pesto": "pasta pesto cherry tomatoes",
  "omelette_champignons": {
   "q": "mushroom omelette",
@@ -41,12 +32,7 @@
  },
  "gnocchis_epinards": "gnocchi spinach",
  "wok_poulet": "chicken stir fry noodles",
- "tofu_brocoli": {
-  "q": "tofu broccoli",
-  "pick": 2
- },
  "tajine_poulet": "chicken tagine olives",
- "couscous_legumes": "vegetable couscous",
  "boeuf_bourguignon": "boeuf bourguignon",
  "blanquette": "blanquette de veau",
  "tartiflette": "tartiflette",
@@ -58,7 +44,6 @@
   "q": "carrot soup",
   "pick": 4
  },
- "gaspacho": "gazpacho",
  "salade_lentilles": "lentil salad",
  "taboule": "tabbouleh",
  "buddha_bowl": "buddha bowl",
@@ -69,7 +54,6 @@
  "carbonara": "spaghetti carbonara",
  "tagliatelles_saumon": "salmon tagliatelle",
  "curry_poulet": "chicken curry",
- "porc_caramel": "thit kho",
  "cabillaud_puree": "cod fillet plate",
  "moules_frites": "moules frites",
  "crevettes_ail": "garlic shrimp",
@@ -77,22 +61,15 @@
   "q": "baked macaroni cheese",
   "pick": 3
  },
- "minestrone": "minestrone",
- "endives_jambon": "endives au jambon",
  "galettes_completes": "galette complète",
  "salade_cesar": {
   "q": "caesar salad",
   "pick": 2
  },
  "pad_thai": "pad thai shrimp",
- "poke_bowl": "poke bowl salmon",
  "lentilles_carottes": {
   "q": "lentil stew",
   "pick": 3
- },
- "petits_pois_carottes": {
-  "q": "chicken peas carrots",
-  "pick": 1
  },
  "crumble_pommes": "apple crumble",
  "mousse_chocolat": "chocolate mousse",
@@ -108,9 +85,16 @@
   "q": "oatmeal porridge bowl",
   "pick": 1
  },
- "poires_chocolat": "poire belle hélène",
  "financiers": {
   "q": "financier cake almond",
   "pick": 1
- }
+ },
+ "gnocchis_alfredo": "chicken alfredo gnocchi",
+ "lasagnes": "lasagna bolognese",
+ "risotto_poireaux": "leek risotto",
+ "risotto_butternut": "butternut squash risotto",
+ "soupe_butternut": "butternut squash soup",
+ "wraps_poulet": "chicken wrap",
+ "wraps_saumon": "smoked salmon wrap",
+ "wraps_crevettes": "shrimp wrap"
 }

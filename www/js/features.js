@@ -153,8 +153,8 @@ function heroHtml(r) {
 }
 
 /* ---------- Étapes et astuces ---------- */
-function stepsOf(r) { return (typeof DETAILS !== 'undefined' && DETAILS[r.id] && DETAILS[r.id].st) || r.st || []; }
-function tipsOf(r) { return (typeof DETAILS !== 'undefined' && DETAILS[r.id] && DETAILS[r.id].tips) || r.tips || []; }
+function stepsOf(r) { if (r.edited || r.custom) return r.st || []; return (typeof DETAILS !== 'undefined' && DETAILS[r.id] && DETAILS[r.id].st) || r.st || []; }
+function tipsOf(r) { if (r.edited || r.custom) return r.tips || []; return (typeof DETAILS !== 'undefined' && DETAILS[r.id] && DETAILS[r.id].tips) || r.tips || []; }
 function stepsHtml(r) {
   const st = stepsOf(r); const tips = tipsOf(r);
   return `${st.length ? `<div class="section-title" style="margin-top:6px">Préparation</div><ol class="steps">${st.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>` : ''}

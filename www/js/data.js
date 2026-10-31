@@ -117,6 +117,7 @@ const INGREDIENTS = {
   cabillaud: { n: 'Dos de cabillaud', a: 'bp', u: 'kg', p: 22, t: ['poisson'] },
   crevettes: { n: 'Crevettes décortiquées', a: 'bp', u: 'kg', p: 22, t: ['crustaces'] },
   moules: { n: 'Moules', a: 'bp', u: 'kg', p: 5, t: ['crustaces'] },
+  saumon_fume: { n: 'Saumon fumé', a: 'bp', u: 'kg', p: 35, t: ['poisson'] },
 
   // Crèmerie et frais
   creme: { n: 'Crème fraîche', a: 'cr', u: 'L', p: 4, t: ['lait'] },
@@ -140,6 +141,7 @@ const INGREDIENTS = {
   tortillas: { n: 'Tortillas de blé', a: 'cr', u: 'pc', p: 0.25, t: ['gluten'], l: ['tortilla', 'tortillas'] },
   mayonnaise: { n: 'Mayonnaise', a: 'es', u: 'kg', p: 6, t: ['oeuf', 'moutarde'] },
   houmous: { n: 'Houmous', a: 'cr', u: 'kg', p: 10, t: ['sesame'] },
+  fromage_frais: { n: 'Fromage frais (type Saint Môret)', a: 'cr', u: 'kg', p: 9, t: ['lait'] },
 
   // Boulangerie
   baguette: { n: 'Baguette', a: 'bo', u: 'pc', p: 1, t: ['gluten'], l: ['baguette', 'baguettes'] },
@@ -187,6 +189,7 @@ const INGREDIENTS = {
   muscade: { n: 'Noix de muscade', a: 'es', u: 'kg', p: 40, pantry: true },
   herbes_provence: { n: 'Herbes de Provence', a: 'es', u: 'kg', p: 40, pantry: true },
   thym: { n: 'Thym', a: 'es', u: 'kg', p: 40, pantry: true },
+  sauge: { n: 'Sauge fraîche', a: 'fl', u: 'pc', p: 1.2, l: ['botte', 'bottes'] },
   laurier: { n: 'Laurier', a: 'es', u: 'pc', p: 0.05, pantry: true, l: ['feuille', 'feuilles'] },
   cumin: { n: 'Cumin', a: 'es', u: 'kg', p: 40 },
   curry: { n: 'Curry en poudre', a: 'es', u: 'kg', p: 40 },
@@ -249,17 +252,14 @@ const RECIPES = [
     i: [['boeuf_hache', 500, 'g'], ['haricots_rouges', 500, 'g'], ['tomates_concassees', 400, 'g'], ['poivron', 1, 'pc'], ['oignon', 1, 'pc'], ['ail', 2, 'pc'], ['cumin', 1, 'cc'], ['piment', 0.5, 'cc'], ['riz', 300, 'g'], ['huile', 2, 'cs']],
     st: ['Faire revenir l’oignon, l’ail et le poivron coupés dans l’huile.', 'Ajouter la viande et les épices, cuire 5 min.', 'Ajouter les tomates et les haricots égouttés, laisser mijoter 30 min.', 'Servir avec le riz cuit.'] },
 
-  { id: 'chili_sin_carne', n: 'Chili sin carne', e: '🫘', type: 'plat', t: 40, d: 1, s: [], eq: ['plaques'], p: 4,
-    i: [['haricots_rouges', 500, 'g'], ['mais', 285, 'g'], ['poivron', 2, 'pc'], ['tomates_concassees', 800, 'g'], ['oignon', 1, 'pc'], ['ail', 2, 'pc'], ['cumin', 1, 'cc'], ['paprika', 1, 'cc'], ['riz', 300, 'g'], ['huile', 2, 'cs'], ['avocat', 1, 'pc']],
-    st: ['Faire revenir oignon, ail et poivrons coupés dans l’huile.', 'Ajouter les épices puis les tomates, les haricots et le maïs égouttés.', 'Laisser mijoter 25 min.', 'Servir avec le riz et l’avocat en tranches.'] },
 
   { id: 'quiche_lorraine', n: 'Quiche lorraine', e: '🥧', type: 'plat', t: 50, d: 1, s: [], eq: ['four'], p: 4,
     i: [['pate_brisee', 1, 'pc'], ['lardons', 200, 'g'], ['oeufs', 3, 'pc'], ['creme', 200, 'ml'], ['lait', 100, 'ml'], ['gruyere', 80, 'g'], ['muscade', 1, 'pincee'], ['salade', 1, 'pc']],
     st: ['Préchauffer le four à 180 °C et étaler la pâte dans un moule.', 'Faire dorer les lardons à sec dans une poêle.', 'Battre les œufs avec la crème, le lait, la muscade et le gruyère.', 'Répartir les lardons sur la pâte, verser l’appareil.', 'Cuire 35 min. Servir avec la salade.'] },
 
-  { id: 'quiche_poireaux_chevre', n: 'Quiche poireaux et chèvre', e: '🥧', type: 'plat', t: 55, d: 1, s: ['au', 'hi', 'pr'], eq: ['four', 'plaques'], p: 4,
-    i: [['pate_brisee', 1, 'pc'], ['poireau', 3, 'pc'], ['chevre', 150, 'g'], ['oeufs', 3, 'pc'], ['creme', 200, 'ml'], ['beurre', 20, 'g'], ['sel', 1, 'cc'], ['poivre', 1, 'pincee']],
-    st: ['Préchauffer le four à 180 °C.', 'Émincer les poireaux et les faire fondre 10 min dans le beurre.', 'Battre les œufs avec la crème, saler et poivrer.', 'Garnir la pâte de poireaux, verser l’appareil et déposer les rondelles de chèvre.', 'Cuire 35 min.'] },
+  { id: 'quiche_poireaux_chevre', n: 'Quiche aux poireaux', e: '🥧', type: 'plat', t: 55, d: 1, s: ['au', 'hi', 'pr'], eq: ['four', 'plaques'], p: 4,
+    i: [['pate_brisee', 1, 'pc'], ['poireau', 3, 'pc'], ['gruyere', 100, 'g'], ['oeufs', 3, 'pc'], ['creme', 200, 'ml'], ['lait', 100, 'ml'], ['beurre', 20, 'g'], ['muscade', 1, 'pincee'], ['sel', 1, 'cc'], ['poivre', 1, 'pincee']],
+    st: [] },
 
   { id: 'saumon_brocoli', n: 'Saumon au four, riz et brocoli', e: '🐟', type: 'plat', t: 30, d: 1, s: [], eq: ['four', 'plaques'], p: 4,
     i: [['saumon', 4, 'pc'], ['brocoli', 1, 'pc'], ['riz', 300, 'g'], ['citron', 1, 'pc'], ['huile_olive', 2, 'cs'], ['sel', 1, 'cc'], ['poivre', 1, 'pincee']],
@@ -273,9 +273,6 @@ const RECIPES = [
     i: [['courgette', 2, 'pc'], ['aubergine', 1, 'pc'], ['poivron', 2, 'pc'], ['tomate', 4, 'pc'], ['oignon', 1, 'pc'], ['ail', 3, 'pc'], ['herbes_provence', 1, 'cs'], ['huile_olive', 4, 'cs'], ['sel', 1, 'cc'], ['riz', 250, 'g']],
     st: ['Couper tous les légumes en dés.', 'Faire revenir oignon et poivrons dans l’huile, puis ajouter aubergine et courgettes.', 'Ajouter tomates, ail et herbes, saler.', 'Couvrir et laisser mijoter 40 min. Servir avec du riz.'] },
 
-  { id: 'salade_nicoise', n: 'Salade niçoise', e: '🥗', type: 'salade', t: 30, d: 1, s: ['et', 'pr'], eq: ['plaques'], p: 4,
-    i: [['thon', 280, 'g'], ['oeufs', 4, 'pc'], ['tomate', 4, 'pc'], ['haricots_verts', 300, 'g'], ['pdt', 400, 'g'], ['olives', 80, 'g'], ['salade', 1, 'pc'], ['huile_olive', 4, 'cs'], ['vinaigre', 2, 'cs']],
-    st: ['Cuire les pommes de terre 20 min, les haricots 8 min et les œufs 9 min.', 'Laisser refroidir, couper pommes de terre, tomates et œufs.', 'Disposer sur la salade avec le thon, les haricots et les olives.', 'Arroser de vinaigrette huile-vinaigre.'] },
 
   { id: 'croque_monsieur', n: 'Croque-monsieur et salade', e: '🥪', type: 'plat', t: 25, d: 1, s: [], eq: ['four'], p: 4,
     i: [['pain_mie', 16, 'pc'], ['jambon', 8, 'pc'], ['gruyere', 150, 'g'], ['beurre', 40, 'g'], ['creme', 100, 'ml'], ['salade', 1, 'pc']],
@@ -285,9 +282,6 @@ const RECIPES = [
     i: [['boeuf_hache', 500, 'g'], ['pdt', 1000, 'g'], ['lait', 200, 'ml'], ['beurre', 50, 'g'], ['oignon', 1, 'pc'], ['gruyere', 60, 'g'], ['muscade', 1, 'pincee'], ['sel', 1, 'cc']],
     st: ['Cuire les pommes de terre épluchées 20 min à l’eau salée, puis les écraser avec le lait, le beurre et la muscade.', 'Faire revenir l’oignon puis la viande, saler.', 'Dans un plat, étaler la viande puis la purée, parsemer de gruyère.', 'Gratiner 20 min à 200 °C.'] },
 
-  { id: 'lasagnes_epinards', n: 'Lasagnes épinards et ricotta', e: '🧀', type: 'plat', t: 70, d: 2, s: [], eq: ['four', 'plaques'], p: 4,
-    i: [['lasagnes', 250, 'g'], ['epinards_surgeles', 500, 'g'], ['ricotta', 250, 'g'], ['tomates_concassees', 800, 'g'], ['mozzarella', 125, 'g'], ['parmesan', 50, 'g'], ['oignon', 1, 'pc'], ['ail', 2, 'pc'], ['huile_olive', 2, 'cs']],
-    st: ['Préparer une sauce tomate : oignon et ail revenus dans l’huile, puis tomates, 15 min.', 'Faire décongeler les épinards à la poêle et les mélanger à la ricotta.', 'Alterner feuilles de lasagne, épinards-ricotta et sauce tomate.', 'Terminer par la mozzarella et le parmesan, cuire 40 min à 180 °C.'] },
 
   { id: 'pates_pesto', n: 'Pâtes au pesto et tomates cerises', e: '🌿', type: 'plat', t: 15, d: 1, s: ['pr', 'et'], eq: ['plaques'], p: 4,
     i: [['pates', 400, 'g'], ['pesto', 190, 'g'], ['tomates_cerises', 250, 'g'], ['parmesan', 40, 'g'], ['basilic', 1, 'pc']],
@@ -297,25 +291,19 @@ const RECIPES = [
     i: [['oeufs', 8, 'pc'], ['champignons', 250, 'g'], ['ciboulette', 1, 'pc'], ['beurre', 20, 'g'], ['salade', 1, 'pc'], ['sel', 1, 'cc']],
     st: ['Poêler les champignons émincés dans le beurre.', 'Battre les œufs avec le sel et la ciboulette ciselée.', 'Verser sur les champignons et cuire à feu moyen.', 'Plier l’omelette et servir avec la salade.'] },
 
-  { id: 'gnocchis_epinards', n: 'Gnocchis poêlés, épinards et chèvre', e: '🥟', type: 'plat', t: 20, d: 1, s: [], eq: ['plaques'], p: 4,
-    i: [['gnocchis', 1000, 'g'], ['epinards_frais', 200, 'g'], ['chevre', 150, 'g'], ['creme', 100, 'ml'], ['ail', 1, 'pc'], ['huile_olive', 2, 'cs']],
-    st: ['Faire dorer les gnocchis 8 min à la poêle dans l’huile.', 'Ajouter l’ail haché et les épinards, laisser tomber 2 min.', 'Ajouter la crème et le chèvre émietté, mélanger et servir.'] },
+  { id: 'gnocchis_epinards', n: 'Gnocchis poêlés, épinards et parmesan', e: '🥟', type: 'plat', t: 20, d: 1, s: [], eq: ['plaques'], p: 4,
+    i: [['gnocchis', 1000, 'g'], ['epinards_frais', 200, 'g'], ['parmesan', 60, 'g'], ['creme', 150, 'ml'], ['ail', 1, 'pc'], ['huile_olive', 2, 'cs'], ['poivre', 1, 'pincee']],
+    st: [] },
 
   { id: 'wok_poulet', n: 'Wok de poulet aux légumes', e: '🥢', type: 'plat', t: 30, d: 1, s: [], eq: ['plaques'], p: 4,
     i: [['blanc_poulet', 500, 'g'], ['nouilles', 250, 'g'], ['poivron', 1, 'pc'], ['carotte', 2, 'pc'], ['oignon', 1, 'pc'], ['sauce_soja', 4, 'cs'], ['gingembre', 15, 'g'], ['ail', 2, 'pc'], ['huile', 2, 'cs'], ['graines_sesame', 1, 'cs']],
     st: ['Cuire les nouilles, les égoutter.', 'Saisir le poulet en lanières dans l’huile très chaude.', 'Ajouter les légumes en fines lanières, l’ail et le gingembre, cuire 5 min.', 'Ajouter les nouilles et la sauce soja, mélanger, parsemer de sésame.'] },
 
-  { id: 'tofu_brocoli', n: 'Tofu sauté, brocoli et riz', e: '🥦', type: 'plat', t: 30, d: 1, s: [], eq: ['plaques'], p: 4,
-    i: [['tofu', 400, 'g'], ['brocoli', 1, 'pc'], ['riz', 300, 'g'], ['sauce_soja', 4, 'cs'], ['ail', 2, 'pc'], ['gingembre', 15, 'g'], ['huile', 2, 'cs'], ['graines_sesame', 1, 'cs']],
-    st: ['Cuire le riz.', 'Couper le tofu en cubes et le faire dorer dans l’huile.', 'Ajouter le brocoli en petites fleurettes, l’ail et le gingembre, cuire 6 min.', 'Arroser de sauce soja, parsemer de sésame et servir avec le riz.'] },
 
   { id: 'tajine_poulet', n: 'Tajine de poulet citron et olives', e: '🫒', type: 'plat', t: 75, d: 2, s: ['au', 'hi'], eq: ['plaques'], p: 4,
     i: [['cuisses_poulet', 4, 'pc'], ['citron', 2, 'pc'], ['olives', 100, 'g'], ['oignon', 2, 'pc'], ['ail', 2, 'pc'], ['cumin', 1, 'cc'], ['curcuma', 1, 'cc'], ['coriandre', 1, 'pc'], ['semoule', 300, 'g'], ['huile_olive', 3, 'cs']],
     st: ['Dorer le poulet dans l’huile, réserver.', 'Faire fondre les oignons émincés et l’ail, ajouter les épices.', 'Remettre le poulet, ajouter 300 ml d’eau et le citron en quartiers. Couvrir et cuire 45 min.', 'Ajouter les olives 10 min avant la fin. Servir avec la semoule et la coriandre.'] },
 
-  { id: 'couscous_legumes', n: 'Couscous aux légumes', e: '🥕', type: 'plat', t: 60, d: 1, s: ['au', 'hi'], eq: ['plaques'], p: 4,
-    i: [['semoule', 300, 'g'], ['carotte', 3, 'pc'], ['courgette', 2, 'pc'], ['navet', 2, 'pc'], ['pois_chiches', 265, 'g'], ['tomates_concassees', 400, 'g'], ['oignon', 1, 'pc'], ['ras_el_hanout', 2, 'cs'], ['bouillon', 1, 'pc'], ['huile_olive', 2, 'cs']],
-    st: ['Faire revenir l’oignon dans l’huile avec le ras el hanout.', 'Ajouter carottes et navets en morceaux, les tomates, le cube et 1 L d’eau. Cuire 25 min.', 'Ajouter courgettes et pois chiches, cuire 15 min.', 'Préparer la semoule à l’eau bouillante et servir avec les légumes et le bouillon.'] },
 
   { id: 'boeuf_bourguignon', n: 'Bœuf bourguignon', e: '🍷', type: 'plat', t: 180, d: 3, s: ['au', 'hi'], eq: ['plaques'], p: 4,
     i: [['boeuf_bourguignon', 1000, 'g'], ['vin_rouge', 750, 'ml'], ['carotte', 3, 'pc'], ['oignon', 2, 'pc'], ['champignons', 250, 'g'], ['lardons', 150, 'g'], ['farine', 2, 'cs'], ['ail', 2, 'pc'], ['thym', 1, 'cc'], ['laurier', 2, 'pc'], ['pdt', 800, 'g']],
@@ -337,9 +325,6 @@ const RECIPES = [
     i: [['carotte', 8, 'pc'], ['pdt', 200, 'g'], ['oignon', 1, 'pc'], ['cumin', 1, 'cc'], ['lait_coco', 200, 'ml'], ['bouillon', 1, 'pc'], ['huile_olive', 1, 'cs']],
     st: ['Faire revenir l’oignon et le cumin dans l’huile.', 'Ajouter les carottes en rondelles, la pomme de terre, le cube et 1 L d’eau.', 'Cuire 25 min, mixer avec le lait de coco.'] },
 
-  { id: 'gaspacho', n: 'Gaspacho', e: '🍅', type: 'soupe', t: 15, d: 1, s: ['et'], eq: ['mixeur'], p: 4,
-    i: [['tomate', 8, 'pc'], ['concombre', 1, 'pc'], ['poivron', 1, 'pc'], ['oignon', 1, 'pc'], ['ail', 1, 'pc'], ['huile_olive', 4, 'cs'], ['vinaigre', 1, 'cs'], ['sel', 1, 'cc'], ['baguette', 1, 'pc']],
-    st: ['Couper grossièrement tous les légumes.', 'Mixer avec l’huile, le vinaigre et le sel jusqu’à obtenir un velouté.', 'Réfrigérer au moins 1 h et servir très frais avec du pain.'] },
 
   { id: 'salade_lentilles', n: 'Salade de lentilles et feta', e: '🥗', type: 'salade', t: 35, d: 1, s: [], eq: ['plaques'], p: 4,
     i: [['lentilles_vertes', 250, 'g'], ['carotte', 2, 'pc'], ['oignon_rouge', 1, 'pc'], ['feta', 150, 'g'], ['persil', 1, 'pc'], ['moutarde', 1, 'cc'], ['huile_olive', 4, 'cs'], ['vinaigre', 2, 'cs']],
@@ -381,9 +366,6 @@ const RECIPES = [
     i: [['blanc_poulet', 600, 'g'], ['lait_coco', 400, 'ml'], ['poivron', 1, 'pc'], ['oignon', 1, 'pc'], ['ail', 2, 'pc'], ['gingembre', 15, 'g'], ['curry', 2, 'cs'], ['riz', 300, 'g'], ['coriandre', 1, 'pc'], ['huile', 2, 'cs']],
     st: ['Cuire le riz.', 'Faire revenir oignon, ail et gingembre dans l’huile, ajouter le curry.', 'Ajouter le poulet en morceaux et le poivron, cuire 5 min.', 'Verser le lait de coco et laisser mijoter 15 min. Servir avec riz et coriandre.'] },
 
-  { id: 'porc_caramel', n: 'Porc au caramel', e: '🍖', type: 'plat', t: 50, d: 2, s: [], eq: ['plaques'], p: 4,
-    i: [['echine_porc', 600, 'g'], ['sucre', 60, 'g'], ['sauce_soja', 3, 'cs'], ['oignon', 1, 'pc'], ['ail', 2, 'pc'], ['riz', 300, 'g'], ['oignon_nouveau', 2, 'pc']],
-    st: ['Faire un caramel brun avec le sucre et 2 cs d’eau.', 'Ajouter le porc en cubes, l’oignon et l’ail, bien enrober.', 'Ajouter la sauce soja et 200 ml d’eau, mijoter 35 min jusqu’à ce que la sauce nappe.', 'Servir avec le riz et l’oignon nouveau émincé.'] },
 
   { id: 'cabillaud_puree', n: 'Cabillaud et purée de patate douce', e: '🐟', type: 'plat', t: 35, d: 1, s: ['au', 'hi'], eq: ['plaques', 'four'], p: 4,
     i: [['cabillaud', 600, 'g'], ['patate_douce', 1000, 'g'], ['beurre', 30, 'g'], ['lait', 100, 'ml'], ['citron', 1, 'pc'], ['persil', 1, 'pc'], ['huile_olive', 2, 'cs']],
@@ -401,13 +383,7 @@ const RECIPES = [
     i: [['coquillettes', 400, 'g'], ['jambon', 4, 'pc'], ['creme', 200, 'ml'], ['gruyere', 120, 'g'], ['sel', 1, 'cc']],
     st: ['Cuire les coquillettes.', 'Les mélanger avec le jambon en dés, la crème et la moitié du gruyère.', 'Verser dans un plat, couvrir du reste de gruyère.', 'Gratiner 15 min à 200 °C.'] },
 
-  { id: 'minestrone', n: 'Minestrone', e: '🥣', type: 'soupe', t: 45, d: 1, s: ['pr', 'et', 'au'], eq: ['plaques'], p: 4,
-    i: [['courgette', 1, 'pc'], ['carotte', 2, 'pc'], ['celeri', 2, 'pc'], ['haricots_blancs', 265, 'g'], ['tomates_concassees', 400, 'g'], ['petites_pates', 100, 'g'], ['oignon', 1, 'pc'], ['ail', 2, 'pc'], ['bouillon', 1, 'pc'], ['parmesan', 40, 'g'], ['huile_olive', 2, 'cs']],
-    st: ['Faire revenir oignon, ail, carottes et céleri en dés dans l’huile.', 'Ajouter tomates, cube et 1,2 L d’eau, cuire 15 min.', 'Ajouter courgette, haricots et pâtes, cuire 10 min.', 'Servir avec le parmesan.'] },
 
-  { id: 'endives_jambon', n: 'Endives au jambon', e: '🥬', type: 'plat', t: 60, d: 2, s: ['au', 'hi'], eq: ['four', 'plaques'], p: 4,
-    i: [['endive', 8, 'pc'], ['jambon', 8, 'pc'], ['lait', 500, 'ml'], ['farine', 40, 'g'], ['beurre', 40, 'g'], ['gruyere', 100, 'g'], ['muscade', 1, 'pincee']],
-    st: ['Cuire les endives 15 min à l’eau, bien les égoutter.', 'Préparer une béchamel : beurre, farine, puis lait en fouettant ; ajouter la muscade.', 'Rouler chaque endive dans une tranche de jambon, disposer dans un plat.', 'Napper de béchamel, parsemer de gruyère, cuire 25 min à 200 °C.'] },
 
   { id: 'galettes_completes', n: 'Galettes de sarrasin complètes', e: '🥞', type: 'plat', t: 40, d: 2, s: [], eq: ['plaques'], p: 4,
     i: [['farine_sarrasin', 250, 'g'], ['oeufs', 5, 'pc'], ['jambon', 4, 'pc'], ['gruyere', 150, 'g'], ['beurre', 40, 'g'], ['sel', 1, 'cc'], ['salade', 1, 'pc']],
@@ -421,17 +397,11 @@ const RECIPES = [
     i: [['nouilles_riz', 250, 'g'], ['crevettes', 300, 'g'], ['oeufs', 2, 'pc'], ['pousses_mungo', 200, 'g'], ['cacahuetes', 50, 'g'], ['sauce_soja', 3, 'cs'], ['citron_vert', 2, 'pc'], ['sucre', 1, 'cs'], ['oignon_nouveau', 3, 'pc'], ['huile', 2, 'cs']],
     st: ['Faire tremper les nouilles dans l’eau chaude 10 min.', 'Saisir les crevettes dans l’huile, pousser sur le côté et brouiller les œufs.', 'Ajouter nouilles, sauce soja, sucre et jus de citron vert, mélanger 3 min.', 'Ajouter les pousses, l’oignon nouveau et les cacahuètes concassées.'] },
 
-  { id: 'poke_bowl', n: 'Poke bowl au saumon', e: '🍣', type: 'salade', t: 30, d: 1, s: ['pr', 'et'], eq: ['plaques'], p: 4,
-    i: [['riz', 300, 'g'], ['saumon', 3, 'pc'], ['avocat', 2, 'pc'], ['concombre', 1, 'pc'], ['edamame', 150, 'g'], ['mangue', 1, 'pc'], ['sauce_soja', 4, 'cs'], ['graines_sesame', 1, 'cs'], ['vinaigre', 1, 'cs']],
-    st: ['Cuire le riz et l’assaisonner avec le vinaigre, laisser tiédir.', 'Couper le saumon (très frais) en cubes et le mariner 10 min dans la sauce soja.', 'Couper avocat, concombre et mangue ; cuire les edamame 4 min.', 'Composer les bols et parsemer de sésame.'] },
 
   { id: 'lentilles_carottes', n: 'Lentilles mijotées aux carottes', e: '🥘', type: 'plat', t: 40, d: 1, s: ['au', 'hi'], eq: ['plaques'], p: 4,
     i: [['lentilles_vertes', 300, 'g'], ['carotte', 3, 'pc'], ['oignon', 1, 'pc'], ['ail', 1, 'pc'], ['thym', 1, 'cc'], ['laurier', 1, 'pc'], ['bouillon', 1, 'pc'], ['moutarde', 1, 'cs'], ['huile_olive', 2, 'cs']],
     st: ['Faire revenir l’oignon et les carottes en rondelles dans l’huile.', 'Ajouter les lentilles, l’ail, le thym, le laurier, le cube et 900 ml d’eau.', 'Cuire 25 min à feu doux.', 'Hors du feu, ajouter la moutarde et rectifier l’assaisonnement.'] },
 
-  { id: 'petits_pois_carottes', n: 'Poulet, petits pois et carottes', e: '🫛', type: 'plat', t: 40, d: 1, s: ['pr'], eq: ['plaques'], p: 4,
-    i: [['blanc_poulet', 500, 'g'], ['petits_pois', 400, 'g'], ['carotte', 4, 'pc'], ['oignon', 1, 'pc'], ['bouillon', 1, 'pc'], ['beurre', 20, 'g'], ['thym', 1, 'cc']],
-    st: ['Faire dorer le poulet en morceaux dans le beurre, réserver.', 'Faire revenir l’oignon et les carottes, ajouter le cube et 300 ml d’eau.', 'Cuire 15 min, ajouter les petits pois et le poulet.', 'Cuire encore 10 min.'] },
 
   // Desserts et brunch
   { id: 'crumble_pommes', n: 'Crumble aux pommes', e: '🍎', type: 'dessert', t: 50, d: 1, s: ['au', 'hi'], eq: ['four'], p: 6,
@@ -454,11 +424,41 @@ const RECIPES = [
     i: [['flocons_avoine', 100, 'g'], ['lait', 400, 'ml'], ['banane', 1, 'pc'], ['cannelle', 1, 'cc'], ['miel', 1, 'cs']],
     st: ['Porter le lait à frémissement avec la cannelle.', 'Ajouter les flocons et cuire 5 min en remuant.', 'Servir avec la banane en rondelles et le miel.'] },
 
-  { id: 'poires_chocolat', n: 'Poires pochées sauce chocolat', e: '🍐', type: 'dessert', t: 30, d: 1, s: ['au', 'hi'], eq: ['plaques'], p: 4,
-    i: [['poire', 4, 'pc'], ['sucre', 80, 'g'], ['chocolat_noir', 100, 'g'], ['creme', 100, 'ml'], ['sucre_vanille', 1, 'pc']],
-    st: ['Éplucher les poires en gardant la queue.', 'Les pocher 20 min dans 1 L d’eau avec le sucre et le sucre vanillé.', 'Faire fondre le chocolat dans la crème chaude.', 'Servir les poires nappées de sauce.'] },
 
   { id: 'financiers', n: 'Financiers aux amandes', e: '🧁', type: 'dessert', t: 30, d: 2, s: [], eq: ['four'], p: 6,
     i: [['amandes_poudre', 100, 'g'], ['sucre', 120, 'g'], ['farine', 40, 'g'], ['oeufs', 4, 'pc'], ['beurre', 100, 'g']],
-    st: ['Préchauffer le four à 200 °C. Faire fondre le beurre jusqu’à ce qu’il soit noisette.', 'Mélanger poudre d’amande, sucre et farine.', 'Ajouter les blancs d’œufs non battus puis le beurre.', 'Remplir des moules et cuire 12 min.'] }
+    st: ['Préchauffer le four à 200 °C. Faire fondre le beurre jusqu’à ce qu’il soit noisette.', 'Mélanger poudre d’amande, sucre et farine.', 'Ajouter les blancs d’œufs non battus puis le beurre.', 'Remplir des moules et cuire 12 min.'] },
+
+  // Ajouts
+  { id: 'gnocchis_alfredo', n: 'Gnocchis au poulet façon Alfredo', e: '🍝', type: 'plat', t: 25, d: 1, s: [], eq: ['plaques'], p: 4,
+    i: [['gnocchis', 1000, 'g'], ['blanc_poulet', 500, 'g'], ['creme', 300, 'ml'], ['parmesan', 80, 'g'], ['beurre', 30, 'g'], ['ail', 2, 'pc'], ['persil', 1, 'pc'], ['huile_olive', 2, 'cs'], ['muscade', 1, 'pincee'], ['sel', 1, 'cc'], ['poivre', 1, 'pincee']],
+    st: [] },
+
+  { id: 'lasagnes', n: 'Lasagnes à la bolognaise', e: '🍝', type: 'plat', t: 90, d: 2, s: [], eq: ['four', 'plaques'], p: 6,
+    i: [['lasagnes', 300, 'g'], ['boeuf_hache', 600, 'g'], ['tomates_concassees', 800, 'g'], ['concentre_tomate', 2, 'cs'], ['oignon', 1, 'pc'], ['carotte', 1, 'pc'], ['ail', 2, 'pc'], ['herbes_provence', 1, 'cs'], ['lait', 750, 'ml'], ['beurre', 60, 'g'], ['farine', 60, 'g'], ['gruyere', 100, 'g'], ['parmesan', 40, 'g'], ['muscade', 1, 'pincee'], ['huile_olive', 2, 'cs'], ['sel', 1, 'cc']],
+    st: [] },
+
+  { id: 'risotto_poireaux', n: 'Risotto aux poireaux', e: '🍚', type: 'plat', t: 40, d: 2, s: ['au', 'hi', 'pr'], eq: ['plaques'], p: 4,
+    i: [['riz_arborio', 320, 'g'], ['poireau', 3, 'pc'], ['echalote', 1, 'pc'], ['bouillon', 2, 'pc'], ['vin_blanc', 100, 'ml'], ['parmesan', 70, 'g'], ['beurre', 30, 'g'], ['huile_olive', 1, 'cs'], ['poivre', 1, 'pincee']],
+    st: [] },
+
+  { id: 'risotto_butternut', n: 'Risotto à la courge butternut', e: '🎃', type: 'plat', t: 45, d: 2, s: ['au', 'hi'], eq: ['plaques'], p: 4,
+    i: [['riz_arborio', 320, 'g'], ['butternut', 600, 'g'], ['oignon', 1, 'pc'], ['bouillon', 2, 'pc'], ['vin_blanc', 100, 'ml'], ['parmesan', 70, 'g'], ['beurre', 30, 'g'], ['sauge', 1, 'pc'], ['huile_olive', 2, 'cs'], ['muscade', 1, 'pincee']],
+    st: [] },
+
+  { id: 'soupe_butternut', n: 'Velouté de butternut', e: '🥣', type: 'soupe', t: 40, d: 1, s: ['au', 'hi'], eq: ['plaques', 'mixeur'], p: 4,
+    i: [['butternut', 1200, 'g'], ['carotte', 1, 'pc'], ['oignon', 1, 'pc'], ['bouillon', 1, 'pc'], ['creme', 100, 'ml'], ['muscade', 1, 'pincee'], ['huile_olive', 1, 'cs'], ['baguette', 1, 'pc']],
+    st: [] },
+
+  { id: 'wraps_poulet', n: 'Wraps au poulet', e: '🌯', type: 'plat', t: 25, d: 1, s: [], eq: ['plaques'], p: 4,
+    i: [['tortillas', 8, 'pc'], ['blanc_poulet', 500, 'g'], ['salade', 1, 'pc'], ['tomate', 2, 'pc'], ['avocat', 1, 'pc'], ['cheddar', 4, 'pc'], ['mayonnaise', 4, 'cs'], ['citron', 1, 'pc'], ['paprika', 1, 'cc'], ['huile', 1, 'cs']],
+    st: [] },
+
+  { id: 'wraps_saumon', n: 'Wraps au saumon fumé', e: '🌯', type: 'plat', t: 15, d: 1, s: [], eq: [], p: 4,
+    i: [['tortillas', 8, 'pc'], ['saumon_fume', 250, 'g'], ['fromage_frais', 150, 'g'], ['concombre', 1, 'pc'], ['avocat', 1, 'pc'], ['salade', 1, 'pc'], ['citron', 1, 'pc'], ['ciboulette', 1, 'pc']],
+    st: [] },
+
+  { id: 'wraps_crevettes', n: 'Wraps aux crevettes', e: '🌯', type: 'plat', t: 20, d: 1, s: [], eq: ['plaques'], p: 4,
+    i: [['tortillas', 8, 'pc'], ['crevettes', 300, 'g'], ['avocat', 2, 'pc'], ['salade', 1, 'pc'], ['tomate', 2, 'pc'], ['citron_vert', 1, 'pc'], ['mayonnaise', 3, 'cs'], ['ail', 1, 'pc'], ['piment', 0.5, 'cc'], ['huile_olive', 1, 'cs']],
+    st: [] }
 ];

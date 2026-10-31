@@ -73,14 +73,6 @@ const DETAILS = {
       'Servir avec le riz.'],
     tips: ['Commencer avec peu de piment : on peut toujours en rajouter à table, jamais en enlever.', 'Une cuillère de crème fraîche et un peu de coriandre fraîche sur chaque assiette, c’est parfait.'] },
 
-  chili_sin_carne: {
-    st: ['Lancer la cuisson du riz.',
-      'Émincer l’oignon, hacher l’ail et couper les poivrons en petits dés.',
-      'Faire revenir oignon et poivrons 6 min dans l’huile, ajouter l’ail, le cumin et le paprika et remuer 1 min.',
-      'Ajouter les tomates, les haricots rouges et le maïs rincés et égouttés. Saler.',
-      'Laisser mijoter 25 min à feu doux en remuant de temps en temps.',
-      'Couper l’avocat en tranches au dernier moment et servir le chili sur le riz.'],
-    tips: ['Ajouter 50 g de lentilles corail crues avec les tomates (et un verre d’eau) donne une texture plus « viande hachée ».', 'Un filet de citron vert sur l’avocat l’empêche de noircir.'] },
 
   quiche_lorraine: {
     st: ['Préchauffer le four à 180 °C. Dérouler la pâte dans un moule à tarte en gardant le papier cuisson, et la piquer à la fourchette.',
@@ -91,14 +83,6 @@ const DETAILS = {
       'Laisser tiédir 5 min avant de découper. Servir avec la salade.'],
     tips: ['Pour une pâte bien croustillante, la précuire 10 min seule avant de la garnir.', 'La quiche se réchauffe très bien au four (pas au micro-ondes, qui ramollit la pâte).'] },
 
-  quiche_poireaux_chevre: {
-    st: ['Préchauffer le four à 180 °C et étaler la pâte dans un moule, puis la piquer à la fourchette.',
-      'Nettoyer les poireaux (les fendre et les rincer) et les émincer finement.',
-      'Les faire fondre 10 à 12 min dans le beurre à feu doux avec un peu de sel : ils doivent être tendres, pas grillés.',
-      'Battre les œufs avec la crème, saler légèrement et poivrer.',
-      'Étaler les poireaux sur la pâte, verser l’appareil et disposer les rondelles de chèvre sur le dessus.',
-      'Cuire 35 min jusqu’à ce que le dessus soit doré.'],
-    tips: ['Un filet de miel sur le chèvre avant d’enfourner et quelques noix concassées : un classique délicieux.', 'Bien laisser égoutter les poireaux pour éviter une quiche détrempée.'] },
 
   saumon_brocoli: {
     st: ['Préchauffer le four à 200 °C et lancer la cuisson du riz.',
@@ -129,14 +113,6 @@ const DETAILS = {
       'Servir chaud ou tiède avec du riz.'],
     tips: ['Cuire les légumes séparément puis les réunir donne une ratatouille où chaque légume garde son goût.', 'Froide le lendemain, avec un œuf mollet ou un peu de feta, elle est excellente.'] },
 
-  salade_nicoise: {
-    st: ['Cuire les pommes de terre entières, avec leur peau, 20 min dans l’eau salée. Les égoutter et les laisser refroidir.',
-      'Cuire les haricots verts équeutés 8 min dans l’eau bouillante salée, puis les plonger dans l’eau glacée pour qu’ils restent verts.',
-      'Cuire les œufs 9 min dans l’eau bouillante pour des œufs durs, les refroidir puis les écaler.',
-      'Couper les pommes de terre en rondelles, les tomates et les œufs en quartiers.',
-      'Préparer la vinaigrette : vinaigre, sel, poivre, puis l’huile en fouettant.',
-      'Disposer la salade dans un grand plat, puis les pommes de terre, les haricots, les tomates, le thon émietté, les œufs et les olives. Arroser de vinaigrette au moment de servir.'],
-    tips: ['Les pommes de terre absorbent mieux la vinaigrette quand elles sont encore tièdes.', 'Toutes les cuissons peuvent se faire la veille : il ne reste qu’à assembler.'] },
 
   croque_monsieur: {
     st: ['Préchauffer le four à 220 °C (ou en position gril).',
@@ -156,15 +132,6 @@ const DETAILS = {
       'Parsemer de gruyère et enfourner 20 min jusqu’à ce que le dessus soit bien doré.'],
     tips: ['Les sillons tracés à la fourchette dorent davantage et donnent un dessus croustillant.', 'C’est la recette idéale pour utiliser un reste de pot-au-feu ou de rôti haché.'] },
 
-  lasagnes_epinards: {
-    st: ['Préparer la sauce tomate : faire revenir l’oignon émincé et l’ail haché dans l’huile 5 min, ajouter les tomates, saler et cuire 15 min.',
-      'Faire décongeler les épinards dans une poêle à feu moyen jusqu’à évaporation de l’eau, puis les presser pour bien les égoutter.',
-      'Mélanger les épinards avec la ricotta, saler, poivrer et ajouter un peu de muscade si vous en avez.',
-      'Préchauffer le four à 180 °C.',
-      'Dans un plat, étaler un peu de sauce tomate, puis alterner : feuilles de lasagne, mélange épinards-ricotta, sauce tomate. Terminer par des feuilles et de la sauce.',
-      'Couvrir de mozzarella en tranches et de parmesan, puis enfourner 40 min.',
-      'Laisser reposer 10 min avant de couper : les parts se tiendront mieux.'],
-    tips: ['Les feuilles de lasagne sans précuisson ont besoin d’assez de sauce pour cuire : bien les recouvrir.', 'Couvrir d’aluminium les 20 premières minutes si le fromage colore trop vite.'] },
 
   pates_pesto: {
     st: ['Porter une grande casserole d’eau à ébullition, saler généreusement et y cuire les pâtes selon le temps indiqué.',
@@ -183,12 +150,6 @@ const DETAILS = {
       'Replier l’omelette en deux, la glisser sur l’assiette et servir avec la salade.'],
     tips: ['Pour 4 personnes, faire deux omelettes de 4 œufs : elles sont plus faciles à réussir.', 'Une poêle antiadhésive et un feu moyen, jamais trop fort : c’est le secret d’une omelette moelleuse.'] },
 
-  gnocchis_epinards: {
-    st: ['Chauffer l’huile dans une grande poêle à feu moyen-vif.',
-      'Ajouter les gnocchis directement (sans les cuire à l’eau) et les faire dorer 8 à 10 min en les remuant régulièrement : ils doivent être croustillants à l’extérieur.',
-      'Ajouter l’ail haché et les épinards, et laisser tomber 2 min en remuant.',
-      'Verser la crème, ajouter le chèvre émietté et mélanger jusqu’à ce qu’il fonde. Poivrer et servir.'],
-    tips: ['Ne pas trop remplir la poêle : les gnocchis doivent être en une seule couche pour bien dorer (faire deux fournées si besoin).', 'Les gnocchis poêlés sont bien meilleurs que bouillis : essayez aussi avec un simple beurre-sauge.'] },
 
   wok_poulet: {
     st: ['Cuire les nouilles selon le paquet, les égoutter et les rincer à l’eau froide pour qu’elles ne collent pas.',
@@ -199,14 +160,6 @@ const DETAILS = {
       'Parsemer de graines de sésame et servir aussitôt.'],
     tips: ['Tout couper avant de commencer : la cuisson au wok va très vite.', 'Un trait d’huile de sésame à la fin donne un goût très parfumé.'] },
 
-  tofu_brocoli: {
-    st: ['Lancer la cuisson du riz.',
-      'Égoutter le tofu, l’envelopper dans un torchon propre et le presser 10 min sous un poids (une casserole) pour retirer l’eau.',
-      'Couper le tofu en cubes et le faire dorer sur toutes les faces dans l’huile chaude, 8 à 10 min. Réserver.',
-      'Dans la même poêle, faire sauter les fleurettes de brocoli 3 min, ajouter 3 cs d’eau et couvrir 3 min.',
-      'Ajouter l’ail et le gingembre, puis le tofu et la sauce soja. Mélanger 1 min pour bien enrober.',
-      'Parsemer de sésame et servir avec le riz.'],
-    tips: ['Presser le tofu, c’est ce qui le rend croustillant au lieu de spongieux.', 'Rouler les cubes dans un peu de fécule de maïs avant cuisson les rend encore plus croustillants.'] },
 
   tajine_poulet: {
     st: ['Émincer les oignons, hacher l’ail et couper un citron en quartiers. Presser le jus du second.',
@@ -218,14 +171,6 @@ const DETAILS = {
       'Préparer la semoule : la couvrir de son volume d’eau bouillante salée avec un filet d’huile, couvrir 5 min puis égrainer à la fourchette. Servir avec la coriandre.'],
     tips: ['Avec des citrons confits (rayon épicerie du monde), le goût est encore plus authentique.', 'Rincer les olives si elles sont très salées.'] },
 
-  couscous_legumes: {
-    st: ['Éplucher carottes et navets et les couper en gros tronçons. Couper les courgettes en tronçons. Émincer l’oignon.',
-      'Dans un grand faitout, faire revenir l’oignon dans l’huile avec le ras el hanout 3 min.',
-      'Ajouter carottes et navets, les tomates, le cube de bouillon et 1 L d’eau. Porter à ébullition puis cuire 25 min à feu moyen.',
-      'Ajouter les courgettes et les pois chiches égouttés, et cuire encore 15 min.',
-      'Préparer la semoule : la verser dans un saladier, ajouter son volume de bouillon de cuisson bouillant (ou d’eau salée) et un filet d’huile, couvrir 5 min, puis égrainer à la fourchette.',
-      'Servir la semoule avec les légumes et un peu de bouillon dans un bol à côté.'],
-    tips: ['Un peu de harissa diluée dans le bouillon pour ceux qui aiment épicé.', 'Les restes de bouillon font une excellente base de soupe.'] },
 
   boeuf_bourguignon: {
     st: ['Couper la viande en gros cubes de 4 à 5 cm et bien la sécher avec du papier absorbant.',
@@ -273,14 +218,6 @@ const DETAILS = {
       'Mixer en ajoutant le lait de coco, goûter et ajuster le sel.'],
     tips: ['Un peu de gingembre râpé avec l’oignon et un filet d’orange à la fin, pour une variante fraîche.', 'La pomme de terre donne du velouté sans ajouter de crème.'] },
 
-  gaspacho: {
-    st: ['Laver les légumes. Couper les tomates en quartiers, éplucher le concombre et le couper en morceaux, épépiner le poivron.',
-      'Éplucher l’oignon et l’ail.',
-      'Mettre tous les légumes dans le blender avec l’huile, le vinaigre et le sel.',
-      'Mixer longuement jusqu’à obtenir un velouté très lisse. Ajouter un peu d’eau froide s’il est trop épais.',
-      'Réfrigérer au moins 1 h.',
-      'Servir très frais, avec des petits dés de concombre et du pain grillé.'],
-    tips: ['Ajouter une tranche de pain rassis trempée dans l’eau au moment de mixer donne un gaspacho plus onctueux.', 'Les tomates bien mûres de l’été font toute la différence.'] },
 
   salade_lentilles: {
     st: ['Rincer les lentilles et les cuire 25 min dans 3 fois leur volume d’eau non salée (le sel les durcit). Saler en fin de cuisson et égoutter.',
@@ -371,14 +308,6 @@ const DETAILS = {
       'Servir avec le riz et la coriandre ciselée.'],
     tips: ['Les hauts de cuisse désossés restent plus moelleux que les blancs dans un curry.', 'Un peu de pâte de curry rouge ou verte à la place de la poudre pour une version thaïe.'] },
 
-  porc_caramel: {
-    st: ['Couper le porc en cubes de 3 cm, émincer l’oignon et hacher l’ail.',
-      'Dans une cocotte, faire fondre le sucre avec 2 cs d’eau à feu moyen, sans remuer, jusqu’à obtenir un caramel ambré foncé.',
-      'Ajouter aussitôt la viande (attention aux projections) et bien l’enrober de caramel. Ajouter l’oignon et l’ail.',
-      'Verser la sauce soja et 200 ml d’eau. Le caramel va durcir puis fondre à nouveau.',
-      'Laisser mijoter 35 min à feu doux, à découvert, en remuant de temps en temps, jusqu’à ce que la sauce soit sirupeuse et nappe la viande.',
-      'Pendant ce temps, cuire le riz. Servir avec l’oignon nouveau émincé.'],
-    tips: ['Traditionnellement, on utilise de la sauce nuoc-mâm (poisson) à la place de la sauce soja.', 'Ne pas quitter le caramel des yeux : il passe d’ambré à brûlé en quelques secondes.'] },
 
   cabillaud_puree: {
     st: ['Éplucher la patate douce, la couper en cubes et la cuire 20 min à l’eau salée.',
@@ -416,22 +345,7 @@ const DETAILS = {
       'Enfourner 15 min jusqu’à ce que le dessus soit doré.'],
     tips: ['Les enfants l’adorent : c’est la recette idéale pour les soirs pressés.', 'Quelques champignons ou petits pois ajoutés rendent le plat plus complet.'] },
 
-  minestrone: {
-    st: ['Couper la carotte, le céleri et l’oignon en petits dés, hacher l’ail et couper la courgette en dés.',
-      'Faire revenir oignon, carottes, céleri et ail dans l’huile 6 min dans une grande casserole.',
-      'Ajouter les tomates, le cube de bouillon et 1,2 L d’eau. Porter à ébullition et cuire 15 min.',
-      'Ajouter la courgette, les haricots blancs égouttés et les petites pâtes. Cuire 10 min de plus.',
-      'Goûter et rectifier l’assaisonnement. Servir avec du parmesan râpé.'],
-    tips: ['Une croûte de parmesan ajoutée dans la soupe pendant la cuisson donne beaucoup de goût.', 'Les pâtes gonflent en attendant : si vous en faites d’avance, les cuire à part.'] },
 
-  endives_jambon: {
-    st: ['Retirer les feuilles abîmées des endives et creuser légèrement la base pour retirer le cône amer.',
-      'Cuire les endives 15 min à l’eau bouillante salée, puis les égoutter longuement en les pressant pour retirer un maximum d’eau.',
-      'Préchauffer le four à 200 °C.',
-      'Préparer la béchamel : faire fondre le beurre, ajouter la farine et remuer 2 min, puis verser le lait petit à petit en fouettant. Laisser épaissir 5 min, saler, poivrer, ajouter la muscade.',
-      'Enrouler chaque endive dans une tranche de jambon et les ranger dans un plat beurré.',
-      'Napper de béchamel, parsemer de gruyère et enfourner 25 min.'],
-    tips: ['Bien égoutter les endives est essentiel, sinon elles rendent de l’eau dans le gratin.', 'Une pincée de sucre dans l’eau de cuisson atténue l’amertume.'] },
 
   galettes_completes: {
     st: ['Dans un saladier, mélanger la farine de sarrasin, 1 œuf et le sel, puis ajouter 500 ml d’eau froide petit à petit en fouettant pour éviter les grumeaux.',
@@ -459,14 +373,6 @@ const DETAILS = {
       'Ajouter les pousses et l’oignon nouveau, mélanger 30 s, puis servir avec les cacahuètes et des quartiers de citron vert.'],
     tips: ['Ne pas trop faire tremper les nouilles : elles finissent de cuire dans le wok.', 'Version végétarienne : remplacer les crevettes par du tofu ferme doré.'] },
 
-  poke_bowl: {
-    st: ['Rincer le riz puis le cuire. L’assaisonner chaud avec le vinaigre et une pincée de sel, puis le laisser tiédir.',
-      'Couper le saumon en cubes de 1,5 cm et le mélanger avec la sauce soja. Laisser mariner 10 min au frais.',
-      'Cuire les edamame 4 min à l’eau bouillante salée et les égoutter.',
-      'Couper l’avocat, le concombre et la mangue en dés.',
-      'Disposer le riz au fond des bols, puis les garnitures en sections.',
-      'Ajouter le saumon mariné et parsemer de sésame.'],
-    tips: ['Utiliser du saumon très frais (ou de qualité sushi), ou le remplacer par du saumon fumé.', 'Un peu de mayonnaise mélangée à de la sauce piquante fait une excellente sauce.'] },
 
   lentilles_carottes: {
     st: ['Rincer les lentilles.',
@@ -476,14 +382,6 @@ const DETAILS = {
       'Hors du feu, retirer le laurier, ajouter la moutarde, mélanger et rectifier l’assaisonnement.'],
     tips: ['Les lentilles vertes du Puy tiennent très bien à la cuisson.', 'Pour les non-végétariens, quelques saucisses fumées ajoutées 15 min avant la fin.'] },
 
-  petits_pois_carottes: {
-    st: ['Couper le poulet en gros morceaux, l’oignon en lamelles et les carottes en rondelles.',
-      'Faire dorer le poulet dans le beurre 5 min, puis le réserver.',
-      'Faire revenir l’oignon et les carottes 5 min dans la même cocotte.',
-      'Ajouter le cube de bouillon, le thym et 300 ml d’eau. Couvrir et cuire 15 min.',
-      'Ajouter les petits pois surgelés et le poulet, et cuire encore 10 min.',
-      'Rectifier l’assaisonnement et servir.'],
-    tips: ['Ajouter une feuille de laitue émincée avec les petits pois : c’est la recette « à la française ».', 'Un peu de crème en fin de cuisson pour une sauce plus onctueuse.'] },
 
   crumble_pommes: {
     st: ['Préchauffer le four à 180 °C.',
@@ -528,14 +426,6 @@ const DETAILS = {
       'Servir dans des bols avec la banane en rondelles et un filet de miel.'],
     tips: ['Version « overnight » : mélanger flocons et lait la veille au soir dans un pot, et le manger froid le matin.', 'Une poignée de fruits rouges ou une cuillère de beurre de cacahuète pour varier.'] },
 
-  poires_chocolat: {
-    st: ['Éplucher les poires en gardant la queue et couper une fine tranche à la base pour qu’elles tiennent debout.',
-      'Dans une casserole, porter 1 L d’eau à ébullition avec le sucre et le sucre vanillé.',
-      'Ajouter les poires et les pocher 20 min à petits frémissements : une lame doit s’enfoncer facilement.',
-      'Les égoutter et les laisser refroidir.',
-      'Chauffer la crème, puis la verser sur le chocolat en morceaux et mélanger jusqu’à obtenir une sauce lisse.',
-      'Servir les poires nappées de sauce chaude.'],
-    tips: ['C’est la « poire Belle-Hélène » : une boule de glace vanille la complète parfaitement.', 'Le sirop de pochage se garde pour arroser une salade de fruits.'] },
 
   financiers: {
     st: ['Préchauffer le four à 200 °C et beurrer des petits moules (ou utiliser des moules en silicone).',
@@ -544,5 +434,98 @@ const DETAILS = {
       'Ajouter les blancs d’œufs non montés et mélanger juste ce qu’il faut.',
       'Incorporer le beurre noisette tiède.',
       'Remplir les moules aux trois quarts et cuire 10 à 12 min jusqu’à ce que les bords soient dorés.'],
-    tips: ['La recette parfaite pour utiliser des blancs restants (après une carbonara par exemple).', 'Une framboise posée sur chaque financier avant cuisson, c’est joli et délicieux.'] }
+    tips: ['La recette parfaite pour utiliser des blancs restants (après une carbonara par exemple).', 'Une framboise posée sur chaque financier avant cuisson, c’est joli et délicieux.'] },
+
+  quiche_poireaux_chevre: {
+    st: ['Préchauffer le four à 180 °C. Étaler la pâte dans un moule en gardant le papier cuisson et la piquer à la fourchette.',
+      'Couper la racine et le vert trop dur des poireaux, les fendre en deux et les rincer soigneusement, puis les émincer finement.',
+      'Faire fondre les poireaux 10 à 12 min dans le beurre à feu doux avec une pincée de sel : ils doivent être tendres sans colorer. Les laisser tiédir.',
+      'Battre les œufs avec la crème, le lait, la muscade, le poivre et les deux tiers du gruyère.',
+      'Étaler les poireaux sur la pâte, verser l’appareil et parsemer du reste de gruyère.',
+      'Cuire 35 min jusqu’à ce que la quiche soit gonflée et dorée. Laisser reposer 5 min avant de couper.'],
+    tips: ['Bien égoutter les poireaux après cuisson pour éviter une pâte détrempée.', 'Quelques lardons ou un peu de saumon fumé ajoutés avec les poireaux font une belle variante.'] },
+
+  gnocchis_epinards: {
+    st: ['Chauffer l’huile dans une grande poêle à feu moyen-vif.',
+      'Ajouter les gnocchis directement, sans les cuire à l’eau, et les faire dorer 8 à 10 min en les remuant régulièrement : ils doivent être croustillants à l’extérieur.',
+      'Ajouter l’ail haché et les épinards, et laisser tomber 2 min en remuant.',
+      'Verser la crème et laisser réduire 2 min.',
+      'Hors du feu, ajouter le parmesan râpé, poivrer généreusement et servir aussitôt.'],
+    tips: ['Ne pas trop remplir la poêle : les gnocchis doivent être en une seule couche pour bien dorer.', 'Quelques tomates séchées ou des pignons grillés ajoutent du goût et du croquant.'] },
+
+  gnocchis_alfredo: {
+    st: ['Couper le poulet en petits morceaux, saler et poivrer. Hacher l’ail et ciseler le persil. Râper le parmesan.',
+      'Dans une grande poêle, chauffer 1 cs d’huile à feu moyen-vif et faire dorer les gnocchis 8 min en remuant, jusqu’à ce qu’ils soient croustillants. Les réserver.',
+      'Dans la même poêle, ajouter le reste de l’huile et faire dorer le poulet 6 à 7 min : il doit être bien cuit et doré.',
+      'Baisser le feu, ajouter le beurre et l’ail, et remuer 1 min sans laisser brunir l’ail.',
+      'Verser la crème, ajouter la muscade et laisser frémir 3 min pour qu’elle épaississe légèrement.',
+      'Hors du feu, incorporer le parmesan en remuant jusqu’à obtenir une sauce lisse et nappante.',
+      'Remettre les gnocchis, mélanger pour bien les enrober, parsemer de persil et servir aussitôt.'],
+    tips: ['Ajouter le parmesan hors du feu : à feu vif, il fait des grumeaux.', 'Si la sauce épaissit trop, la détendre avec un peu de lait ou d’eau chaude.', 'Quelques champignons ou des épinards poêlés avec le poulet complètent bien le plat.'] },
+
+  lasagnes: {
+    st: ['Préparer la bolognaise : hacher finement l’oignon, la carotte et l’ail et les faire revenir 5 min dans l’huile.',
+      'Ajouter la viande et la faire dorer en l’émiettant. Incorporer le concentré, les tomates et les herbes, saler et laisser mijoter 25 min à feu doux.',
+      'Préparer la béchamel : faire fondre le beurre, ajouter la farine et remuer 2 min, puis verser le lait petit à petit en fouettant. Cuire 5 min jusqu’à ce qu’elle nappe la cuillère. Saler, ajouter la muscade.',
+      'Préchauffer le four à 180 °C.',
+      'Dans un grand plat, étaler un peu de béchamel, puis alterner : feuilles de lasagne, bolognaise, béchamel, un peu de gruyère. Faire 3 ou 4 couches.',
+      'Terminer par des feuilles, la béchamel restante, le reste du gruyère et le parmesan.',
+      'Enfourner 40 min, en couvrant d’aluminium si le dessus colore trop vite. Laisser reposer 10 min avant de couper.'],
+    tips: ['Les feuilles sans précuisson ont besoin d’être bien recouvertes de sauce pour cuire.', 'Les lasagnes sont encore meilleures réchauffées le lendemain, et elles se congèlent très bien en parts.'] },
+
+  risotto_poireaux: {
+    st: ['Dissoudre les cubes dans 1 L d’eau et garder ce bouillon chaud à feu très doux.',
+      'Fendre les poireaux, les rincer et les émincer finement. Émincer l’échalote.',
+      'Dans une casserole à fond épais, faire fondre les poireaux et l’échalote 6 min dans l’huile et la moitié du beurre, sans coloration.',
+      'Ajouter le riz et le nacrer 2 min en remuant, jusqu’à ce que les grains deviennent translucides sur les bords.',
+      'Verser le vin blanc et remuer jusqu’à ce qu’il soit absorbé.',
+      'Ajouter le bouillon louche par louche en remuant souvent, en attendant que chaque louche soit presque absorbée. Compter 17 à 18 min : le riz doit rester légèrement ferme à cœur.',
+      'Hors du feu, ajouter le reste du beurre et le parmesan râpé, poivrer, couvrir 2 min puis servir.'],
+    tips: ['Garder quelques rondelles de poireau poêlées à part pour décorer l’assiette.', 'Une poignée de lardons ou de saumon fumé en fin de cuisson pour une version plus gourmande.'] },
+
+  risotto_butternut: {
+    st: ['Éplucher la courge, retirer les graines et couper la chair en petits dés de 1 cm. Émincer l’oignon.',
+      'Dissoudre les cubes dans 1 L d’eau et garder ce bouillon chaud.',
+      'Faire revenir les dés de courge 8 min dans 1 cs d’huile, avec quelques feuilles de sauge, jusqu’à ce qu’ils soient tendres et légèrement dorés. Réserver.',
+      'Dans une casserole, faire suer l’oignon dans le reste de l’huile 3 min, puis ajouter le riz et le nacrer 2 min.',
+      'Déglacer au vin blanc, puis ajouter le bouillon louche par louche en remuant, pendant 17 à 18 min.',
+      'À mi-cuisson, ajouter la moitié de la courge : elle va fondre et rendre le risotto orangé et crémeux.',
+      'Hors du feu, incorporer le reste de la courge, le beurre, le parmesan et la muscade. Couvrir 2 min et servir avec quelques feuilles de sauge.'],
+    tips: ['Faire frire quelques feuilles de sauge 30 s dans le beurre pour une garniture croustillante.', 'Les graines de courge grillées au four avec un peu de sel font un joli topping.'] },
+
+  soupe_butternut: {
+    st: ['Éplucher la courge, retirer les graines et couper la chair en cubes. Éplucher et couper la carotte en rondelles et émincer l’oignon.',
+      'Faire revenir l’oignon dans l’huile 3 min dans une grande casserole.',
+      'Ajouter la courge, la carotte, le cube de bouillon et 1 L d’eau. Porter à ébullition.',
+      'Baisser le feu, couvrir et cuire 25 min jusqu’à ce que les légumes soient très tendres.',
+      'Mixer avec la crème et la muscade jusqu’à obtenir un velouté lisse. Rectifier l’assaisonnement.',
+      'Servir bien chaud avec du pain grillé et un filet de crème.'],
+    tips: ['Une cuillère de curry ou un peu de gingembre avec l’oignon pour une version plus parfumée.', 'Remplacer la crème par du lait de coco pour une version sans lactose.'] },
+
+  wraps_poulet: {
+    st: ['Couper le poulet en lanières et le mélanger avec le paprika, le sel et la moitié du jus de citron.',
+      'Le faire dorer dans l’huile chaude 6 à 8 min jusqu’à ce qu’il soit bien cuit.',
+      'Pendant ce temps, laver la salade, couper les tomates en dés et l’avocat en tranches.',
+      'Mélanger la mayonnaise avec le reste du jus de citron.',
+      'Réchauffer les tortillas 20 s dans une poêle sèche.',
+      'Tartiner chaque tortilla de sauce, ajouter salade, tomate, avocat, une demi-tranche de cheddar et le poulet chaud, puis rouler en serrant bien.'],
+    tips: ['Couper les wraps en deux en biais et les emballer dans du papier cuisson pour les emporter.', 'Pour un poulet croustillant, rouler les lanières dans de la chapelure avant de les dorer.'] },
+
+  wraps_saumon: {
+    st: ['Laver la salade et la ciboulette. Ciseler la ciboulette.',
+      'Mélanger le fromage frais avec la ciboulette, un filet de jus de citron et du poivre.',
+      'Couper le concombre en fins bâtonnets et l’avocat en tranches. Arroser l’avocat d’un peu de citron.',
+      'Tartiner chaque tortilla du mélange au fromage frais.',
+      'Ajouter les tranches de saumon fumé, la salade, le concombre et l’avocat.',
+      'Rouler en serrant bien et couper en deux en biais.'],
+    tips: ['Sans cuisson : idéal pour un repas rapide ou un pique-nique.', 'Roulés serré et filmés, puis coupés en tronçons, ils font de jolies bouchées pour l’apéritif.'] },
+
+  wraps_crevettes: {
+    st: ['Hacher l’ail. Faire sauter les crevettes 3 min dans l’huile chaude avec l’ail et le piment : elles doivent devenir roses.',
+      'Préparer un guacamole rapide : écraser un avocat avec le jus d’un demi-citron vert et une pincée de sel.',
+      'Mélanger la mayonnaise avec le reste du jus de citron vert.',
+      'Laver la salade, couper les tomates en dés et le second avocat en tranches.',
+      'Réchauffer les tortillas 20 s dans une poêle sèche.',
+      'Tartiner de guacamole, ajouter salade, tomates, avocat et crevettes, napper d’un peu de sauce et rouler.'],
+    tips: ['Les crevettes surgelées conviennent très bien : les décongeler au frais et bien les sécher avant cuisson.', 'Quelques feuilles de coriandre fraîche donnent une touche mexicaine.'] }
 };
