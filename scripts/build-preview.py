@@ -12,7 +12,7 @@ css += """
   .toast { bottom: 90px; }
 }
 """
-scripts = ''.join('<script>%s</script>\n' % open(W + 'js/' + f, encoding='utf8').read() for f in ['data.js', 'details.js', 'images.js', 'genimages.js', 'prompts.js', 'features.js', 'app.js'])
+scripts = ''.join('<script>%s</script>\n' % open(W + 'js/' + f, encoding='utf8').read() for f in ['data.js', 'details.js', 'images.js', 'genimages.js', 'prompts.js', 'imagestyle.js', 'features.js', 'app.js'])
 html = f"""<!DOCTYPE html>
 <html lang="fr">
 <head>

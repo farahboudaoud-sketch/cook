@@ -115,7 +115,21 @@ async function searchPhotoFor(id, manual) {
   render();
 }
 /* Génère une image avec le service compatible OpenAI (payant, quelques centimes). */
-const IMG_STYLE = 'Professional food photography of a home-cooked dish, appetizing and realistic, served on a rustic ceramic plate on a wooden table, soft natural daylight, 45 degree angle, shallow depth of field, no text, no people, no hands.';
+/* Même style, même modèle, même qualité et même format que les images du carnet. */
+function genSettings() { return (typeof GEN_IMAGE_SETTINGS !== 'undefined' && GEN_IMAGE_SETTINGS) || {}; }
+/* Description détaillée du plat en anglais, comme pour les recettes du carnet. */
+async function dishDescription(r) {
+  if (typeof IMAGE_PROMPTS !== 'undefined' && IMAGE_PROMPTS[r.id] && !r.edited) return IMAGE_PROMPTS[r.id];
+  if (r.imgPrompt) return r.imgPrompt;
+  const ex = typeof IMAGE_PROMPTS !== 'undefined' ? Object.values(IMAGE_PROMPTS).slice(0, 3).map((x) => '- ' + x).join('\n') : '';
+  try {
+    const j = await openaiJSON('You write short visual descriptions of plated dishes for food photography. Answer only with JSON.',
+      `Dish: "${r.n}". Main ingredients: ${r.i.map(([k]) => ing(k).n).slice(0, 10).join(', ')}.\nWrite one English sentence (15 to 30 words) describing what the finished dish looks like on the plate, in the same style as these examples:\n${ex}\nAnswer: {"description": "..."}`);
+    const d = String(j.description || '').trim();
+    if (d) { r.imgPrompt = d; return d; }
+  } catch (e) { /* on se rabat sur le nom */ }
+  return r.n;
+}
 async function generateImageFor(id, manual) {
   const r = recipeById(id);
   if (!r || imgPending[id]) return;
@@ -123,9 +137,12 @@ async function generateImageFor(id, manual) {
   imgPending[id] = true;
   if (manual) toast('Image en cours de création (environ 30 s)…');
   render();
-  const what = (typeof IMAGE_PROMPTS !== 'undefined' && IMAGE_PROMPTS[r.id]) || r.imgQuery || r.n;
   try {
-    const src = await openaiImage(`${what}. ${IMG_STYLE}`);
+    const what = await dishDescription(r);
+    // On garde la description pour les prochaines fois (recette perso ou modifiée)
+    if (r.custom) { const c = state.custom.find((x) => x.id === r.id); if (c && !c.imgPrompt) c.imgPrompt = what; }
+    else if (r.edited && state.overrides[r.id] && !state.overrides[r.id].imgPrompt) state.overrides[r.id].imgPrompt = what;
+    const src = await openaiImage(`${what}. ${IMAGE_STYLE}`);
     storeGenerated(id, src);
     state.photos = state.photos || {}; setPhotoIdx(id, 0);
     toast('Image prête');
@@ -235,8 +252,8 @@ function keyForm() {
       <div><label class="lbl" for="oa-key">Clé</label><input class="input" id="oa-key" type="password" placeholder="Colle ta clé ici" value="${esc(state.ai.oaKey || '')}" autocomplete="off"></div>
       ${models.length ? `<div class="row" style="gap:14px">
         <div style="flex:1"><label class="lbl" for="oa-text">Modèle pour les recettes</label><select class="input" id="oa-text">${opt(state.ai.oaText, (m) => !/(image|dall|tts|whisper|embed|audio|realtime|moderation|transcribe|search)/i.test(m))}</select></div>
-        <div style="flex:1"><label class="lbl" for="oa-image">Modèle pour les images</label><select class="input" id="oa-image">${opt(state.ai.oaImage, (m) => /(image|dall)/i.test(m))}</select></div></div>` : ''}
-      <div><label class="lbl" for="oa-quality">Qualité des images</label><select class="input" id="oa-quality">${[['low', 'Basse (le moins cher)'], ['medium', 'Moyenne'], ['high', 'Haute (plus cher)']].map(([v, n]) => `<option value="${v}" ${(state.ai.oaQuality || 'medium') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        </div>` : ''}
+      <p class="muted small" style="margin:0">Images : même style, même modèle${genSettings().model ? ' (' + esc(genSettings().model) + ')' : ''} et même qualité que les images du carnet, pour un rendu homogène.</p>
       <div class="row" style="gap:16px"><button class="link" data-act="save-key">Enregistrer</button>${openaiReady() ? '<button class="link" data-act="test-key">Tester</button>' : ''}</div>
       ${state.ai.oaInfo ? `<p class="muted small" style="margin:0">${esc(state.ai.oaInfo)}</p>` : ''}
       <p class="muted small" style="margin:0">Payant à l’usage sur ton compte : environ 1 centime par recette et quelques centimes par image. La clé reste uniquement sur ce téléphone.</p>`;
@@ -258,8 +275,6 @@ function readKeyForm() {
   if (v('oa-key') !== null) state.ai.oaKey = v('oa-key');
   if (v('oa-base') !== null) state.ai.oaBase = v('oa-base').replace(/\/+$/, '');
   if (v('oa-text') !== null) state.ai.oaText = v('oa-text');
-  if (v('oa-image') !== null) state.ai.oaImage = v('oa-image');
-  if (v('oa-quality') !== null) state.ai.oaQuality = v('oa-quality');
 }
 
 /* ---------- Service compatible OpenAI ---------- */
@@ -305,7 +320,7 @@ async function oaTextModel() {
   return pick(await oaListModels(), rankText, 'gpt-4o-mini');
 }
 async function oaImageModel() {
-  if (state.ai.oaImage) return state.ai.oaImage;
+  if (genSettings().model) return genSettings().model;
   return pick(await oaListModels(), rankImage, 'gpt-image-1-mini');
 }
 async function openaiJSON(system, prompt) {
@@ -342,7 +357,7 @@ async function openaiImage(prompt) {
   const model = await oaImageModel();
   const dalle = /dall-e/.test(model);
   const body = dalle ? { model, prompt, n: 1, size: '1024x1024', response_format: 'b64_json' }
-    : { model, prompt, n: 1, size: '1536x1024', quality: state.ai.oaQuality || 'medium' };
+    : { model, prompt, n: 1, size: genSettings().size || IMAGE_SIZE, quality: genSettings().quality || 'medium' };
   let data;
   try { data = await oaFetch('/images/generations', body); }
   catch (e) {
@@ -539,6 +554,7 @@ Réponds avec ce JSON :
   "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
   "astuces": [ "1 à 3 astuces utiles" ],
   "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat (ex. : gnocchi tomato sauce)",
+  "image_description": "une phrase en anglais (15 à 30 mots) décrivant le plat fini dans l'assiette, ex. : creamy mushroom risotto with parmesan shavings and chopped parsley",
   "remarque": "adaptation éventuelle, sinon chaîne vide"
 }
 Rayons : fl fruits et légumes, bp boucherie et poissonnerie, cr crèmerie et frais, bo boulangerie, ep épicerie salée, es épices et condiments, su épicerie sucrée, sg surgelés, bs boissons, au autres.
@@ -568,6 +584,7 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
       st: (Array.isArray(j.etapes) ? j.etapes : []).map(String).filter(Boolean),
       tips: (Array.isArray(j.astuces) ? j.astuces : []).map(String).filter(Boolean),
       imgQuery: String(j.image_query || '').slice(0, 80),
+      imgPrompt: String(j.image_description || '').slice(0, 300),
       aiNote: String(j.remarque || '').trim(),
       query: sh.q
     };

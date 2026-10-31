@@ -10,7 +10,10 @@ let MODEL = process.env.IMAGE_MODEL || '';
 if (!KEY) { console.error('Secret OPENAI_API_KEY manquant'); process.exit(1); }
 
 const prompts = JSON.parse(fs.readFileSync('scripts/image-prompts.json', 'utf8'));
-const STYLE = 'Professional food photography of a home-cooked dish, appetizing and realistic, served on a rustic ceramic plate on a wooden table, soft natural daylight, 45 degree angle, shallow depth of field, no text, no people, no hands.';
+// Style et format partagés avec l'appli (www/js/imagestyle.js)
+const styleFile = fs.readFileSync('www/js/imagestyle.js', 'utf8');
+const STYLE = styleFile.match(/IMAGE_STYLE = '([^']+)'/)[1];
+const SIZE = styleFile.match(/IMAGE_SIZE = '([^']+)'/)[1];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const headers = { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
@@ -31,6 +34,8 @@ if (!MODEL) {
   MODEL = MODEL || 'gpt-image-1-mini';
 }
 console.log(`Service : ${BASE} · modèle : ${MODEL} · qualité : ${QUALITY}`);
+fs.mkdirSync('tmp-img', { recursive: true });
+fs.writeFileSync('tmp-img/settings.json', JSON.stringify({ model: MODEL, quality: QUALITY, size: SIZE }));
 
 const only = process.argv.slice(2).filter(Boolean);
 const ids = Object.keys(prompts).filter((id) => (only.length ? only.includes(id) : !fs.existsSync(`www/img/${id}.jpg`)));
@@ -39,7 +44,7 @@ let ok = 0;
 for (const id of ids) {
   const dalle = /dall-e/.test(MODEL);
   const body = dalle ? { model: MODEL, prompt: `${prompts[id]}. ${STYLE}`, n: 1, size: '1024x1024', response_format: 'b64_json' }
-    : { model: MODEL, prompt: `${prompts[id]}. ${STYLE}`, n: 1, size: '1536x1024', quality: QUALITY };
+    : { model: MODEL, prompt: `${prompts[id]}. ${STYLE}`, n: 1, size: SIZE, quality: QUALITY };
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const d = ((await call('/images/generations', body)).data || [])[0] || {};

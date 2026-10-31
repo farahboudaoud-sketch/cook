@@ -10,7 +10,16 @@ for p in glob.glob('tmp-img/*.png'):
     im.resize((w, h), Image.LANCZOS).save(f'www/img/{rid}.jpg', quality=82, optimize=True)
 order = list(json.load(open('scripts/image-prompts.json')).keys())
 have = [r for r in order if os.path.exists(f'www/img/{r}.jpg')]
-open('www/js/genimages.js', 'w', encoding='utf8').write("/* Recettes de base dont l'image générée est incluse dans l'appli (www/img/<id>.jpg) */\n'use strict';\nconst GEN_IMAGES = " + json.dumps(have) + ";\n")
+# Réglages utilisés pour les images du carnet : l'appli les reprend pour garder le même style
+settings = {}
+if os.path.exists('www/js/genimages.js'):
+    t = open('www/js/genimages.js', encoding='utf8').read()
+    m = t.find('GEN_IMAGE_SETTINGS = ')
+    if m >= 0:
+        settings = json.loads(t[m + len('GEN_IMAGE_SETTINGS = '):t.index(';', m)])
+if os.path.exists('tmp-img/settings.json'):
+    settings = json.load(open('tmp-img/settings.json'))
+open('www/js/genimages.js', 'w', encoding='utf8').write("/* Recettes de base dont l'image générée est incluse dans l'appli (www/img/<id>.jpg) */\n'use strict';\nconst GEN_IMAGES = " + json.dumps(have) + ";\nconst GEN_IMAGE_SETTINGS = " + json.dumps(settings) + ";\n")
 W, H, cols = 256, 171, 5
 for n in range(0, len(have), 20):
     chunk = have[n:n + 20]; rows = (len(chunk) + cols - 1) // cols
