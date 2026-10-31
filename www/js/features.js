@@ -61,7 +61,7 @@ function storeGenerated(id, src) {
 function photoList(r) {
   const list = [];
   if (genCache[r.id]) list.push({ src: genCache[r.id], ai: true });
-  else if (!r.custom && typeof GEN_IMAGES !== 'undefined' && GEN_IMAGES.includes(r.id)) list.push({ src: 'img/' + r.id + '.jpg', ai: true });
+  else if (!r.custom && typeof GEN_IMAGES !== 'undefined' && GEN_IMAGES.includes(r.id)) list.push({ src: (window.IMG_BASE || 'img/') + r.id + '.jpg', ai: true });
   const own = state.photos && state.photos[r.id];
   const commons = (own && own.list && own.list.length) ? own.list : ((typeof IMAGES !== 'undefined' && IMAGES[r.id]) || []);
   return list.concat(commons);

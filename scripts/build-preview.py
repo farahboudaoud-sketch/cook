@@ -23,6 +23,7 @@ html = f"""<!DOCTYPE html>
 </head>
 <body>
 <div id="app"></div>
+<script>window.IMG_BASE = 'https://raw.githubusercontent.com/farahboudaoud-sketch/cook/main/www/img/';</script>
 {scripts}</body>
 </html>"""
 open(sys.argv[1] if len(sys.argv) > 1 else 'carnet-de-cuisine-apercu.html', 'w', encoding='utf8').write(html)
