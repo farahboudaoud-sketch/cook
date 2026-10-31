@@ -417,7 +417,7 @@ function previewSheet(sh, r) {
       ${heroHtml(r)}
       <div class="kicker">${esc((TYPES.find((t) => t.id === r.type) || {}).name || '')} · Proposée par l’IA</div>
       <h2>${esc(r.n)}</h2>
-      <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · pour ${r.p} ${plural(r.p, 'personne', 'personnes')}</div>
+      <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · pour ${yieldText(r.p, r)}</div>
       ${r.aiNote ? `<div class="card-note" style="font-size:14px">${esc(r.aiNote)}</div>` : ''}
       ${reason ? `<div class="card-warn">Attention : cette recette ne correspond pas entièrement à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</div>` : ''}
       ${dis.length ? `<div class="card-warn">Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</div>` : ''}
@@ -548,7 +548,8 @@ Réponds avec ce JSON :
   "type": "plat" | "soupe" | "salade" | "dessert" | "brunch",
   "temps_min": nombre de minutes au total,
   "difficulte": 1 | 2 | 3,
-  "portions": ${sh.persons},
+  "portions": nombre (${sh.persons} si la recette se compte en personnes),
+  "unite_portions": "personnes" | "pièces" | "parts" (pièces pour ce qui se compte à l'unité : cookies, muffins, crêpes… ; parts pour un gâteau ou une tarte),
   "equipement": liste parmi ["plaques", "four", "micro", "mixeur", "airfryer"],
   "ingredients": [ { "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
   "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
@@ -578,7 +579,8 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
       n: String(j.nom).trim(), e: String(j.emoji || '🍽️').trim().slice(0, 4),
       type: typeIds.includes(j.type) ? j.type : 'plat',
       t: clampInt(parseInt(j.temps_min, 10) || 30, 1, 999), d: [1, 2, 3].includes(+j.difficulte) ? +j.difficulte : 1,
-      p: sh.persons, s: [],
+      pu: ({ 'pièces': 'pieces', pieces: 'pieces', parts: 'parts' })[norm(j.unite_portions)] || 'pers',
+      p: (({ 'pièces': 1, pieces: 1, parts: 1 })[norm(j.unite_portions)] && parseInt(j.portions, 10) > 0) ? clampInt(parseInt(j.portions, 10), 1, 200) : sh.persons, s: [],
       eq: (Array.isArray(j.equipement) ? j.equipement : []).filter((e) => EQUIPMENT.some((x) => x.id === e)),
       i: ings,
       st: (Array.isArray(j.etapes) ? j.etapes : []).map(String).filter(Boolean),

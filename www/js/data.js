@@ -412,7 +412,7 @@ const RECIPES = [
     i: [['chocolat_noir', 200, 'g'], ['oeufs', 6, 'pc'], ['sucre', 30, 'g'], ['sel', 1, 'pincee']],
     st: ['Faire fondre le chocolat doucement au micro-ondes.', 'Séparer les blancs des jaunes ; mélanger les jaunes au chocolat tiédi.', 'Monter les blancs en neige avec le sel, ajouter le sucre en fin.', 'Incorporer délicatement les blancs au chocolat. Réfrigérer au moins 4 h.'] },
 
-  { id: 'gateau_yaourt', n: 'Gâteau au yaourt', e: '🍰', type: 'dessert', t: 45, d: 1, s: [], eq: ['four'], p: 8,
+  { id: 'gateau_yaourt', n: 'Gâteau au yaourt', e: '🍰', type: 'dessert', t: 45, d: 1, s: [], eq: ['four'], p: 8, pu: 'parts',
     i: [['yaourt', 1, 'pc'], ['farine', 250, 'g'], ['sucre', 150, 'g'], ['oeufs', 3, 'pc'], ['huile', 4, 'cs'], ['levure', 1, 'pc'], ['sucre_vanille', 1, 'pc']],
     st: ['Préchauffer le four à 180 °C.', 'Mélanger le yaourt, le sucre et les œufs.', 'Ajouter la farine, la levure, puis l’huile.', 'Verser dans un moule beurré et cuire 35 min.'] },
 
@@ -425,7 +425,7 @@ const RECIPES = [
     st: ['Porter le lait à frémissement avec la cannelle.', 'Ajouter les flocons et cuire 5 min en remuant.', 'Servir avec la banane en rondelles et le miel.'] },
 
 
-  { id: 'financiers', n: 'Financiers aux amandes', e: '🧁', type: 'dessert', t: 30, d: 2, s: [], eq: ['four'], p: 6,
+  { id: 'financiers', n: 'Financiers aux amandes', e: '🧁', type: 'dessert', t: 30, d: 2, s: [], eq: ['four'], p: 12, pu: 'pieces',
     i: [['amandes_poudre', 100, 'g'], ['sucre', 120, 'g'], ['farine', 40, 'g'], ['oeufs', 4, 'pc'], ['beurre', 100, 'g']],
     st: ['Préchauffer le four à 200 °C. Faire fondre le beurre jusqu’à ce qu’il soit noisette.', 'Mélanger poudre d’amande, sucre et farine.', 'Ajouter les blancs d’œufs non battus puis le beurre.', 'Remplir des moules et cuire 12 min.'] },
 

@@ -20,6 +20,11 @@ const LEVELS = [{ id: 'debutant', n: 'Débutant·e', d: 'Recettes simples, pas d
 const DIFF = { 1: 'Facile', 2: 'Moyen', 3: 'Difficile' };
 const UNITS = [{ id: 'g', n: 'g' }, { id: 'ml', n: 'ml' }, { id: 'pc', n: 'pièce' }, { id: 'sachet', n: 'sachet' }, { id: 'cs', n: 'c. à s.' }, { id: 'cc', n: 'c. à c.' }, { id: 'pincee', n: 'pincée' }, { id: 'autre', n: 'Autre…' }];
 const KNOWN_UNITS = ['g', 'ml', 'pc', 'sachet', 'cs', 'cc', 'pincee'];
+/* Une recette se compte en personnes, en pièces (financiers, cookies…) ou en parts (gâteau, tarte) */
+const YIELDS = [{ id: 'pers', one: 'personne', many: 'personnes' }, { id: 'pieces', one: 'pièce', many: 'pièces' }, { id: 'parts', one: 'part', many: 'parts' }];
+function yieldOf(r) { return YIELDS.find((y) => y.id === (r && r.pu)) || YIELDS[0]; }
+function yieldText(n, r) { const y = yieldOf(r); return n + ' ' + plural(n, y.one, y.many); }
+function defaultServings(r) { return r && r.pu && r.pu !== 'pers' ? r.p : state.profile.persons; }
 
 const ICONS = {
   search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
@@ -386,7 +391,7 @@ function renderWeek() {
       <div class="body">
         <button class="name" data-act="open" data-v="${r.id}">${esc(r.n)}</button>
         <div class="row" style="flex-wrap:wrap;gap:10px">
-          ${stepper('servings:' + r.id, m.servings, 'Portions')}
+          <span class="row" style="gap:6px">${stepper('servings:' + r.id, m.servings, 'Quantité')}<span class="muted small">${plural(m.servings, yieldOf(r).one, yieldOf(r).many)}</span></span>
           <select class="day-select" data-act="day" data-v="${r.id}" aria-label="Jour">
             <option value="">Jour non choisi</option>
             ${SLOTS.map((s) => `<option value="${s.id}" ${m.day === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
@@ -410,7 +415,7 @@ function renderWeek() {
     <div class="box">
       <div class="row between"><span>Je cuisine pour</span>${stepper('persons', p.persons, 'Nombre de personnes')}</div>
       <div class="row between"><span>Recettes cette semaine</span>${stepper('target', p.target, 'Nombre de recettes')}</div>
-      ${items.some(({ m }) => m.servings !== p.persons) ? `<button class="link" style="align-self:flex-start" data-act="apply-persons">Mettre toutes les recettes à ${p.persons} ${plural(p.persons, 'personne', 'personnes')}</button>` : ''}
+      ${items.some(({ m, r }) => yieldOf(r).id === 'pers' && m.servings !== p.persons) ? `<button class="link" style="align-self:flex-start" data-act="apply-persons">Mettre toutes les recettes à ${p.persons} ${plural(p.persons, 'personne', 'personnes')}</button>` : ''}
     </div>
     <div class="dots" aria-label="${items.length} recettes choisies sur ${p.target}">${dots}</div>
     <div>${menuHtml}</div>
@@ -573,12 +578,12 @@ function recipeSheet(sh) {
       ${heroHtml(r)}
       <div class="kicker">${esc((TYPES.find((t) => t.id === r.type) || {}).name || '')}${r.custom ? ' · Ma recette' : ''}</div>
       <h2>${esc(r.n)}</h2>
-      <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · ${seasons}${cost > 0 && !r.custom ? ` · environ ${fmtEuro(cost)} par personne` : ''}</div>
+      <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · ${seasons}${cost > 0 && !r.custom ? ` · environ ${fmtEuro(cost)} par ${yieldOf(r).one}` : ''}</div>
       ${reason ? `<div class="card-warn">Cette recette ne correspond pas à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</div>` : ''}
       ${dis.length ? `<div class="card-warn">Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</div>` : ''}
       ${sh2.length ? `<div class="card-note">Réutilise ${esc(sh2.map((k) => ing(k).n.toLowerCase()).join(', '))}, déjà dans ton menu.</div>` : ''}
       <div class="row between" style="margin-top:6px"><span class="section-title">Ingrédients</span>${stepper('sheet-servings', servings, 'Portions')}</div>
-      <div class="muted small" style="margin-top:-8px">Pour ${servings} ${plural(servings, 'personne', 'personnes')}</div>
+      <div class="muted small" style="margin-top:-8px">Pour ${yieldText(servings, r)}</div>
       <div>${r.i.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}</div>
       ${stepsHtml(r)}
       ${notesHtml(r)}
@@ -586,7 +591,7 @@ function recipeSheet(sh) {
       ${r.edited ? '<p class="muted small" style="margin:-8px 0 0">Recette modifiée par toi.</p>' : ''}
     </div>
     <div class="sheet-foot">
-      ${m ? `<button class="btn" data-act="toggle-menu" data-v="${r.id}">Retirer du menu</button>` : `<button class="btn primary" data-act="add-from-sheet" data-v="${r.id}">Ajouter au menu · ${servings} pers.</button>`}
+      ${m ? `<button class="btn" data-act="toggle-menu" data-v="${r.id}">Retirer du menu</button>` : `<button class="btn primary" data-act="add-from-sheet" data-v="${r.id}">Ajouter au menu · ${yieldOf(r).id === 'pers' ? servings + ' pers.' : yieldText(servings, r)}</button>`}
     </div>
   </div>`;
 }
@@ -604,7 +609,7 @@ function editorSheet(sh) {
       </div>
       <div class="row" style="gap:14px">
         <div style="flex:1"><label class="lbl" for="ed-t">Temps (min)</label><input class="input" id="ed-t" name="t" type="number" inputmode="numeric" min="1" value="${esc(d.t)}"></div>
-        <div style="flex:1"><label class="lbl" for="ed-p">Pour (personnes)</label><input class="input" id="ed-p" name="p" type="number" inputmode="numeric" min="1" value="${esc(d.p)}"></div>
+        <div style="flex:1"><label class="lbl" for="ed-p">Pour</label><div class="row" style="gap:8px"><input class="input" id="ed-p" name="p" type="number" inputmode="numeric" min="1" value="${esc(d.p)}" style="width:64px"><select class="input" name="pu" aria-label="Unité des portions">${YIELDS.map((y) => `<option value="${y.id}" ${(d.pu || 'pers') === y.id ? 'selected' : ''}>${y.many}</option>`).join('')}</select></div></div>
       </div>
       <div class="section-title">Ingrédients</div>
       ${d.i.map((row, idx) => `<div class="ing-row">
@@ -629,7 +634,7 @@ function readEditorForm() {
   if (!form) return;
   const d = ui.sheet.draft;
   const fd = new FormData(form);
-  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.st = fd.get('st') || ''; d.tips = fd.get('tips') || '';
+  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.pu = fd.get('pu') || 'pers'; d.st = fd.get('st') || ''; d.tips = fd.get('tips') || '';
   d.i.forEach((row, idx) => {
     const name = fd.get('in-' + idx) || '';
     const changedName = name !== row.name;
@@ -654,8 +659,8 @@ function confirmBox(text, ok, onYes) { ui.dialog = { text, ok, onYes }; renderOv
 /* ---------- Actions ---------- */
 function addToMenu(id, servings) {
   if (inMenu(id)) return;
-  state.menu.push({ rid: id, servings: servings || state.profile.persons, day: '' });
   const r = recipeById(id);
+  state.menu.push({ rid: id, servings: servings || defaultServings(r), day: '' });
   toast(`${r ? r.n : 'Recette'} ajoutée au menu`);
 }
 function removeFromMenu(id) { state.menu = state.menu.filter((m) => m.rid !== id); }
@@ -684,9 +689,9 @@ async function copyList() {
   toast(ok ? 'Liste copiée : colle-la dans un message' : 'Copie impossible sur cet appareil');
 }
 
-function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, i: [{ name: '', q: '', u: 'g', a: 'au' }], st: '', tips: '' }; }
+function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, pu: 'pers', i: [{ name: '', q: '', u: 'g', a: 'au' }], st: '', tips: '' }; }
 function draftFrom(r) {
-  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, i: r.i.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })), st: stepsOf(r).join('\n'), tips: tipsOf(r).join('\n') };
+  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, pu: r.pu || 'pers', i: r.i.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })), st: stepsOf(r).join('\n'), tips: tipsOf(r).join('\n') };
 }
 function saveDraft() {
   readEditorForm();
@@ -706,7 +711,7 @@ function saveDraft() {
     return [key, isFinite(q) && q > 0 ? q : 1, (!row.u || row.u === 'autre') ? 'pc' : row.u];
   });
   const lines = (txt) => String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean);
-  const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 50), i, st: lines(d.st), tips: lines(d.tips) };
+  const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 200), pu: d.pu || 'pers', i, st: lines(d.st), tips: lines(d.tips) };
   let rec;
   if (ui.sheet.base) {
     // Recette du carnet modifiée à la main : la version modifiée est gardée sur le téléphone
@@ -719,7 +724,7 @@ function saveDraft() {
     else state.custom.push(rec);
   }
   save();
-  ui.sheet = { kind: 'recipe', id: rec.id, servings: state.profile.persons };
+  ui.sheet = { kind: 'recipe', id: rec.id, servings: (inMenu(rec.id) || {}).servings || defaultServings(rec) };
   toast('Recette enregistrée');
   render();
   if (!photoList(rec).length) searchPhotoFor(rec.id);
@@ -743,10 +748,10 @@ function handle(act, v, el) {
     case 'toggle-eq': p.equipment = p.equipment.includes(v) ? p.equipment.filter((x) => x !== v) : p.equipment.concat(v); break;
     case 'persons': p.persons = clampInt(p.persons + +v, 1, 20); break;
     case 'target': p.target = clampInt(p.target + +v, 1, 21); break;
-    case 'apply-persons': state.menu.forEach((m) => { m.servings = p.persons; }); break;
+    case 'apply-persons': state.menu.forEach((m) => { if (yieldOf(recipeById(m.rid)).id === 'pers') m.servings = p.persons; }); break;
     case 'filter': ui.filter = v; break;
     case 'type': ui.type = v; break;
-    case 'open': ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || p.persons }; save(); renderOverlays(); return;
+    case 'open': ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || defaultServings(recipeById(v)) }; save(); renderOverlays(); return;
     case 'close-sheet': ui.sheet = null; renderOverlays(); return;
     case 'close-sheet-bg': if (el === ui._target) { ui.sheet = null; renderOverlays(); } return;
     case 'sheet-servings': {
@@ -787,7 +792,7 @@ function handle(act, v, el) {
     case 'new-recipe': ui.sheet = { kind: 'editor', draft: newDraft() }; renderOverlays(); return;
     case 'edit-recipe': { const r = recipeById(v); if (!r) return; ui.sheet = { kind: 'editor', editId: v, base: !r.custom, draft: draftFrom(r) }; renderOverlays(); return; }
     case 'restore-recipe':
-      confirmBox('Revenir à la recette d’origine ? Tes modifications seront perdues.', 'Rétablir', () => { delete state.overrides[v]; ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || p.persons }; toast('Recette d’origine rétablie'); });
+      confirmBox('Revenir à la recette d’origine ? Tes modifications seront perdues.', 'Rétablir', () => { delete state.overrides[v]; ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || defaultServings(recipeById(v)) }; toast('Recette d’origine rétablie'); });
       return;
     case 'hide-recipe':
       confirmBox('Masquer cette recette du carnet ? Tu pourras la faire réapparaître depuis le Profil.', 'Masquer', () => { state.hidden = (state.hidden || []).concat(v); removeFromMenu(v); state.favorites = state.favorites.filter((x) => x !== v); ui.sheet = null; toast('Recette masquée'); });
