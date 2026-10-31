@@ -2,32 +2,56 @@
  "curry_pois_chiches": "chana masala",
  "gratin_butternut": "butternut squash gratin",
  "poulet_citron": "roast chicken legs potatoes",
- "risotto_champignons": "risotto ai funghi",
+ "risotto_champignons": {
+  "q": "risotto ai funghi",
+  "pick": 1
+ },
  "soupe_poireaux": "leek and potato soup",
  "bolognaise": "spaghetti bolognese",
  "chili_con_carne": "chili con carne",
- "chili_sin_carne": "vegetarian chili",
+ "chili_sin_carne": {
+  "q": "vegetarian chili",
+  "pick": 2
+ },
  "quiche_lorraine": "quiche lorraine",
  "quiche_poireaux_chevre": "leek quiche",
  "saumon_brocoli": "salmon fillet broccoli",
- "dahl": "masoor dal",
+ "dahl": {
+  "q": "masoor dal",
+  "pick": 2
+ },
  "ratatouille": "ratatouille dish",
  "salade_nicoise": "salade niçoise",
  "croque_monsieur": "croque monsieur",
  "hachis_parmentier": "hachis parmentier",
- "lasagnes_epinards": "spinach lasagne",
+ "lasagnes_epinards": {
+  "q": "spinach lasagne",
+  "pick": 2
+ },
  "pates_pesto": "pasta pesto cherry tomatoes",
- "omelette_champignons": "mushroom omelette",
+ "omelette_champignons": {
+  "q": "mushroom omelette",
+  "pick": 4
+ },
  "gnocchis_epinards": "gnocchi spinach",
  "wok_poulet": "chicken stir fry noodles",
- "tofu_brocoli": "tofu broccoli",
+ "tofu_brocoli": {
+  "q": "tofu broccoli",
+  "pick": 2
+ },
  "tajine_poulet": "chicken tagine olives",
  "couscous_legumes": "vegetable couscous",
  "boeuf_bourguignon": "boeuf bourguignon",
  "blanquette": "blanquette de veau",
  "tartiflette": "tartiflette",
- "soupe_potiron": "pumpkin soup",
- "veloute_carottes": "carrot soup",
+ "soupe_potiron": {
+  "q": "pumpkin soup",
+  "pick": 2
+ },
+ "veloute_carottes": {
+  "q": "carrot soup",
+  "pick": 4
+ },
  "gaspacho": "gazpacho",
  "salade_lentilles": "lentil salad",
  "taboule": "tabbouleh",
@@ -43,20 +67,41 @@
  "cabillaud_puree": "cod fillet plate",
  "moules_frites": "moules frites",
  "crevettes_ail": "garlic shrimp",
- "gratin_coquillettes": "baked macaroni cheese",
+ "gratin_coquillettes": {
+  "q": "baked macaroni cheese",
+  "pick": 3
+ },
  "minestrone": "minestrone",
  "endives_jambon": "endives au jambon",
  "galettes_completes": "galette complète",
- "salade_cesar": "caesar salad",
+ "salade_cesar": {
+  "q": "caesar salad",
+  "pick": 2
+ },
  "pad_thai": "pad thai shrimp",
  "poke_bowl": "poke bowl salmon",
- "lentilles_carottes": "lentil stew",
- "petits_pois_carottes": "peas and carrots dish",
+ "lentilles_carottes": {
+  "q": "lentil stew",
+  "pick": 3
+ },
+ "petits_pois_carottes": "chicken peas carrots",
  "crumble_pommes": "apple crumble",
  "mousse_chocolat": "chocolate mousse",
- "gateau_yaourt": "yogurt cake",
- "pancakes": "pancakes berries",
- "porridge": "oatmeal porridge bowl",
+ "gateau_yaourt": {
+  "q": "yogurt cake",
+  "pick": 1
+ },
+ "pancakes": {
+  "q": "pancakes berries",
+  "pick": 2
+ },
+ "porridge": {
+  "q": "oatmeal porridge bowl",
+  "pick": 1
+ },
  "poires_chocolat": "poire belle hélène",
- "financiers": "financier cake almond"
+ "financiers": {
+  "q": "financier cake almond",
+  "pick": 1
+ }
 }
