@@ -384,7 +384,7 @@ function aiSheet(sh) {
   if (sh.status === 'done' && sh.recipe) return previewSheet(sh, sh.recipe);
   const head = `<div class="sheet-head"><span class="grab" aria-hidden="true"></span><h2 style="font-size:22px">Générer une recette</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>`;
   if (!aiReady()) {
-    return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}<div class="sheet-body">
+    return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}<div class="sheet-body">
       <p style="margin:0;line-height:1.5">Pour créer des recettes avec l’IA, l’application a besoin d’une clé : celle de ton service compatible OpenAI, ou une clé Gemini gratuite.</p>
       ${keyForm()}</div></div>`;
   }
@@ -392,22 +392,28 @@ function aiSheet(sh) {
   const recap = [c.allergies.length ? 'sans ' + c.allergies.join(', ').toLowerCase() : '', c.diet, c.dislikes.length ? 'en évitant ' + c.dislikes.join(', ').toLowerCase() : '', c.maxTime ? 'en moins de ' + c.maxTime + ' min' : ''].filter(Boolean).join(' · ');
   let body = '';
   if (sh.status === 'loading') {
-    body = `<div class="empty" style="padding:50px 10px"><span class="spinner" aria-hidden="true"></span><span class="big">Recette en préparation…</span><span>Quelques secondes.</span></div>`;
+    body = `<div class="empty" style="padding:50px 10px"><span class="spinner" aria-hidden="true"></span><span class="big">${sh.step === 'tiktok' ? 'Lecture de la vidéo TikTok…' : 'Recette en préparation…'}</span><span>${sh.step === 'tiktok' ? 'Récupération de sa description.' : 'Quelques secondes.'}</span></div>`;
   } else {
     body = `<div><label class="lbl" for="ai-q">Quelle recette veux-tu ?</label>
-      <input class="input" id="ai-q" value="${esc(sh.q)}" placeholder="Ex. : gnocchis à la sauce tomate, gâteau sans four…" autocomplete="off" enterkeyhint="go"></div>
+      <textarea class="input ai-q" id="ai-q" placeholder="Décris la recette que tu veux, colle une recette entière à remettre en forme ou à modifier, ou un lien TikTok…">${esc(sh.q)}</textarea>
+      <p class="muted small ai-tiktok" style="margin:6px 0 0;${findTikTok(sh.q) ? '' : 'display:none'}">Lien TikTok détecté : la description de la vidéo sera lue (la vidéo n’est pas regardée).</p>
+      <details class="help" style="margin-top:6px"><summary>Exemples</summary>
+        <ul style="padding-left:18px;margin:4px 0;line-height:1.5"><li>« Un plat réconfortant avec des lentilles et du lait de coco, prêt en 30 minutes »</li>
+        <li>Une recette copiée depuis un site ou un message : elle sera mise en forme, ses quantités gardées</li>
+        <li>« La même recette mais sans four et pour 2 » sous une recette collée</li>
+        <li>Un lien https://www.tiktok.com/… ou https://vm.tiktok.com/…</li></ul></details></div>
       <div class="row between"><span>Pour</span>${stepper('ai-persons', sh.persons, 'Nombre de personnes')}</div>
       ${recap ? `<p class="muted small" style="margin:0">Tes critères seront respectés : ${esc(recap)}.</p>` : ''}
       ${sh.status === 'error' ? `<p class="card-warn" style="margin:0;font-size:14px">${esc(sh.error)}</p>` : ''}`;
   }
-  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}
+  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}
     <div class="sheet-body has-foot">${body}</div>
     <div class="sheet-foot"><button class="btn primary" data-act="ai-generate" ${sh.status === 'loading' ? 'disabled' : ''}>${ICONS.spark} Générer la recette</button></div></div>`;
 }
 function previewSheet(sh, r) {
   const reason = hiddenReason(r);
   const dis = dislikedIn(r);
-  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
+  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
     <div class="sheet-head"><span class="grab" aria-hidden="true"></span>
       <button class="link" data-act="ai-back" style="text-decoration:none">← Modifier la demande</button>
       <button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>
@@ -417,6 +423,7 @@ function previewSheet(sh, r) {
       <h2>${esc(r.n)}</h2>
       <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · pour ${yieldText(r.p, r)}</div>
       ${r.aiNote ? `<div class="card-note" style="font-size:14px">${esc(r.aiNote)}</div>` : ''}
+      ${sourceHtml(r)}
       ${reason ? `<div class="card-warn">Attention : cette recette ne correspond pas entièrement à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</div>` : ''}
       ${dis.length ? `<div class="card-warn">Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</div>` : ''}
       <div class="section-title" style="margin-top:6px">Ingrédients</div>
@@ -525,8 +532,26 @@ async function aiGenerate(again) {
   const c = constraintsText();
   const names = [...new Set(Object.values(INGREDIENTS).map((i) => i.n))].join(', ');
   const system = 'Tu es un chef cuisinier français qui écrit des recettes familiales claires, fiables et détaillées pour une application de menus et de liste de courses. Tu réponds uniquement avec un objet JSON valide, sans aucun texte autour.';
-  const prompt = `Recette demandée : « ${sh.q} »${again ? ' (propose une version différente de la précédente)' : ''}.
-Pour ${sh.persons} personnes.
+  // Lien TikTok : on lit la description de la vidéo (sans la regarder)
+  let tiktok = null;
+  const link = findTikTok(sh.q);
+  if (link) {
+    sh.step = 'tiktok'; renderOverlays();
+    try { tiktok = await tiktokCaption(link); }
+    catch (e) { sh.status = 'error'; sh.step = ''; sh.error = e.message; if (ui.sheet === sh) renderOverlays(); return; }
+    sh.step = ''; if (ui.sheet === sh) renderOverlays();
+  }
+  const prompt = `Demande de l'utilisateur (un nom de plat, une description détaillée, ou une recette complète copiée à remettre en forme ou à modifier) :
+"""
+${sh.q}
+"""
+${tiktok ? `Description de la vidéo TikTok${tiktok.author ? ' de ' + tiktok.author : ''} (lien fourni par l'utilisateur ; seule cette description est disponible, pas la vidéo) :
+"""
+${tiktok.caption}
+"""
+` : ''}${again ? 'Propose une version différente de la précédente.\n' : ''}
+Si une recette complète est fournie (texte collé ou description de la vidéo), reprends fidèlement ses ingrédients, quantités et étapes en les mettant en forme ; n'invente pas ce qui y est déjà précisé et applique les modifications demandées. Si des informations manquent (quantités, temps, étapes), complète-les de façon réaliste et signale-le en une phrase dans "remarque".
+Nombre de personnes : ${sh.persons}, sauf si la recette fournie indique son propre nombre de portions ou de pièces : garde alors le sien.
 
 Contraintes de l'utilisateur, à respecter absolument :
 - Ne jamais utiliser d'ingrédient contenant : ${c.allergies.length ? c.allergies.join(', ') : 'aucune allergie'}.
@@ -546,7 +571,7 @@ Réponds avec ce JSON :
   "type": "plat" | "soupe" | "salade" | "dessert" | "brunch",
   "temps_min": nombre de minutes au total,
   "difficulte": 1 | 2 | 3,
-  "portions": nombre (${sh.persons} si la recette se compte en personnes),
+  "portions": nombre (celui de la recette fournie s'il est indiqué, sinon ${sh.persons}),
   "unite_portions": "personnes" | "pièces" | "parts" (pièces pour ce qui se compte à l'unité : cookies, muffins, crêpes… ; parts pour un gâteau ou une tarte),
   "equipement": liste parmi ["plaques", "four", "micro", "mixeur", "airfryer"],
   "ingredients": [ { "partie": "nom de la partie si la recette en a plusieurs (ex. : Pâte, Garniture, Crumble), sinon chaîne vide", "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
@@ -580,7 +605,7 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
       type: typeIds.includes(j.type) ? j.type : 'plat',
       t: clampInt(parseInt(j.temps_min, 10) || 30, 1, 999), d: [1, 2, 3].includes(+j.difficulte) ? +j.difficulte : 1,
       pu: ({ 'pièces': 'pieces', pieces: 'pieces', parts: 'parts' })[norm(j.unite_portions)] || 'pers',
-      p: (({ 'pièces': 1, pieces: 1, parts: 1 })[norm(j.unite_portions)] && parseInt(j.portions, 10) > 0) ? clampInt(parseInt(j.portions, 10), 1, 200) : sh.persons, s: [],
+      p: parseInt(j.portions, 10) > 0 ? clampInt(parseInt(j.portions, 10), 1, 200) : sh.persons, s: [],
       eq: (Array.isArray(j.equipement) ? j.equipement : []).filter((e) => EQUIPMENT.some((x) => x.id === e)),
       i: ings,
       st: (Array.isArray(j.etapes) ? j.etapes : []).map(String).filter(Boolean),
@@ -588,7 +613,8 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
       imgQuery: String(j.image_query || '').slice(0, 80),
       imgPrompt: String(j.image_description || '').slice(0, 300),
       aiNote: String(j.remarque || '').trim(),
-      query: sh.q
+      query: sh.q.slice(0, 300),
+      source: tiktok ? { url: link, label: 'Vidéo TikTok' + (tiktok.author ? ' de ' + tiktok.author : '') } : null
     };
     sh.status = 'done';
     sh.keepScroll = false;
@@ -703,4 +729,35 @@ function editorImageHtml(sh) {
           ${openaiReady() ? `<button type="button" class="link" data-act="gen-image" data-v="${r.id}">Générer une nouvelle image</button>` : ''}`}
       </div>
     </div></div>`;
+}
+
+/* ---------- Liens TikTok : lecture de la description de la vidéo ---------- */
+function findTikTok(text) {
+  const m = String(text || '').match(/https?:\/\/(?:www\.|vm\.|vt\.|m\.)?tiktok\.com\/[^\s"'<>]+/i);
+  return m ? m[0].replace(/[).,;!?]+$/, '') : null;
+}
+async function tiktokCaption(url) {
+  const oembed = async (u) => {
+    const res = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(u));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if (!j || (!j.title && !j.author_name)) throw new Error('vide');
+    return { caption: String(j.title || '').trim(), author: j.author_name ? '@' + String(j.author_unique_id || j.author_name).replace(/^@/, '') : '' };
+  };
+  let info = null;
+  try { info = await oembed(url); } catch (e) {
+    // Lien court (vm.tiktok.com) : on suit la redirection pour retrouver l'adresse complète de la vidéo
+    try {
+      const r = await fetch(url);
+      let full = r.url && r.url !== url && /\/video\/\d+/.test(r.url) ? r.url.split('?')[0] : null;
+      if (!full) { const m = (await r.text()).match(/https:\/\/www\.tiktok\.com\/@[\w.-]+\/video\/\d+/); if (m) full = m[0]; }
+      if (full) info = await oembed(full);
+    } catch (e2) { /* ignore */ }
+  }
+  if (!info) throw new Error('Impossible de lire cette vidéo TikTok (vidéo privée, supprimée, lien incomplet ou pas de connexion).');
+  if (!info.caption) throw new Error('La description de cette vidéo TikTok est vide : colle plutôt la recette en texte.');
+  return info;
+}
+function sourceHtml(r) {
+  return r.source && r.source.url ? `<div class="muted small">Source : <a href="${esc(r.source.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(r.source.label || r.source.url)}</a></div>` : '';
 }

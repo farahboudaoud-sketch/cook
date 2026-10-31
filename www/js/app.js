@@ -542,7 +542,7 @@ function renderOverlays() {
   let html = '';
   if (ui.sheet) {
     const body = ui.sheet.kind === 'recipe' ? recipeSheet(ui.sheet) : ui.sheet.kind === 'ai' ? aiSheet(ui.sheet) : editorSheet(ui.sheet);
-    const full = ui.sheet.kind === 'recipe' || ui.sheet.kind === 'editor';
+    const full = true;
     html += `<div class="overlay ${ui.sheet.keepScroll ? '' : 'anim'} ${full ? 'ov-full' : ''}" data-act="close-sheet-bg">${body}</div>`;
   }
   if (ui.dialog) {
@@ -585,6 +585,7 @@ function recipeSheet(sh) {
       <div class="kicker">${esc((TYPES.find((t) => t.id === r.type) || {}).name || '')}${r.custom ? ' · Ma recette' : ''}</div>
       <h2>${esc(r.n)}</h2>
       <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · ${seasons}${cost > 0 && !r.custom ? ` · environ ${fmtEuro(cost)} par ${yieldOf(r).one}` : ''}</div>
+      ${sourceHtml(r)}
       ${reason ? `<div class="card-warn">Cette recette ne correspond pas à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</div>` : ''}
       ${dis.length ? `<div class="card-warn">Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</div>` : ''}
       ${sh2.length ? `<div class="card-note">Réutilise ${esc(sh2.map((k) => ing(k).n.toLowerCase()).join(', '))}, déjà dans ton menu.</div>` : ''}
@@ -953,7 +954,8 @@ document.addEventListener('click', (e) => {
   handle(act, el.dataset.v, el);
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target.id === 'ai-q') { e.preventDefault(); handle('ai-generate'); }
+  // Dans la grande zone de texte, Entrée passe à la ligne ; Ctrl/Cmd + Entrée lance la génération
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.id === 'ai-q') { e.preventDefault(); handle('ai-generate'); }
 });
 document.addEventListener('change', (e) => {
   if (e.target.classList && e.target.classList.contains('ed-name') && ui.sheet && ui.sheet.kind === 'editor') {
@@ -977,6 +979,7 @@ document.addEventListener('focusin', (e) => { if (e.target.dataset && e.target.d
 let noteTimer;
 document.addEventListener('input', (e) => {
   if (e.target.dataset && e.target.dataset.suggest) syncSuggest(e.target);
+  if (e.target.id === 'ai-q') { const h = $('.ai-tiktok'); if (h) h.style.display = findTikTok(e.target.value) ? '' : 'none'; }
   if (e.target.id === 'note-text') {
     const n = noteOf(e.target.dataset.v); n.text = e.target.value;
     clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);

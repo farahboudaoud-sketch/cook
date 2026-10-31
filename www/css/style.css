@@ -261,3 +261,5 @@ select.input { appearance: none; -webkit-appearance: none; background: transpare
 .ed-image-actions .link { min-height: 34px; padding: 4px 0; font-size: 13px; text-align: left; }
 
 .sheet.full .sheet-body { flex: 1; }
+
+.ai-q { min-height: 220px; max-height: 55vh; font-size: 15px; line-height: 1.45; border: 1.5px solid var(--ink); border-radius: 6px; padding: 12px; resize: vertical; }
