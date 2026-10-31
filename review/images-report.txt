@@ -6,7 +6,7 @@ OK soupe_poireaux: 5 photo(s), 1re = File:Potato_Leek_Soup_(4258747258).jpg
 OK bolognaise: 5 photo(s), 1re = File:Spaghetti_Bolognese_-_Figaros,_Brighton_2023-10-06.jpg
 OK chili_con_carne: 5 photo(s), 1re = File:Bowl_of_chili.jpg
 OK quiche_lorraine: 5 photo(s), 1re = File:Quiche_lorraine_01.JPG
-OK quiche_poireaux_chevre: 5 photo(s), 1re = File:Mushroom_and_leek_quiche.jpg
+OK quiche_poireaux_chevre: 4 photo(s), 1re = File:Quiche_with_Potatoes,_Leek,_Bacon_%26_Wine_(4876357842).jpg
 OK saumon_brocoli: 5 photo(s), 1re = File:2022-01-29_20_53_20_Blackened_Cajun_Salmon_(6_oz._blackened_and_grilled_salmon_fillet_with_garlic_mashed_potatoes_and_steamed_broccoli)_at_the_Applebee%27s_in_Fair_Lakes,_Fairfax_County,_Virginia.jpg
 OK dahl: 5 photo(s), 1re = File:Kali_Masoor_Ki_Dal_Ka_Salan.JPG
 OK ratatouille: 5 photo(s), 1re = File:Ratatouille.jpg
@@ -14,7 +14,7 @@ OK croque_monsieur: 5 photo(s), 1re = File:Cambodian_Croque_Monsieur.jpg
 OK hachis_parmentier: 5 photo(s), 1re = File:Hachis_parmentier_02.jpg
 OK pates_pesto: 3 photo(s), 1re = File:Flickr_-_cyclonebill_-_Penne_med_pesto,_cherrytomater,_sorte_oliven_og_gedeost.jpg
 OK omelette_champignons: 5 photo(s), 1re = File:Omelette_aux_girolles_0001.jpg
-OK gnocchis_epinards: 5 photo(s), 1re = File:Gnocchi_Verde.jpg
+OK gnocchis_epinards: 1 photo(s), 1re = File:Gnocchi_Verde.jpg
 OK wok_poulet: 5 photo(s), 1re = File:Noodle_stir_fry_with_chicken,_shrimp,_and_broccoli_(18471621051).jpg
 OK tajine_poulet: 4 photo(s), 1re = File:Moroccan_food-Chicken_tagine_with_preserved_lemons_and_olives-01.jpg
 OK boeuf_bourguignon: 5 photo(s), 1re = File:Boeuf_Bourguignon_Paris_Beaubourg.jpg
@@ -46,11 +46,11 @@ OK gateau_yaourt: 5 photo(s), 1re = File:Vanilla_Yogurt_Pound_Cake_(140490155).j
 OK pancakes: 5 photo(s), 1re = File:Pancakes_with_Berries_(Unsplash).jpg
 OK porridge: 5 photo(s), 1re = File:Oatmeal_porridge_with_m%C3%BCsli_at_night.jpg
 OK financiers: 5 photo(s), 1re = File:Two_rectangular_financiers.jpg
--- gnocchis_alfredo: aucune photo
-OK lasagnes: 5 photo(s), 1re = File:Lasagna_bolognese_dish_with_minced_meat,_Brisbane.jpg
-OK risotto_poireaux: 5 photo(s), 1re = File:Mushroom_and_Leek_Risotto_(49535206656).jpg
-OK risotto_butternut: 3 photo(s), 1re = File:Butternut_Squash_and_Sage_Risotto_Cakes_(13310596004).jpg
-OK soupe_butternut: 5 photo(s), 1re = File:Butternut_squash_soup_-_El_Dorado_Kitchen_-_Nov_2018_-_Sarah_Stierch_01.jpg
-OK wraps_poulet: 5 photo(s), 1re = File:Smoked_chicken_and_avocado_wrap.jpg
-OK wraps_saumon: 4 photo(s), 1re = File:Salmon_%26_Egg_Wrap_-_The_naan_hut_2023-12-22.jpg
-OK wraps_crevettes: 5 photo(s), 1re = File:Last_night%27s_dinner-_bacon_wrapped_shrimp_and_grits.jpg
+-- gnocchis_alfredo: pas de photo (image générée seulement)
+OK lasagnes: 5 photo(s), 1re = File:Lasagna_bolognese,_February_2012.jpg
+OK risotto_poireaux: 3 photo(s), 1re = File:Risotto_by_a_friend.jpg
+OK risotto_butternut: 2 photo(s), 1re = File:Cucina_Verona_-_January_2024_-_Sarah_Stierch_02.jpg
+OK soupe_butternut: 5 photo(s), 1re = File:Butternut_squash_soup_(5171665819).jpg
+OK wraps_poulet: 3 photo(s), 1re = File:Smoked_chicken_and_avocado_wrap.jpg
+OK wraps_saumon: 1 photo(s), 1re = File:Salmon_%26_Egg_Wrap_-_The_naan_hut_2023-12-22.jpg
+-- wraps_crevettes: pas de photo (image générée seulement)
