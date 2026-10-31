@@ -18,7 +18,8 @@ const DISLIKE_SUGGESTIONS = ['champignons', 'olives', 'poivron', 'aubergine', 'c
 const TIME_OPTIONS = [{ v: 20, n: '20 min' }, { v: 30, n: '30 min' }, { v: 45, n: '45 min' }, { v: 60, n: '1 h' }, { v: 0, n: 'Pas de limite' }];
 const LEVELS = [{ id: 'debutant', n: 'Débutant·e', d: 'Recettes simples, pas de recettes difficiles' }, { id: 'intermediaire', n: 'Intermédiaire', d: 'Je me débrouille bien' }, { id: 'confirme', n: 'Confirmé·e', d: 'Tout me va' }];
 const DIFF = { 1: 'Facile', 2: 'Moyen', 3: 'Difficile' };
-const UNITS = [{ id: 'g', n: 'g' }, { id: 'ml', n: 'ml' }, { id: 'pc', n: 'pièce' }, { id: 'cs', n: 'c. à s.' }, { id: 'cc', n: 'c. à c.' }, { id: 'pincee', n: 'pincée' }];
+const UNITS = [{ id: 'g', n: 'g' }, { id: 'ml', n: 'ml' }, { id: 'pc', n: 'pièce' }, { id: 'sachet', n: 'sachet' }, { id: 'cs', n: 'c. à s.' }, { id: 'cc', n: 'c. à c.' }, { id: 'pincee', n: 'pincée' }, { id: 'autre', n: 'Autre…' }];
+const KNOWN_UNITS = ['g', 'ml', 'pc', 'sachet', 'cs', 'cc', 'pincee'];
 
 const ICONS = {
   search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
@@ -172,7 +173,8 @@ function fmtQty(q, unit, key, forList) {
     case 'cs': return fmtNum(Math.round(q * 2) / 2) + ' c. à s.';
     case 'cc': return fmtNum(Math.round(q * 2) / 2) + ' c. à c.';
     case 'pincee': { const n = Math.max(1, Math.round(q)); return n + ' ' + plural(n, 'pincée', 'pincées'); }
-    default: return fmtNum(q) + ' ' + unit;
+    case 'sachet': { const n = forList ? Math.ceil(q - 0.01) : Math.round(q * 2) / 2; return fmtNum(n) + ' ' + plural(n, 'sachet', 'sachets'); }
+    default: return fmtNum(forList ? Math.ceil(q * 2 - 0.01) / 2 : q) + ' ' + unit;
   }
 }
 function lineCost(key, q, unit) {
@@ -197,13 +199,16 @@ function buildList() {
     r.i.forEach(([k, q, u]) => {
       if (!lines.has(k)) lines.set(k, { key: k, name: ing(k).n, aisle: ing(k).a || 'au', units: {}, sources: [], pantry: state.pantry.includes(k) });
       const L = lines.get(k);
+      // « sachet » et « pièce » désignent la même chose pour un produit vendu en sachets (levure, sucre vanillé…)
+      const info = ing(k);
+      if (u === 'sachet' && info.l && info.l[0] === 'sachet') u = 'pc';
       L.units[u] = (L.units[u] || 0) + q * f;
       if (!L.sources.includes(r.n)) L.sources.push(r.n);
     });
   });
   const items = [...lines.values()].map((L) => {
-    const order = ['pc', 'g', 'ml', 'cs', 'cc', 'pincee'];
-    const qty = order.filter((u) => L.units[u]).map((u) => fmtQty(L.units[u], u, L.key, true)).join(' + ');
+    const order = ['pc', 'sachet', 'g', 'ml', 'cs', 'cc', 'pincee'];
+    const qty = order.concat(Object.keys(L.units).filter((u) => !order.includes(u))).filter((u) => L.units[u]).map((u) => fmtQty(L.units[u], u, L.key, true)).join(' + ');
     let cost = 0; Object.entries(L.units).forEach(([u, q]) => { cost += lineCost(L.key, q, u); });
     return { id: L.key, name: L.name, aisle: L.aisle, qty, src: L.sources.join(', '), pantry: L.pantry, cost, manual: false };
   });
@@ -605,8 +610,9 @@ function editorSheet(sh) {
       ${d.i.map((row, idx) => `<div class="ing-row">
         <div><label class="lbl" for="ed-in-${idx}">Ingrédient</label><input class="input" id="ed-in-${idx}" name="in-${idx}" list="ing-names" value="${esc(row.name)}" placeholder="Ex. : Carotte" autocomplete="off"></div>
         <div><label class="lbl" for="ed-iq-${idx}">Qté</label><input class="input" id="ed-iq-${idx}" name="iq-${idx}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}"></div>
-        <div><label class="lbl" for="ed-iu-${idx}">Unité</label><select class="input" id="ed-iu-${idx}" name="iu-${idx}">${UNITS.map((u) => `<option value="${u.id}" ${row.u === u.id ? 'selected' : ''}>${u.n}</option>`).join('')}</select></div>
+        <div><label class="lbl" for="ed-iu-${idx}">Unité</label><select class="input unit-select" id="ed-iu-${idx}" name="iu-${idx}">${UNITS.map((u) => { const sel = KNOWN_UNITS.includes(row.u) ? row.u === u.id : u.id === 'autre'; return `<option value="${u.id}" ${sel ? 'selected' : ''}>${u.n}</option>`; }).join('')}</select></div>
         <button type="button" class="icon-btn" data-act="ed-rm-ing" data-v="${idx}" aria-label="Retirer cet ingrédient" style="width:32px">${ICONS.close}</button>
+        ${KNOWN_UNITS.includes(row.u) ? '' : `<div style="grid-column:1 / span 3"><label class="lbl" for="ed-iux-${idx}">Unité (texte libre)</label><input class="input" id="ed-iux-${idx}" name="iux-${idx}" value="${esc(row.u === 'autre' ? '' : row.u)}" placeholder="Ex. : boîte, tranche, verre, poignée…" autocomplete="off"></div>`}
         <div style="grid-column:1 / span 3"><label class="lbl" for="ed-ia-${idx}">Rayon</label><select class="input" id="ed-ia-${idx}" name="ia-${idx}" style="font-size:14px;padding:6px 0">${aisleOpts(row.a)}</select></div>
       </div>`).join('')}
       <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-ing">+ Ajouter un ingrédient</button>
@@ -627,7 +633,9 @@ function readEditorForm() {
   d.i.forEach((row, idx) => {
     const name = fd.get('in-' + idx) || '';
     const changedName = name !== row.name;
-    row.name = name; row.q = fd.get('iq-' + idx); row.u = fd.get('iu-' + idx); row.a = fd.get('ia-' + idx);
+    row.name = name; row.q = fd.get('iq-' + idx); row.a = fd.get('ia-' + idx);
+    const u = fd.get('iu-' + idx);
+    row.u = u === 'autre' ? (String(fd.get('iux-' + idx) || '').trim() || 'autre') : u;
     if (changedName && name && row.a === 'au') row.a = guessAisle(name);
   });
 }
@@ -695,7 +703,7 @@ function saveDraft() {
       state.customIngs[key].a = row.a || state.customIngs[key].a;
     }
     const q = parseFloat(String(row.q).replace(',', '.'));
-    return [key, isFinite(q) && q > 0 ? q : 1, row.u || 'pc'];
+    return [key, isFinite(q) && q > 0 ? q : 1, (!row.u || row.u === 'autre') ? 'pc' : row.u];
   });
   const lines = (txt) => String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean);
   const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 50), i, st: lines(d.st), tips: lines(d.tips) };
@@ -867,6 +875,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.id === 'ai-q') { e.preventDefault(); handle('ai-generate'); }
 });
 document.addEventListener('change', (e) => {
+  if (e.target.classList && e.target.classList.contains('unit-select') && ui.sheet && ui.sheet.kind === 'editor') {
+    readEditorForm(); renderOverlays();
+    if (e.target.value === 'autre') { const t = document.getElementById(e.target.id.replace('ed-iu-', 'ed-iux-')); if (t) t.focus(); }
+    return;
+  }
   const el = e.target.closest('[data-act="day"]');
   if (el) handle('day', el.dataset.v, el);
 });

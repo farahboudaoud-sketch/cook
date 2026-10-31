@@ -550,7 +550,7 @@ Réponds avec ce JSON :
   "difficulte": 1 | 2 | 3,
   "portions": ${sh.persons},
   "equipement": liste parmi ["plaques", "four", "micro", "mixeur", "airfryer"],
-  "ingredients": [ { "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
+  "ingredients": [ { "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
   "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
   "astuces": [ "1 à 3 astuces utiles" ],
   "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat (ex. : gnocchi tomato sauce)",
@@ -562,7 +562,7 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
   try {
     const j = await aiJSON(system, prompt, again ? 1 : 0.7);
     const typeIds = TYPES.map((t) => t.id);
-    const units = ['g', 'ml', 'pc', 'cs', 'cc', 'pincee'];
+    const units = ['g', 'ml', 'pc', 'sachet', 'cs', 'cc', 'pincee'];
     const ings = (Array.isArray(j.ingredients) ? j.ingredients : []).filter((x) => x && x.nom).map((x) => {
       let key = findIngredientByName(x.nom);
       if (!key) {
