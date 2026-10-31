@@ -158,10 +158,8 @@ function heroHtml(r) {
   const p = photoOf(r);
   const pending = imgPending[r.id];
   const n = photoList(r).length;
-  const actions = r.preview ? '' : pending ? '<span class="muted small">En cours…</span>' : `<span class="row" style="gap:12px">
-      ${n > 1 ? `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="next-photo" data-v="${r.id}">Autre photo</button>` : `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="search-photo" data-v="${r.id}">Chercher une photo</button>`}
-      ${openaiReady() ? `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="gen-image" data-v="${r.id}">Générer</button>` : ''}
-    </span>`;
+  const actions = pending ? '<span class="muted small">Image en cours…</span>' : '';
+
   return `<div class="hero" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${p ? `<img src="${esc(p.src)}" alt="${esc(r.n)}" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
     <div class="row between" style="margin-top:-6px;gap:10px;align-items:flex-start">
       <span class="muted credit">${p ? creditHtml(p) : r.preview ? 'L’image sera ajoutée à l’enregistrement' : 'Pas encore d’image'}</span>
@@ -688,4 +686,21 @@ function openIdea(i) {
   ui.sheet = { kind: 'ai', q: x.nom + (x.description ? ' : ' + x.description : ''), persons: state.profile.persons, status: 'idle', ideaName: x.nom };
   renderOverlays();
   aiGenerate();
+}
+
+/* Section « Image » de l'éditeur : changer de photo, en chercher une ou en générer une */
+function editorImageHtml(sh) {
+  const r = sh.editId ? recipeById(sh.editId) : null;
+  if (!r) return '<div><span class="lbl">Image</span><p class="muted small" style="margin:4px 0 0">Une image sera ajoutée après l’enregistrement.</p></div>';
+  const p = photoOf(r); const n = photoList(r).length; const pending = imgPending[r.id];
+  return `<div><span class="lbl">Image</span>
+    <div class="ed-image">
+      <div class="ed-thumb" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${p ? `<img src="${esc(p.src)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
+      <div class="ed-image-actions">
+        ${pending ? '<span class="muted small">Image en cours…</span>' : `
+          ${n > 1 ? `<button type="button" class="link" data-act="next-photo" data-v="${r.id}">Autre photo (${(((state.photos[r.id] || {}).idx || 0) % n) + 1}/${n})</button>` : ''}
+          <button type="button" class="link" data-act="search-photo" data-v="${r.id}">Chercher une photo en ligne</button>
+          ${openaiReady() ? `<button type="button" class="link" data-act="gen-image" data-v="${r.id}">Générer une nouvelle image</button>` : ''}`}
+      </div>
+    </div></div>`;
 }

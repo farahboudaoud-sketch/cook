@@ -39,6 +39,8 @@ const ICONS = {
   star: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>',
   starFull: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>',
   spark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
+  back: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
   undo: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>'
 };
 
@@ -286,7 +288,7 @@ function dislikePicker() {
     .concat(p.dislikesText.map((t, i) => `<button class="chip on" data-act="rm-dislike-text" data-v="${i}">${esc(t)} <span class="x" aria-hidden="true">×</span></button>`)).join('');
   const sugg = DISLIKE_SUGGESTIONS.filter((k) => !p.dislikes.includes(k) && INGREDIENTS[k])
     .map((k) => `<button class="chip soft" data-act="add-dislike" data-v="${k}">${esc(INGREDIENTS[k].n)}</button>`).join('');
-  return `<form class="field" data-form="dislike">${ICONS.plus}<input name="q" list="ing-names" placeholder="Ajouter un aliment" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
+  return `<form class="field" data-form="dislike">${ICONS.plus}<input name="q" data-suggest="ing-names" placeholder="Ajouter un aliment" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
     ${selected ? `<div class="chips">${selected}</div>` : '<p class="muted small" style="margin:0">Aucun aliment pour l’instant.</p>'}
     <div class="lbl" style="margin-top:6px">Suggestions</div><div class="chips">${sugg}</div>${ingredientDatalist()}`;
 }
@@ -456,7 +458,7 @@ function renderList() {
   }).join('');
 
   const addForm = `<form class="field" data-form="manual" style="flex-wrap:nowrap">${ICONS.plus}
-      <input name="name" placeholder="Ajouter un article" autocomplete="off" list="ing-names" enterkeyhint="done" aria-label="Article">
+      <input name="name" placeholder="Ajouter un article" autocomplete="off" data-suggest="ing-names" enterkeyhint="done" aria-label="Article">
       <input name="qty" placeholder="Qté" autocomplete="off" style="max-width:62px;text-align:right" aria-label="Quantité">
       <button class="link" type="submit">Ajouter</button></form>${ingredientDatalist()}`;
 
@@ -519,7 +521,7 @@ function renderProfile() {
     <div class="section-title">Mon placard de base</div>
     <p class="muted small" style="margin:-8px 0 0">Ces produits sont toujours chez toi : ils sont masqués de la liste de courses.</p>
     <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
-    <form class="field" data-form="pantry">${ICONS.plus}<input name="q" list="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
+    <form class="field" data-form="pantry">${ICONS.plus}<input name="q" data-suggest="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
 
     <div class="section-title">Assistant IA</div>
     <p class="muted small" style="margin:-8px 0 0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>
@@ -540,7 +542,8 @@ function renderOverlays() {
   let html = '';
   if (ui.sheet) {
     const body = ui.sheet.kind === 'recipe' ? recipeSheet(ui.sheet) : ui.sheet.kind === 'ai' ? aiSheet(ui.sheet) : editorSheet(ui.sheet);
-    html += `<div class="overlay ${ui.sheet.keepScroll ? '' : 'anim'}" data-act="close-sheet-bg">${body}</div>`;
+    const full = ui.sheet.kind === 'recipe' || ui.sheet.kind === 'editor';
+    html += `<div class="overlay ${ui.sheet.keepScroll ? '' : 'anim'} ${full ? 'ov-full' : ''}" data-act="close-sheet-bg">${body}</div>`;
   }
   if (ui.dialog) {
     html += `<div class="overlay ${ui.dialog.shown ? '' : 'anim'}" style="align-items:center;z-index:30"><div class="dialog" role="alertdialog" aria-modal="true">
@@ -569,10 +572,13 @@ function recipeSheet(sh) {
   const reason = hiddenReason(r);
   const seasons = (r.s && r.s.length ? r.s.map((x) => SEASONS[x]).join(', ') : 'Toute l’année');
   const cost = recipeCostPerPerson(r);
-  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
-    <div class="sheet-head"><span class="grab" aria-hidden="true"></span>
-      <button class="icon-btn" data-act="fav" data-v="${r.id}" aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" style="color:var(--accent);margin-left:-12px">${fav ? ICONS.heartFull : ICONS.heart}</button>
-      <button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button>
+  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
+    <div class="sheet-head">
+      <button class="icon-btn" data-act="close-sheet" aria-label="Fermer" style="margin-left:-12px">${ICONS.back}</button>
+      <div class="row" style="gap:4px">
+        <button class="head-btn" data-act="edit-recipe" data-v="${r.id}">${ICONS.edit} Modifier</button>
+        <button class="icon-btn" data-act="fav" data-v="${r.id}" aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" style="color:var(--accent)">${fav ? ICONS.heartFull : ICONS.heart}</button>
+      </div>
     </div>
     <div class="sheet-body has-foot">
       ${heroHtml(r)}
@@ -587,7 +593,7 @@ function recipeSheet(sh) {
       <div>${groupIngredients(r.i).map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${g.items.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}`).join('')}</div>
       ${stepsHtml(r)}
       ${notesHtml(r)}
-      <div class="row" style="gap:16px;flex-wrap:wrap"><button class="link" data-act="edit-recipe" data-v="${r.id}">Modifier la recette</button>${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
+      <div class="row" style="gap:16px;flex-wrap:wrap">${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
       ${r.edited ? '<p class="muted small" style="margin:-8px 0 0">Recette modifiée par toi.</p>' : ''}
     </div>
     <div class="sheet-foot">
@@ -610,14 +616,13 @@ function editorSheet(sh) {
   const showParts = d.parts.length > 1 || d.parts.some((x) => x.name);
   const aisleOpts = (sel) => AISLES.map((a) => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''}>${a.name}</option>`).join('');
   const hide = (t) => (tab === t ? '' : 'style="display:none"');
-  const tabs = [['infos', 'Infos'], ['ing', 'Ingrédients'], ['st', 'Étapes'], ['tips', 'Astuces']];
-  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Modifier la recette">
+  const tabs = [['infos', 'Infos'], ['ing', 'Ingrédients'], ['st', 'Étapes']];
+  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Modifier la recette">
     <div class="sheet-head"><span class="grab" aria-hidden="true"></span><h2 style="font-size:22px">${sh.editId ? 'Modifier la recette' : 'Nouvelle recette'}</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>
     <div class="ed-tabs" role="tablist">${tabs.map(([id, n]) => `<button type="button" role="tab" class="${tab === id ? 'on' : ''}" aria-selected="${tab === id}" data-act="ed-tab" data-v="${id}">${n}</button>`).join('')}</div>
     <form class="sheet-body has-foot" data-form="editor" id="editor-form">
       <div class="ed-pane" ${hide('infos')}>
         <div><label class="lbl" for="ed-name">Nom</label><input class="input" id="ed-name" name="n" value="${esc(d.n)}" placeholder="Ex. : Gratin de mamie" required></div>
-        <div><span class="lbl">Illustration</span><div class="chips">${EMOJIS.map((e) => `<button type="button" class="chip ${d.e === e ? 'on' : 'soft'}" data-act="ed-emoji" data-v="${e}" style="font-size:20px;padding:0 10px">${e}</button>`).join('')}</div></div>
         <div class="row" style="gap:14px;align-items:flex-end">
           <div style="flex:1"><label class="lbl" for="ed-type">Type</label><select class="input" id="ed-type" name="type">${TYPES.map((t) => `<option value="${t.id}" ${d.type === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select></div>
           <div style="flex:1"><label class="lbl" for="ed-d">Difficulté</label><select class="input" id="ed-d" name="d">${[1, 2, 3].map((x) => `<option value="${x}" ${+d.d === x ? 'selected' : ''}>${DIFF[x]}</option>`).join('')}</select></div>
@@ -626,6 +631,8 @@ function editorSheet(sh) {
           <div style="flex:1"><label class="lbl" for="ed-t">Temps (min)</label><input class="input" id="ed-t" name="t" type="number" inputmode="numeric" min="1" value="${esc(d.t)}"></div>
           <div style="flex:1"><label class="lbl" for="ed-p">Pour</label><div class="row" style="gap:8px"><input class="input" id="ed-p" name="p" type="number" inputmode="numeric" min="1" value="${esc(d.p)}" style="width:64px"><select class="input" name="pu" aria-label="Unité des portions">${YIELDS.map((y) => `<option value="${y.id}" ${(d.pu || 'pers') === y.id ? 'selected' : ''}>${y.many}</option>`).join('')}</select></div></div>
         </div>
+        ${editorImageHtml(sh)}
+        ${sh.base ? '<p class="muted small" style="margin:0">Tes modifications sont gardées sur ce téléphone. Tu pourras toujours rétablir la recette d’origine.</p>' : ''}
       </div>
       <div class="ed-pane" ${hide('ing')}>
         <div class="ed-grid ed-head" aria-hidden="true"><span>Ingrédient</span><span style="text-align:right">Qté</span><span>Unité</span><span></span></div>
@@ -633,7 +640,7 @@ function editorSheet(sh) {
           ${showParts ? `<div class="ed-part-head"><input class="ed-part-name" id="ed-pn-${pi}" name="pn-${pi}" value="${esc(part.name)}" placeholder="Nom de la partie (ex. : Pâte)" autocomplete="off" aria-label="Nom de la partie ${pi + 1}">${d.parts.length > 1 ? `<button type="button" class="icon-btn" style="width:36px;height:36px" data-act="ed-rm-part" data-v="${pi}" aria-label="Supprimer la partie ${pi + 1}">${ICONS.trash}</button>` : ''}</div>` : ''}
           ${part.rows.map((row, ri) => { const id = pi + '-' + ri; return `<div class="ed-grid ed-line">
             <div class="ed-name-cell">
-              <input class="ed-name" id="ed-in-${id}" name="in-${id}" list="ing-names" value="${esc(row.name)}" placeholder="Ingrédient" autocomplete="off" aria-label="Ingrédient">
+              <input class="ed-name" id="ed-in-${id}" name="in-${id}" data-suggest="ing-names" value="${esc(row.name)}" placeholder="Ingrédient" autocomplete="off" aria-label="Ingrédient">
               <label class="ed-aisle"><span class="sr">Rayon</span><select name="ia-${id}" id="ed-ia-${id}">${aisleOpts(row.a)}</select></label>
             </div>
             <input class="ed-qty" id="ed-iq-${id}" name="iq-${id}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}" placeholder="0" aria-label="Quantité">
@@ -648,10 +655,6 @@ function editorSheet(sh) {
       <div class="ed-pane" ${hide('st')}>
         <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…" style="min-height:320px">${esc(d.st)}</textarea></div>
       </div>
-      <div class="ed-pane" ${hide('tips')}>
-        <div><label class="lbl" for="ed-tips">Astuces (une par ligne)</label><textarea class="input" id="ed-tips" name="tips" placeholder="Facultatif" style="min-height:200px">${esc(d.tips || '')}</textarea></div>
-        ${sh.base ? '<p class="muted small" style="margin:0">Tes modifications sont gardées sur ce téléphone. Tu pourras toujours rétablir la recette d’origine.</p>' : ''}
-      </div>
     </form>
     <div class="sheet-foot"><button class="btn" data-act="close-sheet">Annuler</button><button class="btn primary" data-act="ed-save">Enregistrer</button></div>
   </div>`;
@@ -661,7 +664,7 @@ function readEditorForm() {
   if (!form) return;
   const d = ui.sheet.draft;
   const fd = new FormData(form);
-  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.pu = fd.get('pu') || 'pers'; d.st = fd.get('st') || ''; d.tips = fd.get('tips') || '';
+  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.pu = fd.get('pu') || 'pers'; d.st = fd.get('st') || '';
   d.parts.forEach((part, pi) => {
     if (fd.has('pn-' + pi)) part.name = String(fd.get('pn-' + pi) || '');
     part.rows.forEach((row, ri) => {
@@ -894,9 +897,9 @@ function handle(act, v, el) {
     case 'idea-open': openIdea(+v); return;
     case 'save-key': { readKeyForm(); if (!state.ai.provider) state.ai.provider = aiProvider(); save(); toast(aiReady() ? 'Réglages enregistrés' : 'Clé supprimée'); if (aiProvider() === 'openai' && openaiReady()) testKey(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
     case 'test-key': testKey(); return;
-    case 'gen-image': generateImageFor(v, true); return;
-    case 'next-photo': nextPhoto(v); return;
-    case 'search-photo': searchPhotoFor(v, true); return;
+    case 'gen-image': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); generateImageFor(v, true); return;
+    case 'next-photo': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); nextPhoto(v); return;
+    case 'search-photo': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); searchPhotoFor(v, true); return;
     case 'ai-provider': readKeyForm(); state.ai.provider = v; save(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break;
     case 'dialog-no': ui.dialog = null; renderOverlays(); return;
     case 'dialog-yes': { const fn = ui.dialog && ui.dialog.onYes; ui.dialog = null; if (fn) fn(); save(); render(); return; }
@@ -968,8 +971,12 @@ document.addEventListener('submit', (e) => {
   e.preventDefault();
   handleForm(form);
 });
+/* Les suggestions d'ingrédients n'apparaissent qu'à partir de 2 caractères */
+function syncSuggest(el) { if (el.dataset.suggest) { if ((el.value || '').trim().length >= 2) el.setAttribute('list', el.dataset.suggest); else el.removeAttribute('list'); } }
+document.addEventListener('focusin', (e) => { if (e.target.dataset && e.target.dataset.suggest) syncSuggest(e.target); });
 let noteTimer;
 document.addEventListener('input', (e) => {
+  if (e.target.dataset && e.target.dataset.suggest) syncSuggest(e.target);
   if (e.target.id === 'note-text') {
     const n = noteOf(e.target.dataset.v); n.text = e.target.value;
     clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
