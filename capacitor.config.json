@@ -1,0 +1,14 @@
+{
+  "appId": "fr.carnetcuisine.app",
+  "appName": "Carnet de cuisine",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#FBF6EE"
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "LIGHT",
+      "insetsHandling": "css"
+    }
+  }
+}

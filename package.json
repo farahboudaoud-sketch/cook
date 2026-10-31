@@ -1,0 +1,20 @@
+{
+  "name": "cook",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Carnet de cuisine – recettes et liste de courses",
+  "scripts": {
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0",
+    "@fontsource/fraunces": "^5.0.0",
+    "@fontsource/work-sans": "^5.0.0"
+  }
+}
