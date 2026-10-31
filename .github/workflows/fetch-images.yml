@@ -1,0 +1,29 @@
+name: Chercher les photos
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Chercher les photos sur Wikimedia Commons
+        run: node scripts/fetch-images.mjs
+      - name: Planche contact pour vérification
+        run: |
+          pip install pillow
+          python3 scripts/contact-sheet.py
+      - name: Enregistrer le résultat
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add www/js/images.js review/
+          git commit -m "Photos des recettes (Wikimedia Commons) [skip ci]" || echo "Rien de nouveau"
+          git push
