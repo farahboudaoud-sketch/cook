@@ -13,7 +13,7 @@ OK dahl: 5 photo(s), 1re = File:Kali_Masoor_Ki_Dal_Ka_Salan.JPG
 OK ratatouille: 5 photo(s), 1re = File:Ratatouille.jpg
 OK salade_nicoise: 5 photo(s), 1re = File:Salade_ni%C3%A7oise_(7545098258).jpg
 OK croque_monsieur: 5 photo(s), 1re = File:Cambodian_Croque_Monsieur.jpg
--- hachis_parmentier: aucune photo
+OK hachis_parmentier: 5 photo(s), 1re = File:Hachis_Parmentier.jpg
 OK lasagnes_epinards: 5 photo(s), 1re = File:Spicy_sausage_and_spinach_lasagna,_January_2007.jpg
 OK pates_pesto: 3 photo(s), 1re = File:Flickr_-_cyclonebill_-_Penne_med_pesto,_cherrytomater,_sorte_oliven_og_gedeost.jpg
 OK omelette_champignons: 5 photo(s), 1re = File:Omelette_aux_girolles_0001.jpg
@@ -50,7 +50,7 @@ OK salade_cesar: 5 photo(s), 1re = File:Caesar_salad_(2).jpg
 OK pad_thai: 5 photo(s), 1re = File:Shrimp_Pad_Thai_2026-09-11_classic_02.jpg
 OK poke_bowl: 5 photo(s), 1re = File:Salmon_Poke_Bowl_(S)_with_Spicy_mayo_sauce_-_Kitokito.jpg
 OK lentilles_carottes: 5 photo(s), 1re = File:Catalan_lentil_soup.JPG
-OK petits_pois_carottes: 5 photo(s), 1re = File:Chicken,_carrots,_peas,_and_corn_on_fried_rice,_with_soy_sauce_and_black_pepper_-_Massachusetts.jpg
+OK petits_pois_carottes: 5 photo(s), 1re = File:Liat_Portal_for_Foodie_Disorder_-_Majadra_Style_Peas_with_Carrots_and_Chicken.jpg
 OK crumble_pommes: 5 photo(s), 1re = File:British_apple_crumble_05.jpg
 OK mousse_chocolat: 5 photo(s), 1re = File:Chocolate_coffee_mousse.jpg
 OK gateau_yaourt: 5 photo(s), 1re = File:Vanilla_Yogurt_Pound_Cake_(140490155).jpeg
