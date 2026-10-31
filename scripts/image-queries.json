@@ -23,10 +23,13 @@
  "ratatouille": "ratatouille dish",
  "salade_nicoise": "salade niçoise",
  "croque_monsieur": "croque monsieur",
- "hachis_parmentier": [
-  "hachis parmentier",
-  "cottage pie"
- ],
+ "hachis_parmentier": {
+  "q": [
+   "hachis parmentier",
+   "cottage pie"
+  ],
+  "pick": 3
+ },
  "lasagnes_epinards": {
   "q": "spinach lasagne",
   "pick": 2
