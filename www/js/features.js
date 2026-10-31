@@ -29,13 +29,42 @@ function notesHtml(r) {
     <textarea class="input" id="note-text" data-v="${r.id}" placeholder="Ce que tu changerais, une variante, un avis…">${esc(n.text || '')}</textarea>`;
 }
 
-/* ---------- Photos (Wikimedia Commons, chargées depuis internet) ---------- */
+/* ---------- Images : générées (IA) puis vraies photos (Wikimedia Commons) ---------- */
 const imgPending = {};
-function loadImages() { return Promise.resolve(); }
+const genCache = {};           // images générées dans l'appli (gardées dans IndexedDB)
+let idb = null;
+function openDb() {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open('carnet-cuisine', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('images');
+      req.onsuccess = () => { idb = req.result; resolve(idb); };
+      req.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+async function loadImages() {
+  const db = await openDb();
+  if (!db) return;
+  await new Promise((resolve) => {
+    try {
+      const req = db.transaction('images', 'readonly').objectStore('images').openCursor();
+      req.onsuccess = () => { const c = req.result; if (c) { genCache[c.key] = c.value; c.continue(); } else resolve(); };
+      req.onerror = () => resolve();
+    } catch (e) { resolve(); }
+  });
+}
+function storeGenerated(id, src) {
+  genCache[id] = src;
+  try { if (idb) idb.transaction('images', 'readwrite').objectStore('images').put(src, id); } catch (e) { /* ignore */ }
+}
 function photoList(r) {
+  const list = [];
+  if (genCache[r.id]) list.push({ src: genCache[r.id], ai: true });
+  else if (!r.custom && typeof GEN_IMAGES !== 'undefined' && GEN_IMAGES.includes(r.id)) list.push({ src: 'img/' + r.id + '.jpg', ai: true });
   const own = state.photos && state.photos[r.id];
-  if (own && own.list && own.list.length) return own.list;
-  return (typeof IMAGES !== 'undefined' && IMAGES[r.id]) || [];
+  const commons = (own && own.list && own.list.length) ? own.list : ((typeof IMAGES !== 'undefined' && IMAGES[r.id]) || []);
+  return list.concat(commons);
 }
 function photoOf(r) {
   const list = photoList(r);
@@ -62,39 +91,64 @@ async function searchCommons(q) {
     return { src: ii.thumburl, page: ii.descriptionurl, author: stripHtml(m.Artist && m.Artist.value).slice(0, 80) || 'Auteur inconnu', license: stripHtml(m.LicenseShortName && m.LicenseShortName.value) || 'Licence libre' };
   }).filter(Boolean).slice(0, 8);
 }
-/* « Autre photo » : passe à la photo suivante ; pour une recette sans photo, lance une recherche en ligne. */
-async function generateImageFor(id, manual) {
+function setPhotoIdx(id, idx) { state.photos[id] = Object.assign({}, state.photos[id] || {}, { idx }); save(); }
+/* Bouton « Autre photo » : passe à l'image suivante (image générée, puis vraies photos). */
+function nextPhoto(id) {
+  const r = recipeById(id); if (!r) return;
+  state.photos = state.photos || {};
+  const n = photoList(r).length;
+  if (n > 1) { setPhotoIdx(id, (((state.photos[id] || {}).idx || 0) + 1) % n); render(); }
+  else searchPhotoFor(id, true);
+}
+/* Cherche de vraies photos en ligne pour une recette. */
+async function searchPhotoFor(id, manual) {
   const r = recipeById(id);
   if (!r || imgPending[id]) return;
   state.photos = state.photos || {};
-  const cur = state.photos[id] || {};
-  const list = photoList(r);
-  if (list.length > 1 && manual) {
-    state.photos[id] = Object.assign({}, cur, { idx: ((cur.idx || 0) + 1) % list.length });
-    save(); render(); return;
-  }
   imgPending[id] = true; render();
   const queries = [r.imgQuery, r.query, r.n].filter(Boolean);
   let found = [];
-  try {
-    for (const q of queries) { found = await searchCommons(q); if (found.length) break; }
-  } catch (e) { found = null; }
+  try { for (const q of queries) { found = await searchCommons(q); if (found.length) break; } } catch (e) { found = null; }
   imgPending[id] = false;
-  if (found && found.length) { state.photos[id] = { list: found, idx: 0 }; save(); if (manual) toast('Photo trouvée'); }
-  else toast(found === null ? 'Pas de connexion : la photo sera cherchée plus tard' : 'Aucune photo trouvée pour cette recette');
+  if (found && found.length) { state.photos[id] = { list: found, idx: genCache[id] ? 0 : 0 }; save(); if (manual) toast('Photo trouvée'); }
+  else if (manual) toast(found === null ? 'Pas de connexion : réessaie plus tard' : 'Aucune photo trouvée pour cette recette');
+  render();
+}
+/* Génère une image avec le service compatible OpenAI (payant, quelques centimes). */
+const IMG_STYLE = 'Professional food photography of a home-cooked dish, appetizing and realistic, served on a rustic ceramic plate on a wooden table, soft natural daylight, 45 degree angle, shallow depth of field, no text, no people, no hands.';
+async function generateImageFor(id, manual) {
+  const r = recipeById(id);
+  if (!r || imgPending[id]) return;
+  if (!openaiReady()) { if (manual) toast('Ajoute ta clé OpenAI dans le Profil pour générer des images'); return; }
+  imgPending[id] = true;
+  if (manual) toast('Image en cours de création (environ 30 s)…');
+  render();
+  const what = (typeof IMAGE_PROMPTS !== 'undefined' && IMAGE_PROMPTS[r.id]) || r.imgQuery || r.n;
+  try {
+    const src = await openaiImage(`${what}. ${IMG_STYLE}`);
+    storeGenerated(id, src);
+    state.photos = state.photos || {}; setPhotoIdx(id, 0);
+    toast('Image prête');
+  } catch (e) { toast(e.message || 'Image impossible pour le moment'); }
+  imgPending[id] = false;
   render();
 }
 function creditHtml(p) {
+  if (p.ai) return 'Image générée par IA, illustration non contractuelle';
   return `Photo : ${esc(p.author)} · ${esc(p.license)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>`;
 }
 function heroHtml(r) {
   const p = photoOf(r);
   const pending = imgPending[r.id];
   const n = photoList(r).length;
+  const actions = r.preview ? '' : pending ? '<span class="muted small">En cours…</span>' : `<span class="row" style="gap:12px">
+      ${n > 1 ? `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="next-photo" data-v="${r.id}">Autre photo</button>` : `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="search-photo" data-v="${r.id}">Chercher une photo</button>`}
+      ${openaiReady() ? `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="gen-image" data-v="${r.id}">Générer</button>` : ''}
+    </span>`;
   return `<div class="hero" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${p ? `<img src="${esc(p.src)}" alt="${esc(r.n)}" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
     <div class="row between" style="margin-top:-6px;gap:10px;align-items:flex-start">
-      <span class="muted credit">${p ? creditHtml(p) : r.preview ? 'La photo sera cherchée à l’enregistrement' : 'Pas encore de photo'}</span>
-      ${r.preview ? '' : pending ? '<span class="muted small">Recherche…</span>' : `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="gen-image" data-v="${r.id}">${p ? (n > 1 ? 'Autre photo' : 'Chercher une photo') : 'Chercher une photo'}</button>`}
+      <span class="muted credit">${p ? creditHtml(p) : r.preview ? 'L’image sera ajoutée à l’enregistrement' : 'Pas encore d’image'}</span>
+      ${actions}
     </div>`;
 }
 
@@ -167,17 +221,143 @@ function aiSuggest(q) {
   return `<div class="ai-box"><span>Tu ne trouves pas exactement ce que tu cherches ?</span>
     <button class="btn dark block" data-act="ai-open" data-v="${esc(q)}">${ICONS.spark} Générer « ${esc(q)} » avec l’IA</button></div>`;
 }
+function aiProvider() { return state.ai.provider || (state.ai.oaKey ? 'openai' : 'gemini'); }
+function openaiReady() { return !!(state.ai.oaKey && state.ai.oaBase); }
+function aiReady() { return aiProvider() === 'openai' ? openaiReady() : !!state.ai.key; }
 function keyForm() {
-  return `<div class="field"><input id="ai-key" type="password" placeholder="Colle ta clé Gemini ici" value="${esc(state.ai.key || '')}" autocomplete="off" aria-label="Clé Gemini"></div>
+  const prov = aiProvider();
+  const tabs = `<div class="chips"><button class="chip ${prov === 'openai' ? 'on' : 'soft'}" data-act="ai-provider" data-v="openai">OpenAI (compatible)</button><button class="chip ${prov === 'gemini' ? 'on' : 'soft'}" data-act="ai-provider" data-v="gemini">Gemini</button></div>`;
+  if (prov === 'openai') {
+    const models = state.ai.oaModels || [];
+    const opt = (sel, filter) => ['<option value="">Automatique</option>'].concat(models.filter(filter).map((m) => `<option value="${esc(m)}" ${sel === m ? 'selected' : ''}>${esc(m)}</option>`)).join('');
+    return `${tabs}
+      <div><label class="lbl" for="oa-base">Adresse du service (URL de base)</label><input class="input" id="oa-base" placeholder="https://…/v1" value="${esc(state.ai.oaBase || '')}" autocomplete="off" inputmode="url"></div>
+      <div><label class="lbl" for="oa-key">Clé</label><input class="input" id="oa-key" type="password" placeholder="Colle ta clé ici" value="${esc(state.ai.oaKey || '')}" autocomplete="off"></div>
+      ${models.length ? `<div class="row" style="gap:14px">
+        <div style="flex:1"><label class="lbl" for="oa-text">Modèle pour les recettes</label><select class="input" id="oa-text">${opt(state.ai.oaText, (m) => !/(image|dall|tts|whisper|embed|audio|realtime|moderation|transcribe|search)/i.test(m))}</select></div>
+        <div style="flex:1"><label class="lbl" for="oa-image">Modèle pour les images</label><select class="input" id="oa-image">${opt(state.ai.oaImage, (m) => /(image|dall)/i.test(m))}</select></div></div>` : ''}
+      <div><label class="lbl" for="oa-quality">Qualité des images</label><select class="input" id="oa-quality">${[['low', 'Basse (le moins cher)'], ['medium', 'Moyenne'], ['high', 'Haute (plus cher)']].map(([v, n]) => `<option value="${v}" ${(state.ai.oaQuality || 'medium') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      <div class="row" style="gap:16px"><button class="link" data-act="save-key">Enregistrer</button>${openaiReady() ? '<button class="link" data-act="test-key">Tester</button>' : ''}</div>
+      ${state.ai.oaInfo ? `<p class="muted small" style="margin:0">${esc(state.ai.oaInfo)}</p>` : ''}
+      <p class="muted small" style="margin:0">Payant à l’usage sur ton compte : environ 1 centime par recette et quelques centimes par image. La clé reste uniquement sur ce téléphone.</p>`;
+  }
+  return `${tabs}<div class="field"><input id="ai-key" type="password" placeholder="Colle ta clé Gemini ici" value="${esc(state.ai.key || '')}" autocomplete="off" aria-label="Clé Gemini"></div>
     <div class="row" style="gap:16px"><button class="link" data-act="save-key">Enregistrer la clé</button>${state.ai.key ? '<button class="link" data-act="test-key">Tester la clé</button>' : ''}</div>
     <details class="help"><summary>Comment obtenir une clé gratuite ?</summary>
       <ol><li>Ouvre <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (adresse à recopier si le lien ne s’ouvre pas).</li>
       <li>Connecte-toi avec ton compte Google et accepte les conditions.</li>
       <li>Touche « Create API key » (Créer une clé), puis copie la clé.</li>
       <li>Colle-la ci-dessus et touche « Enregistrer la clé ».</li></ol>
-      <p class="muted small">Gratuit dans la limite d’un quota quotidien largement suffisant. La clé reste uniquement sur ce téléphone.</p>
+      <p class="muted small">Gratuit dans la limite d’un quota quotidien. La clé reste uniquement sur ce téléphone.</p>
     </details>`;
 }
+function readKeyForm() {
+  oaModelsFetched = false;
+  const v = (id) => { const el = $('#' + id); return el ? el.value.trim() : null; };
+  if (v('ai-key') !== null) { state.ai.key = v('ai-key'); state.ai.model = ''; geminiModelsCache = null; }
+  if (v('oa-key') !== null) state.ai.oaKey = v('oa-key');
+  if (v('oa-base') !== null) state.ai.oaBase = v('oa-base').replace(/\/+$/, '');
+  if (v('oa-text') !== null) state.ai.oaText = v('oa-text');
+  if (v('oa-image') !== null) state.ai.oaImage = v('oa-image');
+  if (v('oa-quality') !== null) state.ai.oaQuality = v('oa-quality');
+}
+
+/* ---------- Service compatible OpenAI ---------- */
+async function oaFetch(path, body, method) {
+  let res;
+  try {
+    res = await fetch(state.ai.oaBase + path, {
+      method: method || (body ? 'POST' : 'GET'),
+      headers: Object.assign({ Authorization: 'Bearer ' + state.ai.oaKey }, body ? { 'Content-Type': 'application/json' } : {}),
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch (e) { throw new Error('Impossible de joindre le service. Vérifie l’adresse et ta connexion internet.'); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data.error && (data.error.message || data.error)) || data.message || ('HTTP ' + res.status);
+    const err = new Error(res.status === 401 ? 'Clé refusée par le service (401). Vérifie la clé.' : res.status === 429 ? 'Limite atteinte ou crédit épuisé (429) : ' + msg : 'Erreur du service (' + res.status + ') : ' + msg);
+    err.status = res.status; err.raw = String(msg);
+    throw err;
+  }
+  return data;
+}
+const rankText = (m) => [/gpt-5[.\d]*-mini/, /gpt-4\.1-mini/, /gpt-4o-mini/, /mini/, /gpt-5/, /gpt-4/, /gpt/].findIndex((re) => re.test(m));
+const rankImage = (m) => [/gpt-image-2(?!.*mini)/, /gpt-image-1\.5/, /gpt-image-1-mini/, /gpt-image/, /dall-e-3/, /image/, /dall/].findIndex((re) => re.test(m));
+let oaModelsFetched = false;
+async function oaListModels() {
+  if (oaModelsFetched && state.ai.oaModels && state.ai.oaModels.length) return state.ai.oaModels;
+  try {
+    const data = await oaFetch('/models');
+    const ids = (data.data || data.models || []).map((m) => m.id || m.name).filter(Boolean).sort();
+    state.ai.oaModels = ids; oaModelsFetched = true;
+    return ids;
+  } catch (e) {
+    if (e.status === 401) throw e;
+    return state.ai.oaModels || [];
+  }
+}
+function pick(models, rank, fallback) {
+  const c = models.map((m) => [m, rank(m)]).filter(([, r]) => r >= 0).sort((a, b) => a[1] - b[1]);
+  return c.length ? c[0][0] : fallback;
+}
+async function oaTextModel() {
+  if (state.ai.oaText) return state.ai.oaText;
+  return pick(await oaListModels(), rankText, 'gpt-4o-mini');
+}
+async function oaImageModel() {
+  if (state.ai.oaImage) return state.ai.oaImage;
+  return pick(await oaListModels(), rankImage, 'gpt-image-1-mini');
+}
+async function openaiJSON(system, prompt) {
+  const model = await oaTextModel();
+  const body = { model, messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }], response_format: { type: 'json_object' } };
+  let data;
+  try { data = await oaFetch('/chat/completions', body); }
+  catch (e) {
+    if (e.status === 400 && /response_format|json/i.test(e.raw || '')) { delete body.response_format; data = await oaFetch('/chat/completions', body); }
+    else throw e;
+  }
+  const text = (((data.choices || [])[0] || {}).message || {}).content || '';
+  const a = text.indexOf('{'); const b = text.lastIndexOf('}');
+  if (a < 0 || b < a) throw new Error('Réponse inattendue de l’IA. Réessaie.');
+  return JSON.parse(text.slice(a, b + 1));
+}
+function toJpeg(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    if (!src.startsWith('data:')) img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const w = Math.min(768, img.naturalWidth); const h = Math.round(img.naturalHeight * w / img.naturalWidth);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      } catch (e) { resolve(src); }
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+}
+async function openaiImage(prompt) {
+  const model = await oaImageModel();
+  const dalle = /dall-e/.test(model);
+  const body = dalle ? { model, prompt, n: 1, size: '1024x1024', response_format: 'b64_json' }
+    : { model, prompt, n: 1, size: '1536x1024', quality: state.ai.oaQuality || 'medium' };
+  let data;
+  try { data = await oaFetch('/images/generations', body); }
+  catch (e) {
+    if (e.status === 400 && /size|quality/i.test(e.raw || '')) { delete body.quality; body.size = '1024x1024'; data = await oaFetch('/images/generations', body); }
+    else throw e;
+  }
+  const d = (data.data || [])[0] || {};
+  if (d.b64_json) return toJpeg('data:image/png;base64,' + d.b64_json);
+  if (d.url) return toJpeg(d.url);
+  throw new Error('Le service n’a pas renvoyé d’image.');
+}
+async function aiJSON(system, prompt, temperature) {
+  return aiProvider() === 'openai' ? openaiJSON(system, prompt) : geminiJSON(system, prompt, temperature);
+}
+
 function readAiInput() { const el = $('#ai-q'); if (el && ui.sheet) ui.sheet.q = el.value; }
 function constraintsText() {
   const p = state.profile;
@@ -190,9 +370,9 @@ function constraintsText() {
 function aiSheet(sh) {
   if (sh.status === 'done' && sh.recipe) return previewSheet(sh, sh.recipe);
   const head = `<div class="sheet-head"><span class="grab" aria-hidden="true"></span><h2 style="font-size:22px">Générer une recette</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>`;
-  if (!state.ai.key) {
+  if (!aiReady()) {
     return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}<div class="sheet-body">
-      <p style="margin:0;line-height:1.5">Pour créer des recettes avec l’IA, l’application a besoin d’une clé Gemini (gratuite, à créer une seule fois avec ton compte Google).</p>
+      <p style="margin:0;line-height:1.5">Pour créer des recettes avec l’IA, l’application a besoin d’une clé : celle de ton service compatible OpenAI, ou une clé Gemini gratuite.</p>
       ${keyForm()}</div></div>`;
   }
   const c = constraintsText();
@@ -306,11 +486,21 @@ async function geminiJSON(system, prompt, temperature) {
 }
 
 async function testKey() {
-  const el = $('#ai-key'); if (el && el.value.trim()) { state.ai.key = el.value.trim(); save(); }
-  geminiModelsCache = null;
+  readKeyForm(); save();
   toast('Test en cours…');
-  try { await geminiJSON('Tu réponds en JSON.', 'Réponds exactement {"ok": true}', 0); toast('La clé fonctionne (modèle ' + state.ai.model + ')'); }
-  catch (e) { toast(e.message); }
+  try {
+    if (aiProvider() === 'openai') {
+      const models = await oaListModels();
+      const t = await oaTextModel(); const i = await oaImageModel();
+      await openaiJSON('Tu réponds en JSON.', 'Réponds exactement {"ok": true}');
+      state.ai.oaInfo = `Connexion réussie. Recettes : ${t}. Images : ${i}${models.length ? '' : ' (liste des modèles indisponible, valeur par défaut)'}.`;
+      save(); render(); toast('La clé fonctionne');
+    } else {
+      geminiModelsCache = null;
+      await geminiJSON('Tu réponds en JSON.', 'Réponds exactement {"ok": true}', 0);
+      toast('La clé fonctionne (modèle ' + state.ai.model + ')');
+    }
+  } catch (e) { state.ai.oaInfo = ''; toast(e.message); render(); }
 }
 
 const AISLE_IDS = () => AISLES.map((a) => a.id);
@@ -354,7 +544,7 @@ Réponds avec ce JSON :
 Rayons : fl fruits et légumes, bp boucherie et poissonnerie, cr crèmerie et frais, bo boulangerie, ep épicerie salée, es épices et condiments, su épicerie sucrée, sg surgelés, bs boissons, au autres.
 Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tranches…). Quantités réalistes pour ${sh.persons} personnes.`;
   try {
-    const j = await geminiJSON(system, prompt, again ? 1 : 0.7);
+    const j = await aiJSON(system, prompt, again ? 1 : 0.7);
     const typeIds = TYPES.map((t) => t.id);
     const units = ['g', 'ml', 'pc', 'cs', 'cc', 'pincee'];
     const ings = (Array.isArray(j.ingredients) ? j.ingredients : []).filter((x) => x && x.nom).map((x) => {
@@ -397,5 +587,5 @@ function aiSave(toMenu) {
   save();
   ui.sheet = { kind: 'recipe', id: r.id, servings: r.p };
   render();
-  generateImageFor(r.id);
+  if (openaiReady()) generateImageFor(r.id); else searchPhotoFor(r.id);
 }

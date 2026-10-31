@@ -1,0 +1,49 @@
+name: Générer les images (OpenAI)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "Recettes à (re)générer, séparées par des espaces (vide = seulement celles sans image)"
+        required: false
+        default: ""
+      quality:
+        description: "Qualité : low, medium ou high"
+        required: false
+        default: "medium"
+      model:
+        description: "Modèle d'image (vide = choix automatique)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Générer les images
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          IMAGE_QUALITY: ${{ github.event.inputs.quality }}
+          IMAGE_MODEL: ${{ github.event.inputs.model }}
+        run: node scripts/generate-images-openai.mjs ${{ github.event.inputs.ids }}
+      - name: Redimensionner et préparer la vérification
+        run: |
+          pip install pillow
+          python3 scripts/finish-images.py
+      - name: Enregistrer les images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add www/img www/js/genimages.js review
+          git commit -m "Images générées des recettes [skip ci]" || echo "Rien de nouveau"
+          git pull --rebase
+          git push

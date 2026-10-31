@@ -75,7 +75,7 @@ function defaultState() {
     history: [],
     notes: {},
     photos: {},
-    ai: { key: '', model: '' },
+    ai: { key: '', model: '', provider: '', oaKey: '', oaBase: '', oaText: '', oaImage: '', oaQuality: 'medium', oaModels: [], oaInfo: '' },
     weekStart: mondayOf(new Date())
   };
 }
@@ -504,8 +504,8 @@ function renderProfile() {
     <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
     <form class="field" data-form="pantry">${ICONS.plus}<input name="q" list="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
 
-    <div class="section-title">Assistant IA (Gemini)</div>
-    <p class="muted small" style="margin:-8px 0 0">Pour générer des recettes qui ne sont pas dans le carnet. La clé est gratuite et reste sur ce téléphone.</p>
+    <div class="section-title">Assistant IA</div>
+    <p class="muted small" style="margin:-8px 0 0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>
     ${keyForm()}
 
     <div class="box" style="margin-top:20px">
@@ -696,7 +696,7 @@ function saveDraft() {
   ui.sheet = { kind: 'recipe', id: rec.id, servings: state.profile.persons };
   toast('Recette enregistrée');
   render();
-  if (!photoList(rec).length) generateImageFor(rec.id);
+  if (!photoList(rec).length) searchPhotoFor(rec.id);
 }
 
 function handle(act, v, el) {
@@ -779,9 +779,12 @@ function handle(act, v, el) {
     case 'ai-back': ui.sheet = { kind: 'ai', q: ui.sheet.q, persons: ui.sheet.persons, status: 'idle' }; renderOverlays(); return;
     case 'ai-save': aiSave(false); return;
     case 'ai-save-menu': aiSave(true); return;
-    case 'save-key': { const el2 = $('#ai-key'); state.ai.key = (el2 && el2.value || '').trim(); state.ai.model = ''; geminiModelsCache = null; save(); toast(state.ai.key ? 'Clé enregistrée' : 'Clé supprimée'); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
+    case 'save-key': { readKeyForm(); if (!state.ai.provider) state.ai.provider = aiProvider(); save(); toast(aiReady() ? 'Réglages enregistrés' : 'Clé supprimée'); if (aiProvider() === 'openai' && openaiReady()) testKey(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
     case 'test-key': testKey(); return;
     case 'gen-image': generateImageFor(v, true); return;
+    case 'next-photo': nextPhoto(v); return;
+    case 'search-photo': searchPhotoFor(v, true); return;
+    case 'ai-provider': readKeyForm(); state.ai.provider = v; save(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break;
     case 'dialog-no': ui.dialog = null; renderOverlays(); return;
     case 'dialog-yes': { const fn = ui.dialog && ui.dialog.onYes; ui.dialog = null; if (fn) fn(); save(); render(); return; }
     case 'reset':
