@@ -75,7 +75,7 @@ function defaultState() {
     history: [],
     notes: {},
     photos: {},
-    ai: { key: '' },
+    ai: { key: '', model: '' },
     weekStart: mondayOf(new Date())
   };
 }
@@ -779,7 +779,7 @@ function handle(act, v, el) {
     case 'ai-back': ui.sheet = { kind: 'ai', q: ui.sheet.q, persons: ui.sheet.persons, status: 'idle' }; renderOverlays(); return;
     case 'ai-save': aiSave(false); return;
     case 'ai-save-menu': aiSave(true); return;
-    case 'save-key': { const el2 = $('#ai-key'); state.ai.key = (el2 && el2.value || '').trim(); save(); toast(state.ai.key ? 'Clé enregistrée' : 'Clé supprimée'); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
+    case 'save-key': { const el2 = $('#ai-key'); state.ai.key = (el2 && el2.value || '').trim(); state.ai.model = ''; geminiModelsCache = null; save(); toast(state.ai.key ? 'Clé enregistrée' : 'Clé supprimée'); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
     case 'test-key': testKey(); return;
     case 'gen-image': generateImageFor(v, true); return;
     case 'dialog-no': ui.dialog = null; renderOverlays(); return;
