@@ -1,0 +1,36 @@
+name: Générer les images des recettes
+
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "Recettes à (re)générer, séparées par des espaces (vide = seulement les manquantes)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Générer les images (une toutes les ~50 s, limite du service gratuit)
+        run: node scripts/generate-images.mjs ${{ github.event.inputs.ids }}
+      - name: Planche contact pour vérification
+        run: |
+          pip install pillow
+          python3 scripts/contact-sheet.py
+      - name: Enregistrer les images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add www/img review
+          git commit -m "Images des recettes générées [skip ci]" || echo "Rien de nouveau"
+          git pull --rebase
+          git push
