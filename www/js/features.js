@@ -600,9 +600,88 @@ function aiSave(toMenu) {
   if (!sh || !sh.recipe) return;
   const r = Object.assign({}, sh.recipe); delete r.preview;
   state.custom.push(r);
+  if (sh.ideaName) state.ideas = state.ideas.filter((x) => x.nom !== sh.ideaName);
   if (toMenu) addToMenu(r.id, r.p); else toast('Recette enregistrée dans Mes recettes');
   save();
   ui.sheet = { kind: 'recipe', id: r.id, servings: r.p };
   render();
   if (openaiReady()) generateImageFor(r.id); else searchPhotoFor(r.id);
+}
+
+/* ---------- Idées IA : 10 nouvelles recettes à chaque rafraîchissement ---------- */
+let ideasLoading = false;
+function renderIdeas() {
+  const ideas = state.ideas || [];
+  const head = `<div class="ideas-head">
+      <p class="muted small" style="margin:0">Des recettes qui ne sont pas encore dans ton carnet, choisies selon ton profil et la saison.</p>
+      <button class="btn dark block" data-act="ideas-refresh" ${ideasLoading ? 'disabled' : ''}>${ideasLoading ? '<span class="spinner small-spin" aria-hidden="true"></span> Recherche d’idées…' : (ideas.length ? '↻ Rafraîchir : 10 nouvelles idées' : '✦ Proposer 10 nouvelles recettes')}</button>
+    </div>`;
+  if (!ideas.length) {
+    return head + (ideasLoading ? '' : `<div class="empty"><span>${aiReady() ? 'Touche le bouton pour découvrir 10 recettes qui ne sont pas encore dans l’appli.' : 'Pour proposer de nouvelles recettes, l’appli a besoin de ta clé d’IA (Profil → Assistant IA).'}</span></div>`);
+  }
+  const shown = ideas.map((x, i) => [x, i]).filter(([x]) => ui.type === 'tous' || x.type === ui.type);
+  if (!shown.length) return head + '<div class="empty"><span>Aucune idée de ce type dans cette série. Rafraîchis pour en voir d’autres.</span></div>';
+  return head + '<div class="grid">' + shown.map(([x, i]) => `<div class="card">
+      <div class="tile" style="background:${hashColor(x.nom)}">
+        <span class="tile-emoji" aria-hidden="true">${esc(x.emoji || '🍽️')}</span>
+        ${x.photo ? `<img class="tile-img" src="${esc(x.photo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}
+        <button class="tile-open" data-act="idea-open" data-v="${i}" aria-label="Voir la recette ${esc(x.nom)}"></button>
+        <span class="idea-tag">Nouveau</span>
+      </div>
+      <button class="card" data-act="idea-open" data-v="${i}" style="gap:4px">
+        <span class="card-name">${esc(x.nom)}</span>
+        <span class="card-meta">${x.temps_min ? x.temps_min + ' min · ' : ''}${DIFF[x.difficulte] || ''}</span>
+        ${x.description ? `<span class="card-meta" style="font-style:italic">${esc(x.description)}</span>` : ''}
+      </button>
+    </div>`).join('') + '</div>' + (ideasLoading ? '' : '<p class="muted small" style="text-align:center;margin:20px 0 0">Touche une idée pour voir la recette complète, puis enregistre-la dans ton carnet.</p>');
+}
+function refreshResultsView() { const res = $('#results'); if (res && ui.tab === 'decouvrir' && ui.filter === 'idees') res.innerHTML = renderIdeas(); }
+async function refreshIdeas() {
+  if (ideasLoading) return;
+  if (!aiReady()) { ui.sheet = { kind: 'ai', q: '', persons: state.profile.persons, status: 'idle' }; renderOverlays(); return; }
+  ideasLoading = true; refreshResultsView();
+  const c = constraintsText();
+  const existing = [...new Set(allRecipes().map((r) => r.n).concat(state.ideasSeen || []))];
+  const season = SEASONS[currentSeason()].toLowerCase();
+  const system = 'Tu es un chef cuisinier français qui propose des idées de recettes familiales variées. Tu réponds uniquement avec un objet JSON valide.';
+  const prompt = `Propose exactement 10 idées de recettes, variées (cuisines du monde et françaises, plats, soupes, salades, quelques desserts ou petits-déjeuners), adaptées à la saison (${season}).
+Elles doivent être différentes de toutes ces recettes, déjà connues de l'utilisateur : ${existing.join(' ; ')}.
+
+Contraintes à respecter absolument :
+- Ne jamais utiliser : ${c.allergies.length ? c.allergies.join(', ') : 'aucune allergie'}.
+- Régime : ${c.diet || 'aucun régime particulier'}.
+- Éviter si possible : ${c.dislikes.length ? c.dislikes.join(', ') : 'rien'}.
+- Temps total maximum : ${c.maxTime ? c.maxTime + ' minutes' : 'pas de limite'}.
+- Équipement disponible : ${c.eq.join(', ') || 'plaques de cuisson'}.
+- Niveau : ${c.level || 'intermédiaire'}.
+
+Réponds avec ce JSON :
+{ "idees": [ { "nom": "nom de la recette en français", "emoji": "un emoji", "type": "plat" | "soupe" | "salade" | "dessert" | "brunch", "temps_min": nombre, "difficulte": 1 | 2 | 3, "description": "une phrase courte et appétissante (12 mots maximum)", "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat" } ] }`;
+  try {
+    const j = await aiJSON(system, prompt, 1);
+    const known = new Set(existing.map(norm));
+    const list = (Array.isArray(j.idees) ? j.idees : []).filter((x) => x && x.nom && !known.has(norm(x.nom))).slice(0, 10)
+      .map((x) => ({ nom: String(x.nom).trim(), emoji: String(x.emoji || '🍽️').slice(0, 4), type: x.type, temps_min: parseInt(x.temps_min, 10) || 0, difficulte: [1, 2, 3].includes(+x.difficulte) ? +x.difficulte : 1, description: String(x.description || '').trim(), image_query: String(x.image_query || '').trim() }));
+    if (!list.length) throw new Error('Aucune idée reçue. Réessaie.');
+    state.ideas = list;
+    state.ideasSeen = (state.ideasSeen || []).concat(list.map((x) => x.nom)).slice(-300);
+    save();
+    ideasLoading = false; refreshResultsView();
+    // Vraies photos en ligne pour illustrer les idées (gratuit)
+    for (const x of list) {
+      if (!x.image_query) continue;
+      try { const found = await searchCommons(x.image_query); if (found.length) { x.photo = found[0].src; refreshResultsView(); } } catch (e) { break; }
+    }
+    save();
+  } catch (e) {
+    ideasLoading = false; refreshResultsView();
+    toast(e.message || 'Impossible de proposer des idées pour le moment');
+  }
+}
+function openIdea(i) {
+  const x = (state.ideas || [])[i];
+  if (!x) return;
+  ui.sheet = { kind: 'ai', q: x.nom + (x.description ? ' : ' + x.description : ''), persons: state.profile.persons, status: 'idle', ideaName: x.nom };
+  renderOverlays();
+  aiGenerate();
 }

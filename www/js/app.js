@@ -75,6 +75,8 @@ function defaultState() {
     history: [],
     notes: {},
     photos: {},
+    ideas: [],
+    ideasSeen: [],
     overrides: {},
     hidden: [],
     ai: { key: '', model: '', provider: '', oaKey: '', oaBase: '', oaText: '', oaImage: '', oaQuality: 'medium', oaModels: [], oaInfo: '' },
@@ -90,7 +92,7 @@ function load() {
     if (raw) {
       const s = JSON.parse(raw);
       const d = defaultState();
-      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {}, photos: s.photos || {}, overrides: s.overrides || {}, hidden: s.hidden || [] });
+      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {}, photos: s.photos || {}, overrides: s.overrides || {}, hidden: s.hidden || [], ideas: s.ideas || [], ideasSeen: s.ideasSeen || [] });
     }
   } catch (e) { /* stockage indisponible */ }
   return defaultState();
@@ -322,7 +324,7 @@ function guessAisle(name) {
 /* ---------- Découvrir ---------- */
 function renderDiscover() {
   const p = state.profile;
-  const filters = [['tout', 'Tout'], ['saison', 'De saison'], ['rapide', 'Rapide'], ['antigaspi', 'Anti-gaspi']];
+  const filters = [['tout', 'Tout'], ['idees', 'Idées IA'], ['saison', 'De saison'], ['rapide', 'Rapide'], ['antigaspi', 'Anti-gaspi']];
   return `<div class="page">
     <div class="kicker">Semaine du ${fmtDate(state.weekStart)}</div>
     <div class="title-row"><h1>Découvrir</h1><span class="counter">${state.menu.length} sur ${p.target}</span></div>
@@ -333,6 +335,7 @@ function renderDiscover() {
   </div>`;
 }
 function renderResults() {
+  if (ui.filter === 'idees') return renderIdeas();
   const q = norm(ui.query);
   let hiddenCount = 0;
   let list = allRecipes().filter((r) => {
@@ -801,6 +804,8 @@ function handle(act, v, el) {
     case 'ai-back': ui.sheet = { kind: 'ai', q: ui.sheet.q, persons: ui.sheet.persons, status: 'idle' }; renderOverlays(); return;
     case 'ai-save': aiSave(false); return;
     case 'ai-save-menu': aiSave(true); return;
+    case 'ideas-refresh': refreshIdeas(); return;
+    case 'idea-open': openIdea(+v); return;
     case 'save-key': { readKeyForm(); if (!state.ai.provider) state.ai.provider = aiProvider(); save(); toast(aiReady() ? 'Réglages enregistrés' : 'Clé supprimée'); if (aiProvider() === 'openai' && openaiReady()) testKey(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
     case 'test-key': testKey(); return;
     case 'gen-image': generateImageFor(v, true); return;
