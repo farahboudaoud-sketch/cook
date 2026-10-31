@@ -10,7 +10,11 @@
  "bolognaise": "spaghetti bolognese",
  "chili_con_carne": "chili con carne",
  "quiche_lorraine": "quiche lorraine",
- "quiche_poireaux_chevre": "leek quiche",
+ "quiche_poireaux_chevre": {
+  "q": "leek quiche",
+  "pick": 2,
+  "max": 4
+ },
  "saumon_brocoli": "salmon fillet broccoli",
  "dahl": {
   "q": "masoor dal",
@@ -30,7 +34,11 @@
   "q": "mushroom omelette",
   "pick": 4
  },
- "gnocchis_epinards": "gnocchi spinach",
+ "gnocchis_epinards": {
+  "q": "gnocchi spinach",
+  "pick": 0,
+  "max": 1
+ },
  "wok_poulet": "chicken stir fry noodles",
  "tajine_poulet": "chicken tagine olives",
  "boeuf_bourguignon": "boeuf bourguignon",
@@ -89,12 +97,40 @@
   "q": "financier cake almond",
   "pick": 1
  },
- "gnocchis_alfredo": "chicken alfredo gnocchi",
- "lasagnes": "lasagna bolognese",
- "risotto_poireaux": "leek risotto",
- "risotto_butternut": "butternut squash risotto",
- "soupe_butternut": "butternut squash soup",
- "wraps_poulet": "chicken wrap",
- "wraps_saumon": "smoked salmon wrap",
- "wraps_crevettes": "shrimp wrap"
+ "gnocchis_alfredo": {
+  "q": "chicken alfredo gnocchi",
+  "max": 0
+ },
+ "lasagnes": {
+  "q": "lasagna bolognese",
+  "pick": 4
+ },
+ "risotto_poireaux": {
+  "q": "leek risotto",
+  "pick": 2,
+  "max": 3
+ },
+ "risotto_butternut": {
+  "q": "butternut squash risotto",
+  "pick": 1,
+  "max": 2
+ },
+ "soupe_butternut": {
+  "q": "butternut squash soup",
+  "pick": 3
+ },
+ "wraps_poulet": {
+  "q": "chicken wrap",
+  "pick": 0,
+  "max": 3
+ },
+ "wraps_saumon": {
+  "q": "smoked salmon wrap",
+  "pick": 0,
+  "max": 1
+ },
+ "wraps_crevettes": {
+  "q": "shrimp wrap",
+  "max": 0
+ }
 }

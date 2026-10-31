@@ -41,11 +41,12 @@ for (const [id, raw] of Object.entries(queries)) {
   try {
     // { "q": "recherche", "pick": n } : la n-ième photo trouvée (vérifiée à la main) passe en premier
     const spec = typeof raw === 'object' && !Array.isArray(raw) ? raw : { q: raw, pick: 0 };
+    if (spec.max === 0) { report.push(`-- ${id}: pas de photo (image générée seulement)`); continue; }
     let list = [];
     for (const q of [].concat(spec.q)) list = list.concat(q.startsWith('File:') ? await byTitle(q) : await bySearch(q));
     const seen = new Set(); list = list.filter((x) => !seen.has(x.src) && seen.add(x.src));
     if (spec.pick && list[spec.pick]) list.unshift(list.splice(spec.pick, 1)[0]);
-    list = list.slice(0, 5);
+    list = list.slice(0, spec.max ?? 5);
     if (list.length) { out[id] = list; report.push(`OK ${id}: ${list.length} photo(s), 1re = ${list[0].page.split('/').pop()}`); }
     else report.push(`-- ${id}: aucune photo`);
   } catch (e) { report.push(`ERR ${id}: ${e.message}`); }
