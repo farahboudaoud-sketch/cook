@@ -215,3 +215,36 @@ label.lbl { font-size: 13px; font-weight: 600; color: var(--muted); display: blo
 .part-title:first-child { padding-top: 4px; }
 .part-block { display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px; }
 .part-block + .part-block { border-top: 1px dotted var(--rule); padding-top: 12px; }
+
+/* Éditeur de recette (lignes compactes) */
+.ed-tabs { display: flex; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--ink); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+.ed-tabs button { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 0; min-height: 44px; font-size: 14px; color: #5E4B3F; white-space: nowrap; }
+.ed-tabs button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.ed-pane { display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
+.ed-grid { display: grid; grid-template-columns: minmax(0, 1fr) 54px 86px 30px; gap: 8px; align-items: center; }
+.ed-head { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); padding-bottom: 2px; margin-bottom: -8px; }
+.ed-part { display: flex; flex-direction: column; }
+.ed-part-head { display: flex; align-items: center; gap: 6px; padding: 8px 0 0; }
+.ed-part-name { flex: 1; border: none; border-bottom: 1px dashed transparent; background: transparent; font-family: var(--serif); font-style: italic; font-size: 19px; color: var(--accent); padding: 6px 0; outline: none; min-width: 0; }
+.ed-part-name:focus { border-bottom-color: var(--accent); }
+.ed-part-name::placeholder { color: #C9937F; }
+.ed-line { min-height: 56px; border-bottom: 1px dotted var(--rule); padding: 4px 0; }
+.ed-name-cell { display: flex; flex-direction: column; min-width: 0; }
+.ed-name { border: none; background: transparent; font-size: 15px; padding: 4px 0 0; outline: none; min-width: 0; width: 100%; }
+.ed-name:focus { box-shadow: inset 0 -1px 0 var(--ink); }
+.ed-aisle select { appearance: none; -webkit-appearance: none; border: none; background: transparent; font-size: 11px; color: var(--muted); padding: 2px 14px 2px 0; max-width: 100%; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236A5649' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right center; }
+.ed-qty { border: none; border-bottom: 1px solid var(--rule); background: transparent; font-family: var(--serif); font-size: 16px; text-align: right; padding: 6px 0; width: 100%; outline: none; -moz-appearance: textfield; }
+.ed-qty::-webkit-outer-spin-button, .ed-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ed-qty:focus { border-bottom-color: var(--ink); }
+.ed-unit { display: flex; align-items: center; border: 1px solid var(--rule); border-radius: 6px; background: #fff; padding: 0 8px; height: 36px; gap: 4px; }
+.ed-unit:focus-within { border-color: var(--ink); }
+.unit-input { border: none; background: transparent; font-size: 14px; width: 100%; min-width: 0; outline: none; padding: 0; }
+.ed-del { width: 30px; height: 36px; border: none; background: none; display: flex; align-items: center; justify-content: center; color: var(--muted); padding: 0; }
+.ed-del svg { width: 16px; height: 16px; }
+.ed-add { align-self: flex-start; font-size: 13px; min-height: 40px; }
+.ed-add-part { background: none; border: none; border-top: 1px solid var(--ink); text-align: left; font-weight: 600; font-size: 14px; padding: 14px 0; margin-top: 4px; min-height: 48px; }
+.unit-pop { position: fixed; z-index: 50; width: 160px; max-height: 260px; overflow-y: auto; background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(43,33,26,.22); padding: 4px 0; }
+.unit-pop button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 14px; font-size: 15px; min-height: 40px; }
+.unit-pop button.on { background: var(--paper-2); }
+.unit-pop-hint { font-size: 11px; color: var(--muted); padding: 6px 14px 4px; }
+.ed-name::-webkit-calendar-picker-indicator { display: none !important; opacity: 0; }

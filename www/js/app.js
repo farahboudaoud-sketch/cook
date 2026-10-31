@@ -595,41 +595,63 @@ function recipeSheet(sh) {
     </div>
   </div>`;
 }
+/* Unités : liste proposée + saisie libre dans le même champ */
+const UNIT_LABELS = { g: 'g', ml: 'ml', pc: 'pièce', sachet: 'sachet', cs: 'c. à s.', cc: 'c. à c.', pincee: 'pincée' };
+function unitLabel(u) { return UNIT_LABELS[u] || u || ''; }
+function unitFromLabel(txt) {
+  const t = norm(txt).replace(/\s+/g, ' ').replace(/\.$/, '');
+  if (!t) return 'pc';
+  const aliases = { g: 'g', gr: 'g', gramme: 'g', grammes: 'g', ml: 'ml', piece: 'pc', pieces: 'pc', pc: 'pc', sachet: 'sachet', sachets: 'sachet', 'c. a s': 'cs', 'c.a.s': 'cs', cas: 'cs', 'cuillere a soupe': 'cs', 'c. a c': 'cc', 'c.a.c': 'cc', cac: 'cc', 'cuillere a cafe': 'cc', pincee: 'pincee', pincees: 'pincee' };
+  return aliases[t] || String(txt).trim();
+}
 function editorSheet(sh) {
   const d = sh.draft;
+  const tab = sh.edTab || (sh.editId ? 'ing' : 'infos');
   const showParts = d.parts.length > 1 || d.parts.some((x) => x.name);
   const aisleOpts = (sel) => AISLES.map((a) => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''}>${a.name}</option>`).join('');
-  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Recette personnelle">
+  const hide = (t) => (tab === t ? '' : 'style="display:none"');
+  const tabs = [['infos', 'Infos'], ['ing', 'Ingrédients'], ['st', 'Étapes'], ['tips', 'Astuces']];
+  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Modifier la recette">
     <div class="sheet-head"><span class="grab" aria-hidden="true"></span><h2 style="font-size:22px">${sh.editId ? 'Modifier la recette' : 'Nouvelle recette'}</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>
+    <div class="ed-tabs" role="tablist">${tabs.map(([id, n]) => `<button type="button" role="tab" class="${tab === id ? 'on' : ''}" aria-selected="${tab === id}" data-act="ed-tab" data-v="${id}">${n}</button>`).join('')}</div>
     <form class="sheet-body has-foot" data-form="editor" id="editor-form">
-      <div><label class="lbl" for="ed-name">Nom</label><input class="input" id="ed-name" name="n" value="${esc(d.n)}" placeholder="Ex. : Gratin de mamie" required></div>
-      <div><span class="lbl">Illustration</span><div class="chips">${EMOJIS.map((e) => `<button type="button" class="chip ${d.e === e ? 'on' : 'soft'}" data-act="ed-emoji" data-v="${e}" style="font-size:20px;padding:0 10px">${e}</button>`).join('')}</div></div>
-      <div class="row" style="gap:14px;align-items:flex-end">
-        <div style="flex:1"><label class="lbl" for="ed-type">Type</label><select class="input" id="ed-type" name="type">${TYPES.map((t) => `<option value="${t.id}" ${d.type === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select></div>
-        <div style="flex:1"><label class="lbl" for="ed-d">Difficulté</label><select class="input" id="ed-d" name="d">${[1, 2, 3].map((x) => `<option value="${x}" ${+d.d === x ? 'selected' : ''}>${DIFF[x]}</option>`).join('')}</select></div>
+      <div class="ed-pane" ${hide('infos')}>
+        <div><label class="lbl" for="ed-name">Nom</label><input class="input" id="ed-name" name="n" value="${esc(d.n)}" placeholder="Ex. : Gratin de mamie" required></div>
+        <div><span class="lbl">Illustration</span><div class="chips">${EMOJIS.map((e) => `<button type="button" class="chip ${d.e === e ? 'on' : 'soft'}" data-act="ed-emoji" data-v="${e}" style="font-size:20px;padding:0 10px">${e}</button>`).join('')}</div></div>
+        <div class="row" style="gap:14px;align-items:flex-end">
+          <div style="flex:1"><label class="lbl" for="ed-type">Type</label><select class="input" id="ed-type" name="type">${TYPES.map((t) => `<option value="${t.id}" ${d.type === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select></div>
+          <div style="flex:1"><label class="lbl" for="ed-d">Difficulté</label><select class="input" id="ed-d" name="d">${[1, 2, 3].map((x) => `<option value="${x}" ${+d.d === x ? 'selected' : ''}>${DIFF[x]}</option>`).join('')}</select></div>
+        </div>
+        <div class="row" style="gap:14px">
+          <div style="flex:1"><label class="lbl" for="ed-t">Temps (min)</label><input class="input" id="ed-t" name="t" type="number" inputmode="numeric" min="1" value="${esc(d.t)}"></div>
+          <div style="flex:1"><label class="lbl" for="ed-p">Pour</label><div class="row" style="gap:8px"><input class="input" id="ed-p" name="p" type="number" inputmode="numeric" min="1" value="${esc(d.p)}" style="width:64px"><select class="input" name="pu" aria-label="Unité des portions">${YIELDS.map((y) => `<option value="${y.id}" ${(d.pu || 'pers') === y.id ? 'selected' : ''}>${y.many}</option>`).join('')}</select></div></div>
+        </div>
       </div>
-      <div class="row" style="gap:14px">
-        <div style="flex:1"><label class="lbl" for="ed-t">Temps (min)</label><input class="input" id="ed-t" name="t" type="number" inputmode="numeric" min="1" value="${esc(d.t)}"></div>
-        <div style="flex:1"><label class="lbl" for="ed-p">Pour</label><div class="row" style="gap:8px"><input class="input" id="ed-p" name="p" type="number" inputmode="numeric" min="1" value="${esc(d.p)}" style="width:64px"><select class="input" name="pu" aria-label="Unité des portions">${YIELDS.map((y) => `<option value="${y.id}" ${(d.pu || 'pers') === y.id ? 'selected' : ''}>${y.many}</option>`).join('')}</select></div></div>
+      <div class="ed-pane" ${hide('ing')}>
+        <div class="ed-grid ed-head" aria-hidden="true"><span>Ingrédient</span><span style="text-align:right">Qté</span><span>Unité</span><span></span></div>
+        ${d.parts.map((part, pi) => `<div class="ed-part">
+          ${showParts ? `<div class="ed-part-head"><input class="ed-part-name" id="ed-pn-${pi}" name="pn-${pi}" value="${esc(part.name)}" placeholder="Nom de la partie (ex. : Pâte)" autocomplete="off" aria-label="Nom de la partie ${pi + 1}">${d.parts.length > 1 ? `<button type="button" class="icon-btn" style="width:36px;height:36px" data-act="ed-rm-part" data-v="${pi}" aria-label="Supprimer la partie ${pi + 1}">${ICONS.trash}</button>` : ''}</div>` : ''}
+          ${part.rows.map((row, ri) => { const id = pi + '-' + ri; return `<div class="ed-grid ed-line">
+            <div class="ed-name-cell">
+              <input class="ed-name" id="ed-in-${id}" name="in-${id}" list="ing-names" value="${esc(row.name)}" placeholder="Ingrédient" autocomplete="off" aria-label="Ingrédient">
+              <label class="ed-aisle"><span class="sr">Rayon</span><select name="ia-${id}" id="ed-ia-${id}">${aisleOpts(row.a)}</select></label>
+            </div>
+            <input class="ed-qty" id="ed-iq-${id}" name="iq-${id}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}" placeholder="0" aria-label="Quantité">
+            <div class="ed-unit"><input class="unit-input" id="ed-iu-${id}" name="iu-${id}" value="${esc(unitLabel(row.u))}" placeholder="unité" autocomplete="off" aria-label="Unité (choisis ou écris)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6A5649" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+            <button type="button" class="ed-del" data-act="ed-rm-ing" data-v="${pi}:${ri}" aria-label="Retirer cet ingrédient">${ICONS.close}</button>
+          </div>`; }).join('')}
+          <button type="button" class="link ed-add" data-act="ed-add-ing" data-v="${pi}">+ Ingrédient</button>
+        </div>`).join('')}
+        <button type="button" class="ed-add-part" data-act="ed-add-part">+ ${showParts ? 'Nouvelle partie' : 'Séparer en parties (pâte, garniture, crumble…)'}</button>
+        ${ingredientDatalist()}
       </div>
-      <div class="section-title">Ingrédients</div>
-      ${d.parts.map((part, pi) => `<div class="part-block">
-        ${showParts ? `<div class="row" style="gap:8px;align-items:flex-end"><div style="flex:1"><label class="lbl" for="ed-pn-${pi}">Partie ${pi + 1}</label><input class="input part-name" id="ed-pn-${pi}" name="pn-${pi}" value="${esc(part.name)}" placeholder="Ex. : Pâte, Garniture, Crumble…" autocomplete="off"></div>${d.parts.length > 1 ? `<button type="button" class="icon-btn" data-act="ed-rm-part" data-v="${pi}" aria-label="Supprimer la partie ${pi + 1}">${ICONS.trash}</button>` : ''}</div>` : ''}
-        ${part.rows.map((row, ri) => { const id = pi + '-' + ri; return `<div class="ing-row">
-          <div><label class="lbl" for="ed-in-${id}">Ingrédient</label><input class="input" id="ed-in-${id}" name="in-${id}" list="ing-names" value="${esc(row.name)}" placeholder="Ex. : Carotte" autocomplete="off"></div>
-          <div><label class="lbl" for="ed-iq-${id}">Qté</label><input class="input" id="ed-iq-${id}" name="iq-${id}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}"></div>
-          <div><label class="lbl" for="ed-iu-${id}">Unité</label><select class="input unit-select" id="ed-iu-${id}" name="iu-${id}">${UNITS.map((u) => { const sel = KNOWN_UNITS.includes(row.u) ? row.u === u.id : u.id === 'autre'; return `<option value="${u.id}" ${sel ? 'selected' : ''}>${u.n}</option>`; }).join('')}</select></div>
-          <button type="button" class="icon-btn" data-act="ed-rm-ing" data-v="${pi}:${ri}" aria-label="Retirer cet ingrédient" style="width:32px">${ICONS.close}</button>
-          ${KNOWN_UNITS.includes(row.u) ? '' : `<div style="grid-column:1 / span 3"><label class="lbl" for="ed-iux-${id}">Unité (texte libre)</label><input class="input" id="ed-iux-${id}" name="iux-${id}" value="${esc(row.u === 'autre' ? '' : row.u)}" placeholder="Ex. : boîte, tranche, verre, poignée…" autocomplete="off"></div>`}
-          <div style="grid-column:1 / span 3"><label class="lbl" for="ed-ia-${id}">Rayon</label><select class="input" id="ed-ia-${id}" name="ia-${id}" style="font-size:14px;padding:6px 0">${aisleOpts(row.a)}</select></div>
-        </div>`; }).join('')}
-        <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-ing" data-v="${pi}">+ Ajouter un ingrédient${showParts ? (part.name ? ' (' + esc(part.name) + ')' : ' à cette partie') : ''}</button>
-      </div>`).join('')}
-      <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-part">+ ${showParts ? 'Ajouter une partie' : 'Séparer en parties (ex. : pâte, garniture, crumble)'}</button>
-      <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…" style="min-height:200px">${esc(d.st)}</textarea></div>
-      <div><label class="lbl" for="ed-tips">Astuces (une par ligne)</label><textarea class="input" id="ed-tips" name="tips" placeholder="Facultatif">${esc(d.tips || '')}</textarea></div>
-      ${sh.base ? '<p class="muted small" style="margin:0">Tes modifications sont gardées sur ce téléphone. Tu pourras toujours rétablir la recette d’origine.</p>' : ''}
-      ${ingredientDatalist()}
+      <div class="ed-pane" ${hide('st')}>
+        <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…" style="min-height:320px">${esc(d.st)}</textarea></div>
+      </div>
+      <div class="ed-pane" ${hide('tips')}>
+        <div><label class="lbl" for="ed-tips">Astuces (une par ligne)</label><textarea class="input" id="ed-tips" name="tips" placeholder="Facultatif" style="min-height:200px">${esc(d.tips || '')}</textarea></div>
+        ${sh.base ? '<p class="muted small" style="margin:0">Tes modifications sont gardées sur ce téléphone. Tu pourras toujours rétablir la recette d’origine.</p>' : ''}
+      </div>
     </form>
     <div class="sheet-foot"><button class="btn" data-act="close-sheet">Annuler</button><button class="btn primary" data-act="ed-save">Enregistrer</button></div>
   </div>`;
@@ -647,12 +669,35 @@ function readEditorForm() {
       const name = fd.get('in-' + id) || '';
       const changedName = name !== row.name;
       row.name = name; row.q = fd.get('iq-' + id); row.a = fd.get('ia-' + id);
-      const u = fd.get('iu-' + id);
-      row.u = u === 'autre' ? (String(fd.get('iux-' + id) || '').trim() || 'autre') : u;
+      row.u = unitFromLabel(fd.get('iu-' + id) || '');
       if (changedName && name && row.a === 'au') row.a = guessAisle(name);
     });
   });
 }
+
+/* Liste d'unités qui s'ouvre sous le champ « Unité » : on choisit, ou on garde ce qu'on a écrit */
+function closeUnitPop() { const p = $('.unit-pop'); if (p) p.remove(); }
+function openUnitPop(input) {
+  closeUnitPop();
+  const q = norm(input.value);
+  const opts = Object.values(UNIT_LABELS).filter((l) => !q || norm(l).startsWith(q) || q === norm(input.dataset.orig || ''));
+  const pop = document.createElement('div');
+  pop.className = 'unit-pop';
+  const custom = input.value.trim() && !Object.values(UNIT_LABELS).some((l) => norm(l) === q) ? `<button type="button" data-u="${esc(input.value.trim())}" class="on">« ${esc(input.value.trim())} »</button>` : '';
+  pop.innerHTML = `<div class="unit-pop-hint">Choisis ou écris ton unité</div>${custom}${(opts.length ? opts : Object.values(UNIT_LABELS)).map((l) => `<button type="button" data-u="${esc(l)}">${esc(l)}</button>`).join('')}`;
+  const r = input.getBoundingClientRect();
+  const below = window.innerHeight - r.bottom > 260;
+  pop.style.left = Math.max(8, Math.min(window.innerWidth - 168, r.left - 8)) + 'px';
+  pop.style[below ? 'top' : 'bottom'] = (below ? r.bottom + 4 : window.innerHeight - r.top + 4) + 'px';
+  pop.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('[data-u]'); if (!b) return;
+    e.preventDefault(); input.value = b.dataset.u; closeUnitPop(); input.blur();
+  });
+  document.body.appendChild(pop);
+}
+document.addEventListener('focusin', (e) => { if (e.target.classList && e.target.classList.contains('unit-input')) { e.target.dataset.orig = e.target.value; e.target.select(); openUnitPop(e.target); } });
+document.addEventListener('focusout', (e) => { if (e.target.classList && e.target.classList.contains('unit-input')) setTimeout(closeUnitPop, 150); });
+document.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('unit-input')) openUnitPop(e.target); });
 
 /* ---------- Toast et confirmation ---------- */
 let toastTimer;
@@ -715,8 +760,8 @@ function saveDraft() {
   const named = d.parts.length > 1 || d.parts.some((x) => x.name.trim());
   const rows = [];
   d.parts.forEach((part) => part.rows.forEach((row) => { if (row.name.trim()) rows.push(Object.assign({}, row, { g: named ? part.name.trim() : '' })); }));
-  if (!d.n.trim()) { toast('Donne un nom à ta recette'); return; }
-  if (!rows.length) { toast('Ajoute au moins un ingrédient'); return; }
+  if (!d.n.trim()) { ui.sheet.edTab = 'infos'; renderOverlays(); toast('Donne un nom à ta recette'); return; }
+  if (!rows.length) { ui.sheet.edTab = 'ing'; renderOverlays(); toast('Ajoute au moins un ingrédient'); return; }
   const i = rows.map((row) => {
     let key = findIngredientByName(row.name);
     if (!key) {
@@ -809,7 +854,7 @@ function handle(act, v, el) {
     case 'uncheck-all': state.list.checked = {}; break;
     case 'copy': copyList(); return;
     case 'rm-pantry': state.pantry = state.pantry.filter((x) => x !== v); break;
-    case 'new-recipe': ui.sheet = { kind: 'editor', draft: newDraft() }; renderOverlays(); return;
+    case 'new-recipe': ui.sheet = { kind: 'editor', edTab: 'infos', draft: newDraft() }; renderOverlays(); return;
     case 'edit-recipe': { const r = recipeById(v); if (!r) return; ui.sheet = { kind: 'editor', editId: v, base: !r.custom, draft: draftFrom(r) }; renderOverlays(); return; }
     case 'restore-recipe':
       confirmBox('Revenir à la recette d’origine ? Tes modifications seront perdues.', 'Rétablir', () => { delete state.overrides[v]; ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || defaultServings(recipeById(v)) }; toast('Recette d’origine rétablie'); });
@@ -826,6 +871,7 @@ function handle(act, v, el) {
     case 'ed-emoji': readEditorForm(); ui.sheet.draft.e = v; renderOverlays(); return;
     case 'ed-add-ing': readEditorForm(); ui.sheet.draft.parts[+v || 0].rows.push(emptyRow()); renderOverlays(); return;
     case 'ed-rm-ing': { readEditorForm(); const [pi, ri] = v.split(':').map(Number); const part = ui.sheet.draft.parts[pi]; part.rows.splice(ri, 1); if (!part.rows.length) part.rows.push(emptyRow()); renderOverlays(); return; }
+    case 'ed-tab': readEditorForm(); ui.sheet.edTab = v; renderOverlays(); { const b2 = $('.sheet-body'); if (b2) b2.scrollTop = 0; } return;
     case 'ed-add-part': {
       readEditorForm(); const parts = ui.sheet.draft.parts;
       parts.push({ name: '', rows: [emptyRow()] }); renderOverlays();
@@ -907,9 +953,10 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.id === 'ai-q') { e.preventDefault(); handle('ai-generate'); }
 });
 document.addEventListener('change', (e) => {
-  if (e.target.classList && e.target.classList.contains('unit-select') && ui.sheet && ui.sheet.kind === 'editor') {
-    readEditorForm(); renderOverlays();
-    if (e.target.value === 'autre') { const t = document.getElementById(e.target.id.replace('ed-iu-', 'ed-iux-')); if (t) t.focus(); }
+  if (e.target.classList && e.target.classList.contains('ed-name') && ui.sheet && ui.sheet.kind === 'editor') {
+    // Rayon deviné dès que le nom est saisi
+    const sel = document.getElementById(e.target.id.replace('ed-in-', 'ed-ia-'));
+    if (sel && sel.value === 'au') { const g = guessAisle(e.target.value); if (g !== 'au') sel.value = g; }
     return;
   }
   const el = e.target.closest('[data-act="day"]');
