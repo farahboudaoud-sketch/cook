@@ -184,6 +184,12 @@ function fmtQty(q, unit, key, forList) {
     default: return fmtNum(forList ? Math.ceil(q * 2 - 0.01) / 2 : q) + ' ' + unit;
   }
 }
+/* Prix moyen d'un article quand on ne connaît pas le produit (estimation grossière, par rayon) */
+const AISLE_DEFAULT_PRICE = { fl: 1.8, bp: 6, cr: 2.2, bo: 1.6, ep: 1.8, es: 1.5, su: 2, sg: 3.5, bs: 2.5, au: 2 };
+function itemCostEstimate(it) {
+  if (it.pantry) return 0;
+  return it.cost > 0 ? it.cost : (AISLE_DEFAULT_PRICE[it.aisle] || 2);
+}
 function lineCost(key, q, unit) {
   const info = INGREDIENTS[key];
   if (!info || !info.p) return 0;
@@ -436,7 +442,10 @@ function renderList() {
   const pantryItems = items.filter((i) => i.pantry && !L.have[i.id]);
   const haveItems = items.filter((i) => L.have[i.id]);
   const todo = visible.filter((i) => !L.checked[i.id]).length;
-  const budget = visible.reduce((s, i) => s + i.cost, 0);
+  const budget = visible.reduce((s, i) => s + itemCostEstimate(i), 0);
+  const left = visible.filter((i) => !L.checked[i.id]).reduce((s, i) => s + itemCostEstimate(i), 0);
+  const byAisle = AISLES.map((a) => ({ a, v: visible.filter((i) => i.aisle === a.id).reduce((s, i) => s + itemCostEstimate(i), 0) })).filter((x) => x.v > 0).sort((x, y) => y.v - x.v);
+  const round = (x) => (x < 10 ? Math.round(x * 2) / 2 : Math.round(x));
   const recipesCount = state.menu.length;
 
   const itemHtml = (i) => {
@@ -454,7 +463,8 @@ function renderList() {
     const its = visible.filter((i) => i.aisle === a.id);
     if (!its.length) return '';
     its.sort((x, y) => (!!L.checked[x.id]) - (!!L.checked[y.id]) || x.name.localeCompare(y.name, 'fr'));
-    return `<div><div class="section-title">${a.name}</div>${its.map(itemHtml).join('')}</div>`;
+    const sub = its.reduce((t, i) => t + itemCostEstimate(i), 0);
+    return `<div><div class="section-title row between"><span>${a.name}</span>${sub > 0 ? `<span class="aisle-cost">≈ ${fmtEuro(round(sub))}</span>` : ''}</div>${its.map(itemHtml).join('')}</div>`;
   }).join('');
 
   const addForm = `<form class="field" data-form="manual" style="flex-wrap:nowrap">${ICONS.plus}
@@ -466,7 +476,13 @@ function renderList() {
   return `<div class="page">
     <div class="kicker">${todo} ${plural(todo, 'article', 'articles')} à prendre · ${recipesCount} ${plural(recipesCount, 'recette', 'recettes')}</div>
     <div class="title-row"><h1>Les courses</h1>${visible.length ? '<button class="link" data-act="copy">Copier</button>' : ''}</div>
-    ${budget > 0 ? `<div class="muted small">Budget estimé : environ ${fmtEuro(budget)} (indicatif)</div>` : ''}
+    ${budget > 0 ? `<div class="budget">
+      <div class="row between" style="align-items:baseline"><span class="budget-lbl">Estimation du panier</span><span class="budget-total">≈ ${fmtEuro(round(budget))}</span></div>
+      <div class="budget-bar" aria-hidden="true">${byAisle.map((x, k) => `<i style="flex:${x.v};opacity:${Math.max(0.35, 1 - k * 0.12)}"></i>`).join('')}</div>
+      <div class="budget-detail">${byAisle.slice(0, 4).map((x) => `<span>${esc(x.a.name)} ${fmtEuro(round(x.v))}</span>`).join('')}${byAisle.length > 4 ? '<span>…</span>' : ''}</div>
+      ${left < budget - 0.01 ? `<div class="muted small">Reste à acheter : ≈ ${fmtEuro(round(left))}</div>` : ''}
+      <div class="muted small" style="font-size:11px">Prix moyens indicatifs, hors placard et articles « déjà à la maison ».</div>
+    </div>` : ''}
     ${addForm}
     ${empty ? `<div class="empty"><span class="big">Ta liste est vide</span><span>Ajoute des recettes à ton menu : leurs ingrédients s’afficheront ici, regroupés par rayon.</span><button class="btn primary" data-act="tab" data-v="decouvrir">Choisir des recettes</button></div>` : sections}
     ${pantryItems.length ? `<div class="box">
@@ -499,34 +515,32 @@ function renderProfile() {
   const allergies = p.allergies.map((a) => (ALLERGENS.find((x) => x.id === a) || {}).name).filter(Boolean);
   const diet = (DIETS.find((d) => d.id === p.diet) || {}).name;
   const pantry = state.pantry.map((k) => `<button class="chip" data-act="rm-pantry" data-v="${esc(k)}">${esc(ing(k).n)} <span class="x" aria-hidden="true">×</span></button>`).join('');
+  const open = ui.profOpen || (ui.profOpen = {});
+  const timeName = (TIME_OPTIONS.find((o) => o.v === p.maxTime) || {}).n || '';
+  const levelName = (LEVELS.find((l) => l.id === p.level) || {}).n || '';
+  const dislikes = (p.dislikes || []).map((k) => ing(k).n).concat((p.dislikesText || []).filter(Boolean));
+  const short = (arr, n) => arr.length ? arr.slice(0, n).join(', ') + (arr.length > n ? ` +${arr.length - n}` : '') : '';
+  const sec = (id, title, summary, body) => `<section class="prof-sec ${open[id] ? 'open' : ''}">
+      <button class="prof-head" data-act="prof-sec" data-v="${id}" aria-expanded="${!!open[id]}">
+        <span class="prof-title">${title}</span><span class="prof-sum">${esc(summary)}</span>
+        <svg class="prof-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      ${open[id] ? `<div class="prof-body">${body}</div>` : ''}
+    </section>`;
   return `<div class="page">
     <div class="kicker">Mes réglages</div>
     <div class="title-row"><h1>Profil</h1></div>
-
-    <div class="section-title">À éviter absolument</div>
-    <p class="muted small" style="margin:-8px 0 0">Les recettes qui en contiennent ne sont jamais proposées.</p>
-    ${allergyPicker()}
-
-    <div class="section-title">Régime</div>
-    ${dietPicker()}
-
-    <div class="section-title">Ce que je n’aime pas</div>
-    ${dislikePicker()}
-
-    ${cookingPicker()}
-
-    <div class="section-title">Mon foyer</div>
-    ${householdPicker()}
-
-    <div class="section-title">Mon placard de base</div>
-    <p class="muted small" style="margin:-8px 0 0">Ces produits sont toujours chez toi : ils sont masqués de la liste de courses.</p>
-    <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
-    <form class="field" data-form="pantry">${ICONS.plus}<input name="q" data-suggest="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
-
-    <div class="section-title">Assistant IA</div>
-    <p class="muted small" style="margin:-8px 0 0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>
-    ${keyForm()}
-
+    <div class="prof-list">
+    ${sec('allergies', 'À éviter absolument', short(allergies, 3) || 'Aucune allergie', `<p class="muted small" style="margin:0">Les recettes qui en contiennent ne sont jamais proposées.</p>${allergyPicker()}`)}
+    ${sec('diet', 'Régime', diet || 'Aucun', dietPicker())}
+    ${sec('dislikes', 'Ce que je n’aime pas', short(dislikes, 3) || 'Rien de particulier', dislikePicker())}
+    ${sec('cooking', 'En cuisine', [timeName, levelName, (p.equipment || []).length + ' équipement' + ((p.equipment || []).length > 1 ? 's' : '')].filter(Boolean).join(' · '), cookingPicker())}
+    ${sec('household', 'Mon foyer', `${p.persons} ${plural(p.persons, 'personne', 'personnes')} · ${p.target} ${plural(p.target, 'recette', 'recettes')} par semaine`, householdPicker())}
+    ${sec('pantry', 'Mon placard de base', state.pantry.length + ' ' + plural(state.pantry.length, 'produit', 'produits'), `<p class="muted small" style="margin:0">Ces produits sont toujours chez toi : ils sont masqués de la liste de courses.</p>
+      <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
+      <form class="field" data-form="pantry">${ICONS.plus}<input name="q" data-suggest="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>`)}
+    ${sec('ai', 'Assistant IA', aiReady() ? 'Clé enregistrée' : 'Pas de clé', `<p class="muted small" style="margin:0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>${keyForm()}`)}
+    </div>
     ${(state.hidden || []).length ? `<div class="row between"><span class="muted small">${state.hidden.length} ${plural(state.hidden.length, 'recette masquée', 'recettes masquées')}</span><button class="link" data-act="unhide-all">Tout réafficher</button></div>` : ''}
     <div class="box" style="margin-top:20px">
       <span class="muted small">Résumé : ${allergies.length ? 'sans ' + esc(allergies.join(', ').toLowerCase()) : 'aucune allergie'} · ${esc(diet || '')}</span>
@@ -592,7 +606,7 @@ function recipeSheet(sh) {
       <div class="row between" style="margin-top:6px"><span class="section-title">Ingrédients</span>${stepper('sheet-servings', servings, 'Portions')}</div>
       <div class="muted small" style="margin-top:-8px">Pour ${yieldText(servings, r)}</div>
       <div>${groupIngredients(r.i).map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${g.items.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}`).join('')}</div>
-      ${stepsHtml(r)}
+      ${stepsHtml(r, sh)}
       ${notesHtml(r)}
       <div class="row" style="gap:16px;flex-wrap:wrap">${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
       ${r.edited ? '<p class="muted small" style="margin:-8px 0 0">Recette modifiée par toi.</p>' : ''}
@@ -615,7 +629,6 @@ function editorSheet(sh) {
   const d = sh.draft;
   const tab = sh.edTab || (sh.editId ? 'ing' : 'infos');
   const showParts = d.parts.length > 1 || d.parts.some((x) => x.name);
-  const aisleOpts = (sel) => AISLES.map((a) => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''}>${a.name}</option>`).join('');
   const hide = (t) => (tab === t ? '' : 'style="display:none"');
   const tabs = [['infos', 'Infos'], ['ing', 'Ingrédients'], ['st', 'Étapes']];
   return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Modifier la recette">
@@ -642,7 +655,7 @@ function editorSheet(sh) {
           ${part.rows.map((row, ri) => { const id = pi + '-' + ri; return `<div class="ed-grid ed-line">
             <div class="ed-name-cell">
               <input class="ed-name" id="ed-in-${id}" name="in-${id}" data-suggest="ing-names" value="${esc(row.name)}" placeholder="Ingrédient" autocomplete="off" aria-label="Ingrédient">
-              <label class="ed-aisle"><span class="sr">Rayon</span><select name="ia-${id}" id="ed-ia-${id}">${aisleOpts(row.a)}</select></label>
+              <input type="hidden" name="ia-${id}" id="ed-ia-${id}" value="${esc(row.a || 'au')}"><button type="button" class="ed-aisle-btn" data-act="ed-aisle" data-v="${id}" aria-label="Rayon : ${esc(aisleLabel(row.a))}">${esc(aisleLabel(row.a))}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
             </div>
             <input class="ed-qty" id="ed-iq-${id}" name="iq-${id}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}" placeholder="0" aria-label="Quantité">
             <div class="ed-unit"><input class="unit-input" id="ed-iu-${id}" name="iu-${id}" value="${esc(unitLabel(row.u))}" placeholder="unité" autocomplete="off" aria-label="Unité (choisis ou écris)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6A5649" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
@@ -651,10 +664,15 @@ function editorSheet(sh) {
           <button type="button" class="link ed-add" data-act="ed-add-ing" data-v="${pi}">+ Ingrédient</button>
         </div>`).join('')}
         <button type="button" class="ed-add-part" data-act="ed-add-part">+ ${showParts ? 'Nouvelle partie' : 'Séparer en parties (pâte, garniture, crumble…)'}</button>
-        ${ingredientDatalist()}
       </div>
       <div class="ed-pane" ${hide('st')}>
-        <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…" style="min-height:320px">${esc(d.st)}</textarea></div>
+        <div class="ed-steps">${d.steps.map((stp, k) => `<div class="ed-step">
+          <div class="ed-step-head"><span class="ed-step-num">${k + 1}</span><span class="ed-step-lbl">Étape ${k + 1}</span>
+            ${k > 0 ? `<button type="button" class="ed-step-btn" data-act="ed-mv-step" data-v="${k}" aria-label="Monter l’étape ${k + 1}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg></button>` : ''}
+            <button type="button" class="ed-step-btn" data-act="ed-rm-step" data-v="${k}" aria-label="Supprimer l’étape ${k + 1}">${ICONS.trash}</button></div>
+          <textarea class="ed-step-text" id="ed-st-${k}" name="st-${k}" rows="3" placeholder="${k ? 'Étape suivante…' : 'Ex. : Préchauffer le four à 180 °C.'}">${esc(stp)}</textarea>
+        </div>`).join('')}</div>
+        <button type="button" class="btn ed-add-step" data-act="ed-add-step">+ Ajouter une étape</button>
       </div>
     </form>
     <div class="sheet-foot"><button class="btn" data-act="close-sheet">Annuler</button><button class="btn primary" data-act="ed-save">Enregistrer</button></div>
@@ -665,7 +683,9 @@ function readEditorForm() {
   if (!form) return;
   const d = ui.sheet.draft;
   const fd = new FormData(form);
-  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.pu = fd.get('pu') || 'pers'; d.st = fd.get('st') || '';
+  d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.pu = fd.get('pu') || 'pers';
+  d.steps = d.steps.map((x, k) => (fd.has('st-' + k) ? String(fd.get('st-' + k) || '').replace(/\s*\n\s*/g, ' ') : x));
+  if (fd.has('img-note')) d.imgNote = String(fd.get('img-note') || '');
   d.parts.forEach((part, pi) => {
     if (fd.has('pn-' + pi)) part.name = String(fd.get('pn-' + pi) || '');
     part.rows.forEach((row, ri) => {
@@ -674,7 +694,7 @@ function readEditorForm() {
       const changedName = name !== row.name;
       row.name = name; row.q = fd.get('iq-' + id); row.a = fd.get('ia-' + id);
       row.u = unitFromLabel(fd.get('iu-' + id) || '');
-      if (changedName && name && row.a === 'au') row.a = guessAisle(name);
+      if (changedName && name && row.a === 'au') { const k = findIngredientByName(name); row.a = k ? (ing(k).a || 'au') : guessAisle(name); }
     });
   });
 }
@@ -702,6 +722,75 @@ function openUnitPop(input) {
 document.addEventListener('focusin', (e) => { if (e.target.classList && e.target.classList.contains('unit-input')) { e.target.dataset.orig = e.target.value; e.target.select(); openUnitPop(e.target); } });
 document.addEventListener('focusout', (e) => { if (e.target.classList && e.target.classList.contains('unit-input')) setTimeout(closeUnitPop, 150); });
 document.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('unit-input')) openUnitPop(e.target); });
+
+/* Rayons : petite liste stylée à la place du menu déroulant du téléphone */
+function aisleLabel(id) { const a = AISLES.find((x) => x.id === id) || AISLES.find((x) => x.id === 'au'); return a ? a.name : 'Autres'; }
+function closeAislePop() { const p = $('.aisle-pop'); if (p) p.remove(); }
+function placePop(pop, anchorEl, h) {
+  const r = anchorEl.getBoundingClientRect();
+  const below = window.innerHeight - r.bottom > h + 10;
+  pop.style.left = Math.max(8, Math.min(window.innerWidth - pop.offsetWidth - 8, r.left)) + 'px';
+  if (below) pop.style.top = (r.bottom + 4) + 'px'; else pop.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+}
+function openAislePop(btn) {
+  if ($('.aisle-pop') && $('.aisle-pop').dataset.for === btn.dataset.v) { closeAislePop(); return; }
+  closeAislePop(); closeSugPop();
+  const hidden = $('#ed-ia-' + btn.dataset.v);
+  const cur = hidden ? hidden.value : 'au';
+  const pop = document.createElement('div');
+  pop.className = 'pop-list aisle-pop'; pop.dataset.for = btn.dataset.v;
+  pop.innerHTML = `<div class="pop-hint">Rayon du magasin</div>${AISLES.map((a) => `<button type="button" data-a="${a.id}" class="${a.id === cur ? 'on' : ''}"><span class="pop-dot" aria-hidden="true"></span>${esc(a.name)}</button>`).join('')}`;
+  document.body.appendChild(pop);
+  placePop(pop, btn, Math.min(360, pop.offsetHeight));
+  pop.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    e.preventDefault();
+    if (hidden) hidden.value = b.dataset.a;
+    btn.firstChild.textContent = aisleLabel(b.dataset.a);
+    btn.setAttribute('aria-label', 'Rayon : ' + aisleLabel(b.dataset.a));
+    closeAislePop();
+  });
+}
+/* Suggestions d'ingrédients (à partir de 2 lettres), au même style */
+function closeSugPop() { const p = $('.sug-pop'); if (p) p.remove(); }
+function openSugPop(input) {
+  const q = norm(input.value.trim());
+  const seen = new Set(); const items = [];
+  Object.values(INGREDIENTS).concat(Object.values(state.customIngs)).forEach((x) => { const k = norm(x.n); if (!seen.has(k)) { seen.add(k); items.push(x); } });
+  const starts = items.filter((x) => norm(x.n).startsWith(q));
+  const inside = items.filter((x) => !norm(x.n).startsWith(q) && norm(x.n).includes(q));
+  const list = starts.sort((a, b) => a.n.localeCompare(b.n, 'fr')).concat(inside.sort((a, b) => a.n.localeCompare(b.n, 'fr'))).slice(0, 7);
+  if (!list.length || (list.length === 1 && norm(list[0].n) === q)) { closeSugPop(); return; }
+  let pop = $('.sug-pop');
+  if (!pop) {
+    pop = document.createElement('div'); pop.className = 'pop-list sug-pop';
+    pop.addEventListener('pointerdown', (e) => {
+      const b = e.target.closest('[data-n]'); if (!b) return;
+      e.preventDefault();
+      const inp = pop._input; inp.value = b.dataset.n;
+      const m = inp.id && inp.id.match(/^ed-in-(\d+-\d+)$/);
+      if (m) { const hid = $('#ed-ia-' + m[1]); const btn = $(`.ed-aisle-btn[data-v="${m[1]}"]`); if (hid) hid.value = b.dataset.a; if (btn) btn.firstChild.textContent = aisleLabel(b.dataset.a); }
+      closeSugPop();
+      const next = inp.id && inp.id.startsWith('ed-in-') ? $('#' + inp.id.replace('ed-in-', 'ed-iq-')) : null;
+      if (next) next.focus();
+    });
+    document.body.appendChild(pop);
+  }
+  pop._input = input;
+  pop.style.top = ''; pop.style.bottom = '';
+  pop.style.width = Math.min(window.innerWidth - 16, Math.max(240, input.getBoundingClientRect().width + 60)) + 'px';
+  const hl = (n) => { const i = norm(n).indexOf(q); return i < 0 ? esc(n) : esc(n.slice(0, i)) + '<b>' + esc(n.slice(i, i + q.length)) + '</b>' + esc(n.slice(i + q.length)); };
+  pop.innerHTML = list.map((x) => `<button type="button" data-n="${esc(x.n)}" data-a="${x.a || 'au'}"><span class="sug-name">${hl(x.n)}</span><span class="sug-aisle">${esc(aisleLabel(x.a))}</span></button>`).join('');
+  placePop(pop, input, pop.offsetHeight);
+}
+document.addEventListener('focusout', (e) => { if (e.target.dataset && e.target.dataset.suggest) setTimeout(() => { if (document.activeElement !== e.target) closeSugPop(); }, 150); });
+document.addEventListener('scroll', (e) => {
+  if (e.target && e.target.closest && e.target.closest('.pop-list')) return;
+  closeAislePop();
+  const sp = $('.sug-pop'); if (sp && sp._input) { sp.style.top = ''; sp.style.bottom = ''; placePop(sp, sp._input, sp.offsetHeight); }
+}, true);
+window.addEventListener('resize', () => { const sp = $('.sug-pop'); if (sp && sp._input) { sp.style.top = ''; sp.style.bottom = ''; placePop(sp, sp._input, sp.offsetHeight); } });
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.aisle-pop, .ed-aisle-btn')) closeAislePop(); });
 
 /* ---------- Toast et confirmation ---------- */
 let toastTimer;
@@ -747,7 +836,7 @@ async function copyList() {
   toast(ok ? 'Liste copiée : colle-la dans un message' : 'Copie impossible sur cet appareil');
 }
 
-function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, pu: 'pers', parts: [{ name: '', rows: [emptyRow()] }], st: '', tips: '' }; }
+function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, pu: 'pers', parts: [{ name: '', rows: [emptyRow()] }], steps: [''], tips: '', imgNote: '' }; }
 function emptyRow() { return { name: '', q: '', u: 'g', a: 'au' }; }
 /* Regroupe les ingrédients par partie (4e élément), dans l'ordre d'apparition */
 function groupIngredients(list) {
@@ -756,7 +845,7 @@ function groupIngredients(list) {
   return parts;
 }
 function draftFrom(r) {
-  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, pu: r.pu || 'pers', parts: groupIngredients(r.i).map((g) => ({ name: g.name, rows: g.items.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })) })), st: stepsOf(r).join('\n'), tips: tipsOf(r).join('\n') };
+  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, pu: r.pu || 'pers', parts: groupIngredients(r.i).map((g) => ({ name: g.name, rows: g.items.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })) })), steps: stepsOf(r).length ? stepsOf(r).slice() : [''], tips: tipsOf(r).join('\n'), imgNote: r.imgNote || '' };
 }
 function saveDraft() {
   readEditorForm();
@@ -780,10 +869,12 @@ function saveDraft() {
     return line;
   });
   const lines = (txt) => String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean);
-  const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 200), pu: d.pu || 'pers', i, st: lines(d.st), tips: lines(d.tips) };
+  const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 200), pu: d.pu || 'pers', i, st: d.steps.map((x) => String(x || '').trim()).filter(Boolean), tips: lines(d.tips), imgNote: String(d.imgNote || '').trim() };
   let rec;
   if (ui.sheet.base) {
     // Recette du carnet modifiée à la main : la version modifiée est gardée sur le téléphone
+    const prev = state.overrides[ui.sheet.editId] || {};
+    if (prev.imgPrompt) fields.imgPrompt = prev.imgPrompt;
     state.overrides[ui.sheet.editId] = fields;
     rec = recipeById(ui.sheet.editId);
   } else {
@@ -884,21 +975,36 @@ function handle(act, v, el) {
     }
     case 'ed-rm-part': readEditorForm(); if (ui.sheet.draft.parts.length > 1) ui.sheet.draft.parts.splice(+v, 1); renderOverlays(); return;
     case 'ed-save': saveDraft(); return;
+    case 'prof-sec': ui.profOpen = ui.profOpen || {}; ui.profOpen[v] = !ui.profOpen[v]; render(); return;
+    case 'ed-add-step': readEditorForm(); ui.sheet.draft.steps.push(''); renderOverlays(); setTimeout(() => { const t = $('#ed-st-' + (ui.sheet.draft.steps.length - 1)); if (t) { t.focus(); t.scrollIntoView({ block: 'center' }); } }, 50); return;
+    case 'ed-rm-step': readEditorForm(); ui.sheet.draft.steps.splice(+v, 1); if (!ui.sheet.draft.steps.length) ui.sheet.draft.steps.push(''); renderOverlays(); return;
+    case 'ed-mv-step': { readEditorForm(); const st = ui.sheet.draft.steps; const k = +v; [st[k - 1], st[k]] = [st[k], st[k - 1]]; renderOverlays(); return; }
+    case 'ed-aisle': openAislePop(el); return;
+    case 'pick-photo': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); { const f = $('#photo-file'); if (f) f.click(); } return;
+    case 'rm-own-photo': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); removeOwnPhoto(v); return;
+    case 'tips-edit': ui.sheet.tipsEdit = true; renderOverlays(); setTimeout(() => { const t = $('#tips-text'); if (t) { t.focus(); t.scrollIntoView({ block: 'center' }); } }, 50); return;
+    case 'tips-cancel': ui.sheet.tipsEdit = false; renderOverlays(); return;
+    case 'tips-save': saveTips(v); return;
     case 'rec-filter': ui.recFilter = v; break;
     case 'stars': { const n = noteOf(v.split(':')[0]); const k = +v.split(':')[1]; n.stars = n.stars === k ? 0 : k; break; }
     case 'cooked-today': { const n = noteOf(v); n.last = todayIso(); n.lastWeek = false; toast('Date enregistrée'); break; }
-    case 'ai-open': ui.sheet = { kind: 'ai', q: v || ui.query || '', persons: p.persons, status: 'idle' }; renderOverlays(); return;
+    case 'ai-open': ui.sheet = { kind: 'ai', q: v || ui.query || '', persons: p.persons, status: 'idle', mode: (v || ui.query) ? 'write' : null }; renderOverlays(); return;
+    case 'ai-mode': readAiInput(); ui.sheet.mode = v; ui.sheet.status = 'idle'; renderOverlays(); setTimeout(() => { const f = $('#ai-link') || $('#ai-q'); if (f) f.focus(); }, 60); return;
+    case 'ai-mode-back': readAiInput(); ui.sheet.mode = null; ui.sheet.status = 'idle'; renderOverlays(); return;
+    case 'ai-adjust': ui.sheet.status = 'adjust'; ui.sheet.keepScroll = false; renderOverlays(); setTimeout(() => { const f = $('#ai-adjust'); if (f) f.focus(); }, 60); return;
+    case 'ai-adjust-cancel': readAiInput(); ui.sheet.status = 'done'; renderOverlays(); return;
+    case 'ai-adjust-go': aiAdjust(); return;
     case 'ai-persons': ui.sheet.persons = clampInt(ui.sheet.persons + +v, 1, 20); readAiInput(); renderOverlays(); return;
     case 'ai-generate': readAiInput(); aiGenerate(); return;
     case 'ai-again': aiGenerate(true); return;
-    case 'ai-back': ui.sheet = { kind: 'ai', q: ui.sheet.q, persons: ui.sheet.persons, status: 'idle' }; renderOverlays(); return;
+    case 'ai-back': ui.sheet = { kind: 'ai', q: ui.sheet.q, link: ui.sheet.link, mode: ui.sheet.mode || 'write', persons: ui.sheet.persons, status: 'idle' }; renderOverlays(); return;
     case 'ai-save': aiSave(false); return;
     case 'ai-save-menu': aiSave(true); return;
     case 'ideas-refresh': refreshIdeas(); return;
     case 'idea-open': openIdea(+v); return;
     case 'save-key': { readKeyForm(); if (!state.ai.provider) state.ai.provider = aiProvider(); save(); toast(aiReady() ? 'Réglages enregistrés' : 'Clé supprimée'); if (aiProvider() === 'openai' && openaiReady()) testKey(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
     case 'test-key': testKey(); return;
-    case 'gen-image': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); generateImageFor(v, true); return;
+    case 'gen-image': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); generateImageFor(v, true, ui.sheet && ui.sheet.kind === 'editor' ? ui.sheet.draft.imgNote : undefined); return;
     case 'next-photo': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); nextPhoto(v); return;
     case 'search-photo': if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); searchPhotoFor(v, true); return;
     case 'ai-provider': readKeyForm(); state.ai.provider = v; save(); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break;
@@ -974,12 +1080,11 @@ document.addEventListener('submit', (e) => {
   handleForm(form);
 });
 /* Les suggestions d'ingrédients n'apparaissent qu'à partir de 2 caractères */
-function syncSuggest(el) { if (el.dataset.suggest) { if ((el.value || '').trim().length >= 2) el.setAttribute('list', el.dataset.suggest); else el.removeAttribute('list'); } }
+function syncSuggest(el) { el.removeAttribute('list'); if ((el.value || '').trim().length >= 2) openSugPop(el); else closeSugPop(); }
 document.addEventListener('focusin', (e) => { if (e.target.dataset && e.target.dataset.suggest) syncSuggest(e.target); });
 let noteTimer;
 document.addEventListener('input', (e) => {
   if (e.target.dataset && e.target.dataset.suggest) syncSuggest(e.target);
-  if (e.target.id === 'ai-q') { const h = $('.ai-tiktok'); if (h) h.style.display = findTikTok(e.target.value) ? '' : 'none'; }
   if (e.target.id === 'note-text') {
     const n = noteOf(e.target.dataset.v); n.text = e.target.value;
     clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
@@ -999,7 +1104,9 @@ function setupBackButton() {
     if (!App) return;
     App.addListener('backButton', () => {
       if (ui.dialog) { ui.dialog = null; renderOverlays(); return; }
+      if (ui.sheet && ui.sheet.kind === 'ai' && ui.sheet.status === 'adjust') { handle('ai-adjust-cancel'); return; }
       if (ui.sheet && ui.sheet.kind === 'ai' && ui.sheet.status === 'done') { handle('ai-back'); return; }
+      if (ui.sheet && ui.sheet.kind === 'ai' && ui.sheet.mode && ui.sheet.status !== 'loading') { handle('ai-mode-back'); return; }
       if (ui.sheet) { ui.sheet = null; renderOverlays(); return; }
       if (!state.onboarded && state.obStep > 0) { handle('ob-prev'); return; }
       if (state.onboarded && ui.tab !== 'decouvrir') { setTab('decouvrir'); return; }
@@ -1011,3 +1118,11 @@ function setupBackButton() {
 loadImages().then(() => render());
 render(true);
 setupBackButton();
+/* Fin de l'animation d'ouverture */
+(function endIntro() {
+  const el = document.getElementById('intro');
+  if (!el) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 500); }, reduce ? 300 : 2300);
+  el.addEventListener('click', () => { el.classList.add('out'); setTimeout(() => el.remove(), 450); });
+})();

@@ -60,6 +60,7 @@ function storeGenerated(id, src) {
 }
 function photoList(r) {
   const list = [];
+  if (genCache['own:' + r.id]) list.push({ src: genCache['own:' + r.id], own: true });
   if (genCache[r.id]) list.push({ src: genCache[r.id], ai: true });
   else if (!r.custom && typeof GEN_IMAGES !== 'undefined' && GEN_IMAGES.includes(r.id)) list.push({ src: (window.IMG_BASE || 'img/') + r.id + '.jpg', ai: true });
   const own = state.photos && state.photos[r.id];
@@ -130,7 +131,7 @@ async function dishDescription(r) {
   } catch (e) { /* on se rabat sur le nom */ }
   return r.n;
 }
-async function generateImageFor(id, manual) {
+async function generateImageFor(id, manual, note) {
   const r = recipeById(id);
   if (!r || imgPending[id]) return;
   if (!openaiReady()) { if (manual) toast('Ajoute ta clé OpenAI dans le Profil pour générer des images'); return; }
@@ -142,15 +143,17 @@ async function generateImageFor(id, manual) {
     // On garde la description pour les prochaines fois (recette perso ou modifiée)
     if (r.custom) { const c = state.custom.find((x) => x.id === r.id); if (c && !c.imgPrompt) c.imgPrompt = what; }
     else if (r.edited && state.overrides[r.id] && !state.overrides[r.id].imgPrompt) state.overrides[r.id].imgPrompt = what;
-    const src = await openaiImage(`${what}. ${IMAGE_STYLE}`);
+    note = String(note === undefined ? (r.imgNote || '') : note).trim();
+    const src = await openaiImage(`${what}.${note ? ' Specific instructions from the cook (follow them, they may be in French): ' + note + '.' : ''} ${IMAGE_STYLE}`);
     storeGenerated(id, src);
-    state.photos = state.photos || {}; setPhotoIdx(id, 0);
+    state.photos = state.photos || {}; setPhotoIdx(id, genCache['own:' + id] ? 1 : 0);
     toast('Image prête');
   } catch (e) { toast(e.message || 'Image impossible pour le moment'); }
   imgPending[id] = false;
   render();
 }
 function creditHtml(p) {
+  if (p.own) return 'Ma photo';
   if (p.ai) return 'Image générée par IA, illustration non contractuelle';
   return `Photo : ${esc(p.author)} · ${esc(p.license)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>`;
 }
@@ -170,10 +173,32 @@ function heroHtml(r) {
 /* ---------- Étapes et astuces ---------- */
 function stepsOf(r) { if (r.edited || r.custom) return r.st || []; return (typeof DETAILS !== 'undefined' && DETAILS[r.id] && DETAILS[r.id].st) || r.st || []; }
 function tipsOf(r) { if (r.edited || r.custom) return r.tips || []; return (typeof DETAILS !== 'undefined' && DETAILS[r.id] && DETAILS[r.id].tips) || r.tips || []; }
-function stepsHtml(r) {
+function stepsHtml(r, sh) {
   const st = stepsOf(r); const tips = tipsOf(r);
+  const editable = sh && sh.kind === 'recipe' && !r.preview;
+  let tipsBlock = '';
+  if (editable && sh.tipsEdit) {
+    tipsBlock = `<div class="tips"><div class="serif italic" style="font-size:18px;color:var(--accent)">Astuces</div>
+      <textarea class="input tips-text" id="tips-text" placeholder="Une astuce par ligne">${esc(tips.join('\n'))}</textarea>
+      <div class="row" style="gap:10px;justify-content:flex-end"><button class="btn small-btn" data-act="tips-cancel">Annuler</button><button class="btn primary small-btn" data-act="tips-save" data-v="${r.id}">Enregistrer</button></div></div>`;
+  } else if (tips.length || editable) {
+    tipsBlock = `<div class="tips"><div class="row between"><span class="serif italic" style="font-size:18px;color:var(--accent)">Astuces</span>${editable ? `<button class="icon-btn tips-pen" data-act="tips-edit" aria-label="Modifier les astuces"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</div>${tips.length ? tips.map((t) => `<p>${esc(t)}</p>`).join('') : '<p class="muted">Pas encore d’astuce : touche le crayon pour en ajouter une.</p>'}</div>`;
+  }
   return `${st.length ? `<div class="section-title" style="margin-top:6px">Préparation</div><ol class="steps">${st.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>` : ''}
-    ${tips.length ? `<div class="tips"><div class="serif italic" style="font-size:18px;color:var(--accent)">Astuces</div>${tips.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` : ''}`;
+    ${tipsBlock}`;
+}
+/* Crayon des astuces : modification directe depuis la fiche */
+function saveTips(id) {
+  const r = recipeById(id); const t = $('#tips-text');
+  if (!r || !t) return;
+  const tips = t.value.split('\n').map((x) => x.trim()).filter(Boolean);
+  if (r.custom) { const c = state.custom.find((x) => x.id === id); if (c) c.tips = tips; }
+  else {
+    const cur = state.overrides[id];
+    if (cur) cur.tips = tips;
+    else { const b = r; state.overrides[id] = { n: b.n, e: b.e, type: b.type, t: b.t, d: b.d, p: b.p, pu: b.pu || 'pers', i: b.i.map((x) => x.slice()), st: stepsOf(b).slice(), tips }; }
+  }
+  save(); ui.sheet.tipsEdit = false; toast('Astuces enregistrées'); render();
 }
 
 /* ---------- Carte de recette (grilles) ---------- */
@@ -371,7 +396,6 @@ async function aiJSON(system, prompt, temperature) {
   return aiProvider() === 'openai' ? openaiJSON(system, prompt) : geminiJSON(system, prompt, temperature);
 }
 
-function readAiInput() { const el = $('#ai-q'); if (el && ui.sheet) ui.sheet.q = el.value; }
 function constraintsText() {
   const p = state.profile;
   const allergies = p.allergies.map((a) => (ALLERGENS.find((x) => x.id === a) || {}).name).filter(Boolean);
@@ -381,43 +405,72 @@ function constraintsText() {
   return { allergies, diet: diet && diet.id !== 'aucun' ? diet.name : '', dislikes, eq, maxTime: p.maxTime, level: (LEVELS.find((l) => l.id === p.level) || {}).n };
 }
 function aiSheet(sh) {
-  if (sh.status === 'done' && sh.recipe) return previewSheet(sh, sh.recipe);
-  const head = `<div class="sheet-head"><span class="grab" aria-hidden="true"></span><h2 style="font-size:22px">Générer une recette</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>`;
+  if ((sh.status === 'done' || sh.status === 'adjust') && sh.recipe) return previewSheet(sh, sh.recipe);
+  const head = (title, back) => `<div class="sheet-head">${back ? `<button class="icon-btn" data-act="${back}" aria-label="Retour" style="margin-left:-12px">${ICONS.back}</button>` : ''}<h2 style="font-size:22px;flex:1">${title}</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>`;
   if (!aiReady()) {
-    return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}<div class="sheet-body">
+    return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head('Générer une recette')}<div class="sheet-body">
       <p style="margin:0;line-height:1.5">Pour créer des recettes avec l’IA, l’application a besoin d’une clé : celle de ton service compatible OpenAI, ou une clé Gemini gratuite.</p>
       ${keyForm()}</div></div>`;
   }
+  if (sh.status === 'loading') {
+    const msg = { tiktok: ['Lecture de la vidéo TikTok…', 'Récupération de sa description.'], site: ['Lecture de la page…', 'Récupération de la recette.'] }[sh.step] || ['Recette en préparation…', 'Quelques secondes.'];
+    return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head('Générer une recette')}
+      <div class="sheet-body"><div class="empty" style="padding:80px 10px"><span class="spinner" aria-hidden="true"></span><span class="big">${msg[0]}</span><span>${msg[1]}</span></div></div></div>`;
+  }
+  // 1. Choix de la méthode
+  if (!sh.mode) {
+    const choice = (mode, icon, title, desc) => `<button class="ai-choice" data-act="ai-mode" data-v="${mode}"><span class="ai-choice-ic" aria-hidden="true">${icon}</span><span><span class="ai-choice-t">${title}</span><span class="ai-choice-d">${desc}</span></span></button>`;
+    return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head('Générer une recette')}
+      <div class="sheet-body">
+        <p class="muted" style="margin:0">D’où part ta recette ?</p>
+        ${choice('tiktok', '♪', 'Depuis une vidéo TikTok', 'Colle le lien : l’appli lit la description de la vidéo (sans la regarder).')}
+        ${choice('site', '🔗', 'Depuis Marmiton ou un site de recettes', 'Colle le lien de la page : la recette est reprise et mise en forme.')}
+        ${choice('write', '✎', 'Écrire ma demande', 'Décris ce que tu veux avec tous les détails, ou colle une recette entière à mettre en forme.')}
+      </div></div>`;
+  }
+  // 2. Saisie selon la méthode
   const c = constraintsText();
   const recap = [c.allergies.length ? 'sans ' + c.allergies.join(', ').toLowerCase() : '', c.diet, c.dislikes.length ? 'en évitant ' + c.dislikes.join(', ').toLowerCase() : '', c.maxTime ? 'en moins de ' + c.maxTime + ' min' : ''].filter(Boolean).join(' · ');
-  let body = '';
-  if (sh.status === 'loading') {
-    body = `<div class="empty" style="padding:50px 10px"><span class="spinner" aria-hidden="true"></span><span class="big">${sh.step === 'tiktok' ? 'Lecture de la vidéo TikTok…' : 'Recette en préparation…'}</span><span>${sh.step === 'tiktok' ? 'Récupération de sa description.' : 'Quelques secondes.'}</span></div>`;
-  } else {
-    body = `<div><label class="lbl" for="ai-q">Quelle recette veux-tu ?</label>
-      <textarea class="input ai-q" id="ai-q" placeholder="Décris la recette que tu veux, colle une recette entière à remettre en forme ou à modifier, ou un lien TikTok…">${esc(sh.q)}</textarea>
-      <p class="muted small ai-tiktok" style="margin:6px 0 0;${findTikTok(sh.q) ? '' : 'display:none'}">Lien TikTok détecté : la description de la vidéo sera lue (la vidéo n’est pas regardée).</p>
+  const titles = { tiktok: 'Depuis TikTok', site: 'Depuis un site', write: 'Écrire ma demande' };
+  let fields = '';
+  if (sh.mode === 'write') {
+    fields = `<div><label class="lbl" for="ai-q">Ta demande</label>
+      <textarea class="input ai-q" id="ai-q" placeholder="Décris la recette que tu veux avec tous les détails (ingrédients, envies, temps…), ou colle une recette entière à remettre en forme ou à modifier.">${esc(sh.q)}</textarea>
       <details class="help" style="margin-top:6px"><summary>Exemples</summary>
         <ul style="padding-left:18px;margin:4px 0;line-height:1.5"><li>« Un plat réconfortant avec des lentilles et du lait de coco, prêt en 30 minutes »</li>
-        <li>Une recette copiée depuis un site ou un message : elle sera mise en forme, ses quantités gardées</li>
-        <li>« La même recette mais sans four et pour 2 » sous une recette collée</li>
-        <li>Un lien https://www.tiktok.com/… ou https://vm.tiktok.com/…</li></ul></details></div>
+        <li>Une recette copiée depuis un message : elle sera mise en forme, ses quantités gardées</li>
+        <li>« La même recette mais sans four et pour 2 » sous une recette collée</li></ul></details></div>`;
+  } else {
+    const ph = sh.mode === 'tiktok' ? 'https://vm.tiktok.com/… ou https://www.tiktok.com/@…/video/…' : 'https://www.marmiton.org/recettes/…';
+    fields = `<div><label class="lbl" for="ai-link">${sh.mode === 'tiktok' ? 'Lien de la vidéo TikTok' : 'Lien de la recette (Marmiton, 750g, Cuisine AZ…)'}</label>
+        <input class="input" id="ai-link" type="url" inputmode="url" value="${esc(sh.link || '')}" placeholder="${ph}" autocomplete="off"></div>
+      <div><label class="lbl" for="ai-q">Consignes en plus (facultatif)</label>
+        <textarea class="input ai-q small-q" id="ai-q" placeholder="Ex. : sans four, pour 2, plus épicé, remplacer la crème…">${esc(sh.q)}</textarea></div>`;
+  }
+  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head(titles[sh.mode], 'ai-mode-back')}
+    <div class="sheet-body has-foot">${fields}
       <div class="row between"><span>Pour</span>${stepper('ai-persons', sh.persons, 'Nombre de personnes')}</div>
       ${recap ? `<p class="muted small" style="margin:0">Tes critères seront respectés : ${esc(recap)}.</p>` : ''}
-      ${sh.status === 'error' ? `<p class="card-warn" style="margin:0;font-size:14px">${esc(sh.error)}</p>` : ''}`;
-  }
-  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="Générer une recette">${head}
-    <div class="sheet-body has-foot">${body}</div>
-    <div class="sheet-foot"><button class="btn primary" data-act="ai-generate" ${sh.status === 'loading' ? 'disabled' : ''}>${ICONS.spark} Générer la recette</button></div></div>`;
+      ${sh.status === 'error' ? `<p class="card-warn" style="margin:0;font-size:14px">${esc(sh.error)}</p>` : ''}
+    </div>
+    <div class="sheet-foot"><button class="btn primary" data-act="ai-generate">${ICONS.spark} Générer la recette</button></div></div>`;
 }
 function previewSheet(sh, r) {
   const reason = hiddenReason(r);
   const dis = dislikedIn(r);
+  const adjusting = sh.status === 'adjust';
   return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
-    <div class="sheet-head"><span class="grab" aria-hidden="true"></span>
-      <button class="link" data-act="ai-back" style="text-decoration:none">← Modifier la demande</button>
+    <div class="sheet-head">
+      <button class="icon-btn" data-act="ai-back" aria-label="Revenir à la demande" style="margin-left:-12px">${ICONS.back}</button>
+      <span class="muted small" style="flex:1">${sh.versions > 1 ? 'Version ' + sh.versions : ''}</span>
       <button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>
     <div class="sheet-body has-foot">
+      ${adjusting ? `<div class="adjust-box">
+        <label class="lbl" for="ai-adjust">Que veux-tu changer dans cette recette ?</label>
+        <textarea class="input ai-q small-q" id="ai-adjust" placeholder="Ex. : remplace la crème par du lait de coco, ajoute des champignons, pour 4 personnes, moins sucré…">${esc(sh.adjustText || '')}</textarea>
+        <p class="muted small" style="margin:0">La recette ci-dessous sert de base : seuls tes changements sont appliqués.</p>
+        <div class="row" style="gap:10px"><button class="btn" style="flex:1" data-act="ai-adjust-cancel">Annuler</button><button class="btn primary" style="flex:1" data-act="ai-adjust-go">${ICONS.spark} Appliquer</button></div>
+      </div>` : ''}
       ${heroHtml(r)}
       <div class="kicker">${esc((TYPES.find((t) => t.id === r.type) || {}).name || '')} · Proposée par l’IA</div>
       <h2>${esc(r.n)}</h2>
@@ -431,11 +484,12 @@ function previewSheet(sh, r) {
       ${stepsHtml(r)}
       <p class="muted small" style="margin:0">Recette générée automatiquement : vérifie les cuissons et les quantités avant de te lancer.</p>
     </div>
-    <div class="sheet-foot" style="flex-wrap:wrap">
-      <button class="btn" data-act="ai-again" style="flex:1 1 100%">Une autre version</button>
+    ${adjusting ? '' : `<div class="sheet-foot" style="flex-wrap:wrap">
+      <button class="btn" data-act="ai-again">Une autre version</button>
+      <button class="btn" data-act="ai-adjust">Modifier ma demande</button>
       <button class="btn" data-act="ai-save">Enregistrer</button>
-      <button class="btn primary" data-act="ai-save-menu">Enregistrer et ajouter au menu</button>
-    </div></div>`;
+      <button class="btn primary" data-act="ai-save-menu">Enregistrer + menu</button>
+    </div>`}</div>`;
 }
 
 const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/';
@@ -524,103 +578,159 @@ async function testKey() {
 }
 
 const AISLE_IDS = () => AISLES.map((a) => a.id);
-async function aiGenerate(again) {
-  const sh = ui.sheet;
-  if (!sh || sh.kind !== 'ai') return;
-  if (!String(sh.q || '').trim()) { toast('Écris la recette que tu veux'); return; }
-  sh.status = 'loading'; sh.recipe = null; renderOverlays();
+const RECIPE_SCHEMA = (persons) => `{
+  "nom": "nom de la recette en français",
+  "emoji": "un seul emoji représentant le plat",
+  "type": "plat" | "soupe" | "salade" | "dessert" | "brunch",
+  "temps_min": nombre de minutes au total,
+  "difficulte": 1 | 2 | 3,
+  "portions": nombre (celui de la recette fournie s'il est indiqué, sinon ${persons}),
+  "unite_portions": "personnes" | "pièces" | "parts" (pièces pour ce qui se compte à l'unité : cookies, muffins, crêpes… ; parts pour un gâteau ou une tarte),
+  "equipement": liste parmi ["plaques", "four", "micro", "mixeur", "airfryer"],
+  "ingredients": [ { "partie": "nom de la partie si la recette en a plusieurs (ex. : Pâte, Garniture, Crumble), sinon chaîne vide", "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee" ou une autre unité courte en texte, "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
+  "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
+  "astuces": [ "1 à 3 astuces utiles" ],
+  "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat (ex. : gnocchi tomato sauce)",
+  "image_description": "une phrase en anglais (15 à 30 mots) décrivant le plat fini dans l'assiette",
+  "remarque": "adaptation ou information complétée, sinon chaîne vide"
+}
+Rayons : fl fruits et légumes, bp boucherie et poissonnerie, cr crèmerie et frais, bo boulangerie, ep épicerie salée, es épices et condiments, su épicerie sucrée, sg surgelés, bs boissons, au autres.
+Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tranches…).`;
+function constraintsPrompt() {
   const c = constraintsText();
-  const names = [...new Set(Object.values(INGREDIENTS).map((i) => i.n))].join(', ');
-  const system = 'Tu es un chef cuisinier français qui écrit des recettes familiales claires, fiables et détaillées pour une application de menus et de liste de courses. Tu réponds uniquement avec un objet JSON valide, sans aucun texte autour.';
-  // Lien TikTok : on lit la description de la vidéo (sans la regarder)
-  let tiktok = null;
-  const link = findTikTok(sh.q);
-  if (link) {
-    sh.step = 'tiktok'; renderOverlays();
-    try { tiktok = await tiktokCaption(link); }
-    catch (e) { sh.status = 'error'; sh.step = ''; sh.error = e.message; if (ui.sheet === sh) renderOverlays(); return; }
-    sh.step = ''; if (ui.sheet === sh) renderOverlays();
-  }
-  const prompt = `Demande de l'utilisateur (un nom de plat, une description détaillée, ou une recette complète copiée à remettre en forme ou à modifier) :
-"""
-${sh.q}
-"""
-${tiktok ? `Description de la vidéo TikTok${tiktok.author ? ' de ' + tiktok.author : ''} (lien fourni par l'utilisateur ; seule cette description est disponible, pas la vidéo) :
-"""
-${tiktok.caption}
-"""
-` : ''}${again ? 'Propose une version différente de la précédente.\n' : ''}
-Si une recette complète est fournie (texte collé ou description de la vidéo), reprends fidèlement ses ingrédients, quantités et étapes en les mettant en forme ; n'invente pas ce qui y est déjà précisé et applique les modifications demandées. Si des informations manquent (quantités, temps, étapes), complète-les de façon réaliste et signale-le en une phrase dans "remarque".
-Nombre de personnes : ${sh.persons}, sauf si la recette fournie indique son propre nombre de portions ou de pièces : garde alors le sien.
-
-Contraintes de l'utilisateur, à respecter absolument :
+  return `Contraintes de l'utilisateur, à respecter absolument :
 - Ne jamais utiliser d'ingrédient contenant : ${c.allergies.length ? c.allergies.join(', ') : 'aucune allergie'}.
 - Régime : ${c.diet || 'aucun régime particulier'}.
 - Éviter si possible : ${c.dislikes.length ? c.dislikes.join(', ') : 'rien'}.
 - Temps total maximum : ${c.maxTime ? c.maxTime + ' minutes' : 'pas de limite'}.
 - Niveau en cuisine : ${c.level || 'intermédiaire'}.
 - Équipement disponible uniquement : ${c.eq.join(', ') || 'plaques de cuisson'}.
-Si la demande est incompatible avec ces contraintes, adapte la recette (par exemple une version végétarienne) et explique l'adaptation dans "remarque".
+Si la demande est incompatible avec ces contraintes, adapte la recette (par exemple une version végétarienne) et explique l'adaptation dans "remarque".`;
+}
+const AI_SYSTEM = 'Tu es un chef cuisinier français qui écrit des recettes familiales claires, fiables et détaillées pour une application de menus et de liste de courses. Tu réponds uniquement avec un objet JSON valide, sans aucun texte autour.';
+function readAiInput() {
+  if (!ui.sheet) return;
+  const q = $('#ai-q'); if (q) ui.sheet.q = q.value;
+  const l = $('#ai-link'); if (l) ui.sheet.link = l.value.trim();
+  const a = $('#ai-adjust'); if (a) ui.sheet.adjustText = a.value;
+}
+/* Transforme la réponse JSON de l'IA en recette de l'appli */
+function recipeFromAI(j, sh, extra) {
+  const typeIds = TYPES.map((t) => t.id);
+  const units = ['g', 'ml', 'pc', 'sachet', 'cs', 'cc', 'pincee'];
+  const ings = (Array.isArray(j.ingredients) ? j.ingredients : []).filter((x) => x && x.nom).map((x) => {
+    let key = findIngredientByName(x.nom);
+    if (!key) {
+      key = 'x_' + norm(x.nom).replace(/[^a-z0-9]+/g, '_');
+      if (!state.customIngs[key]) state.customIngs[key] = { n: x.nom.charAt(0).toUpperCase() + x.nom.slice(1), a: AISLE_IDS().includes(x.rayon) ? x.rayon : 'au' };
+    }
+    const q = parseFloat(String(x.quantite).replace(',', '.'));
+    const u = String(x.unite || '').trim();
+    const line = [key, isFinite(q) && q > 0 ? q : 1, units.includes(u) ? u : (u && u.length <= 15 ? unitFromLabel(u) : 'pc')];
+    if (x.partie && String(x.partie).trim()) line.push(String(x.partie).trim());
+    return line;
+  });
+  if (!j.nom || !ings.length) throw new Error('La recette reçue est incomplète. Réessaie.');
+  return Object.assign({
+    id: 'ai_' + uid(), custom: true, ai: true, preview: true,
+    n: String(j.nom).trim(), e: String(j.emoji || '🍽️').trim().slice(0, 4),
+    type: typeIds.includes(j.type) ? j.type : 'plat',
+    t: clampInt(parseInt(j.temps_min, 10) || 30, 1, 999), d: [1, 2, 3].includes(+j.difficulte) ? +j.difficulte : 1,
+    pu: ({ pieces: 'pieces', parts: 'parts' })[norm(j.unite_portions)] || 'pers',
+    p: parseInt(j.portions, 10) > 0 ? clampInt(parseInt(j.portions, 10), 1, 200) : sh.persons, s: [],
+    eq: (Array.isArray(j.equipement) ? j.equipement : []).filter((e) => EQUIPMENT.some((x) => x.id === e)),
+    i: ings,
+    st: (Array.isArray(j.etapes) ? j.etapes : []).map(String).filter(Boolean),
+    tips: (Array.isArray(j.astuces) ? j.astuces : []).map(String).filter(Boolean),
+    imgQuery: String(j.image_query || '').slice(0, 80),
+    imgPrompt: String(j.image_description || '').slice(0, 300),
+    aiNote: String(j.remarque || '').trim()
+  }, extra || {});
+}
+/* Recette de l'appli → même format JSON que celui demandé à l'IA (pour l'ajuster) */
+function recipeToAIJSON(r) {
+  return {
+    nom: r.n, emoji: r.e, type: r.type, temps_min: r.t, difficulte: r.d, portions: r.p,
+    unite_portions: { pers: 'personnes', pieces: 'pièces', parts: 'parts' }[r.pu || 'pers'], equipement: r.eq || [],
+    ingredients: r.i.map(([k, q, u, g]) => ({ partie: g || '', nom: ing(k).n, quantite: q, unite: u, rayon: ing(k).a || 'au' })),
+    etapes: r.st || [], astuces: r.tips || [], image_query: r.imgQuery || '', image_description: r.imgPrompt || '', remarque: ''
+  };
+}
+async function aiGenerate(again) {
+  const sh = ui.sheet;
+  if (!sh || sh.kind !== 'ai') return;
+  readAiInput();
+  const mode = sh.mode || 'write';
+  const text = String(sh.q || '').trim();
+  const link = mode === 'write' ? (findTikTok(text) || null) : (sh.link || '');
+  if (mode !== 'write' && !link) { toast('Colle d’abord le lien'); return; }
+  if (mode === 'write' && !text) { toast('Écris ta demande'); return; }
+  sh.status = 'loading'; sh.recipe = null; renderOverlays();
+  let source = null; let sourceText = '';
+  try {
+    if (link && (mode === 'tiktok' || findTikTok(link))) {
+      sh.step = 'tiktok'; renderOverlays();
+      const t = await tiktokCaption(link);
+      source = { url: link, label: 'Vidéo TikTok' + (t.author ? ' de ' + t.author : '') };
+      sourceText = `Description de la vidéo TikTok${t.author ? ' de ' + t.author : ''} (seule cette description est disponible, pas la vidéo) :\n"""\n${t.caption}\n"""`;
+    } else if (link) {
+      sh.step = 'site'; renderOverlays();
+      const w = await webRecipe(link);
+      source = { url: link, label: w.site + (w.name ? ' : ' + w.name : '') };
+      sourceText = `Recette trouvée sur la page ${w.site} (à reprendre fidèlement) :\n"""\n${w.text}\n"""`;
+    }
+  } catch (e) { sh.status = 'error'; sh.step = ''; sh.error = e.message; if (ui.sheet === sh) renderOverlays(); return; }
+  sh.step = ''; if (ui.sheet === sh) renderOverlays();
+  const names = [...new Set(Object.values(INGREDIENTS).map((i) => i.n))].join(', ');
+  const prompt = `${mode === 'write' ? `Demande de l'utilisateur (un nom de plat, une description détaillée, ou une recette complète copiée à remettre en forme ou à modifier) :\n"""\n${text}\n"""` : `Consignes de l'utilisateur : ${text || 'aucune, reprends simplement la recette'}`}
+${sourceText}
+${again ? 'Propose une version différente de la précédente.' : ''}
+Si une recette complète est fournie (texte collé, page web ou description de vidéo), reprends fidèlement ses ingrédients, quantités et étapes en les mettant en forme ; n'invente pas ce qui y est déjà précisé et applique les consignes. Si des informations manquent (quantités, temps, étapes), complète-les de façon réaliste et signale-le en une phrase dans "remarque".
+Nombre de personnes : ${sh.persons}, sauf si la recette fournie indique son propre nombre de portions ou de pièces : garde alors le sien.
+
+${constraintsPrompt()}
 
 Pour les ingrédients, réutilise exactement ces noms quand c'est le même produit : ${names}.
 
 Réponds avec ce JSON :
-{
-  "nom": "nom de la recette en français",
-  "emoji": "un seul emoji représentant le plat",
-  "type": "plat" | "soupe" | "salade" | "dessert" | "brunch",
-  "temps_min": nombre de minutes au total,
-  "difficulte": 1 | 2 | 3,
-  "portions": nombre (celui de la recette fournie s'il est indiqué, sinon ${sh.persons}),
-  "unite_portions": "personnes" | "pièces" | "parts" (pièces pour ce qui se compte à l'unité : cookies, muffins, crêpes… ; parts pour un gâteau ou une tarte),
-  "equipement": liste parmi ["plaques", "four", "micro", "mixeur", "airfryer"],
-  "ingredients": [ { "partie": "nom de la partie si la recette en a plusieurs (ex. : Pâte, Garniture, Crumble), sinon chaîne vide", "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
-  "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
-  "astuces": [ "1 à 3 astuces utiles" ],
-  "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat (ex. : gnocchi tomato sauce)",
-  "image_description": "une phrase en anglais (15 à 30 mots) décrivant le plat fini dans l'assiette, ex. : creamy mushroom risotto with parmesan shavings and chopped parsley",
-  "remarque": "adaptation éventuelle, sinon chaîne vide"
-}
-Rayons : fl fruits et légumes, bp boucherie et poissonnerie, cr crèmerie et frais, bo boulangerie, ep épicerie salée, es épices et condiments, su épicerie sucrée, sg surgelés, bs boissons, au autres.
-Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tranches…). Quantités réalistes pour ${sh.persons} personnes.`;
+${RECIPE_SCHEMA(sh.persons)}`;
   try {
-    const j = await aiJSON(system, prompt, again ? 1 : 0.7);
-    const typeIds = TYPES.map((t) => t.id);
-    const units = ['g', 'ml', 'pc', 'sachet', 'cs', 'cc', 'pincee'];
-    const ings = (Array.isArray(j.ingredients) ? j.ingredients : []).filter((x) => x && x.nom).map((x) => {
-      let key = findIngredientByName(x.nom);
-      if (!key) {
-        key = 'x_' + norm(x.nom).replace(/[^a-z0-9]+/g, '_');
-        if (!state.customIngs[key]) state.customIngs[key] = { n: x.nom.charAt(0).toUpperCase() + x.nom.slice(1), a: AISLE_IDS().includes(x.rayon) ? x.rayon : 'au' };
-      }
-      const q = parseFloat(String(x.quantite).replace(',', '.'));
-      const line = [key, isFinite(q) && q > 0 ? q : 1, units.includes(x.unite) ? x.unite : 'pc'];
-      if (x.partie && String(x.partie).trim()) line.push(String(x.partie).trim());
-      return line;
-    });
-    if (!j.nom || !ings.length) throw new Error('La recette reçue est incomplète. Réessaie.');
-    sh.recipe = {
-      id: 'ai_' + uid(), custom: true, ai: true, preview: true,
-      n: String(j.nom).trim(), e: String(j.emoji || '🍽️').trim().slice(0, 4),
-      type: typeIds.includes(j.type) ? j.type : 'plat',
-      t: clampInt(parseInt(j.temps_min, 10) || 30, 1, 999), d: [1, 2, 3].includes(+j.difficulte) ? +j.difficulte : 1,
-      pu: ({ 'pièces': 'pieces', pieces: 'pieces', parts: 'parts' })[norm(j.unite_portions)] || 'pers',
-      p: parseInt(j.portions, 10) > 0 ? clampInt(parseInt(j.portions, 10), 1, 200) : sh.persons, s: [],
-      eq: (Array.isArray(j.equipement) ? j.equipement : []).filter((e) => EQUIPMENT.some((x) => x.id === e)),
-      i: ings,
-      st: (Array.isArray(j.etapes) ? j.etapes : []).map(String).filter(Boolean),
-      tips: (Array.isArray(j.astuces) ? j.astuces : []).map(String).filter(Boolean),
-      imgQuery: String(j.image_query || '').slice(0, 80),
-      imgPrompt: String(j.image_description || '').slice(0, 300),
-      aiNote: String(j.remarque || '').trim(),
-      query: sh.q.slice(0, 300),
-      source: tiktok ? { url: link, label: 'Vidéo TikTok' + (tiktok.author ? ' de ' + tiktok.author : '') } : null
-    };
-    sh.status = 'done';
-    sh.keepScroll = false;
-  } catch (e) {
-    sh.status = 'error'; sh.error = e.message || 'Erreur';
-  }
+    const j = await aiJSON(AI_SYSTEM, prompt, again ? 1 : 0.7);
+    sh.recipe = recipeFromAI(j, sh, { query: (text || link).slice(0, 300), source });
+    sh.status = 'done'; sh.versions = (sh.versions || 0) + 1; sh.keepScroll = false;
+  } catch (e) { sh.status = 'error'; sh.error = e.message || 'Erreur'; }
+  if (ui.sheet === sh) renderOverlays();
+}
+/* « Modifier ma demande » : la recette générée sert de base, seules les nouvelles consignes sont appliquées */
+async function aiAdjust() {
+  const sh = ui.sheet;
+  if (!sh || !sh.recipe) return;
+  readAiInput();
+  const changes = String(sh.adjustText || '').trim();
+  if (!changes) { toast('Écris ce que tu veux changer'); return; }
+  const base = sh.recipe;
+  sh.status = 'loading'; renderOverlays();
+  const names = [...new Set(Object.values(INGREDIENTS).map((i) => i.n))].join(', ');
+  const prompt = `Voici une recette existante (au format JSON) :
+${JSON.stringify(recipeToAIJSON(base), null, 1)}
+
+Modifie-la selon ces consignes de l'utilisateur :
+"""
+${changes}
+"""
+Garde tout ce qui n'est pas concerné par les consignes (ingrédients, quantités, étapes, nom si pertinent). Ajuste les quantités, les étapes et le temps de façon cohérente avec les changements. Résume en une phrase ce qui a changé dans "remarque".
+
+${constraintsPrompt()}
+
+Pour les ingrédients, réutilise exactement ces noms quand c'est le même produit : ${names}.
+
+Réponds avec la recette complète modifiée, dans ce JSON :
+${RECIPE_SCHEMA(base.p)}`;
+  try {
+    const j = await aiJSON(AI_SYSTEM, prompt, 0.4);
+    sh.recipe = recipeFromAI(j, sh, { query: base.query, source: base.source });
+    sh.status = 'done'; sh.versions = (sh.versions || 1) + 1; sh.adjustText = ''; sh.keepScroll = false;
+  } catch (e) { sh.status = 'adjust'; sh.recipe = base; toast(e.message || 'Modification impossible pour le moment'); }
   if (ui.sheet === sh) renderOverlays();
 }
 function aiSave(toMenu) {
@@ -709,54 +819,169 @@ Réponds avec ce JSON :
 function openIdea(i) {
   const x = (state.ideas || [])[i];
   if (!x) return;
-  ui.sheet = { kind: 'ai', q: x.nom + (x.description ? ' : ' + x.description : ''), persons: state.profile.persons, status: 'idle', ideaName: x.nom };
+  ui.sheet = { kind: 'ai', q: x.nom + (x.description ? ' : ' + x.description : ''), persons: state.profile.persons, status: 'idle', mode: 'write', ideaName: x.nom };
   renderOverlays();
   aiGenerate();
 }
 
-/* Section « Image » de l'éditeur : changer de photo, en chercher une ou en générer une */
+/* Section « Image » de l'éditeur : ma photo, photo en ligne ou image générée (avec consignes) */
 function editorImageHtml(sh) {
   const r = sh.editId ? recipeById(sh.editId) : null;
-  if (!r) return '<div><span class="lbl">Image</span><p class="muted small" style="margin:4px 0 0">Une image sera ajoutée après l’enregistrement.</p></div>';
+  if (!r) return '<div><span class="lbl">Image</span><p class="muted small" style="margin:4px 0 0">Tu pourras ajouter ta photo ou en générer une après l’enregistrement.</p></div>';
   const p = photoOf(r); const n = photoList(r).length; const pending = imgPending[r.id];
+  const own = !!genCache['own:' + r.id];
   return `<div><span class="lbl">Image</span>
     <div class="ed-image">
       <div class="ed-thumb" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${p ? `<img src="${esc(p.src)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
       <div class="ed-image-actions">
         ${pending ? '<span class="muted small">Image en cours…</span>' : `
-          ${n > 1 ? `<button type="button" class="link" data-act="next-photo" data-v="${r.id}">Autre photo (${(((state.photos[r.id] || {}).idx || 0) % n) + 1}/${n})</button>` : ''}
-          <button type="button" class="link" data-act="search-photo" data-v="${r.id}">Chercher une photo en ligne</button>
-          ${openaiReady() ? `<button type="button" class="link" data-act="gen-image" data-v="${r.id}">Générer une nouvelle image</button>` : ''}`}
+          <button type="button" class="link" data-act="pick-photo" data-v="${r.id}">Choisir dans ma galerie</button>
+          ${own ? `<button type="button" class="link" data-act="rm-own-photo" data-v="${r.id}">Retirer ma photo</button>` : ''}
+          ${n > 1 ? `<button type="button" class="link" data-act="next-photo" data-v="${r.id}">Autre image (${(((state.photos[r.id] || {}).idx || 0) % n) + 1}/${n})</button>` : ''}
+          <button type="button" class="link" data-act="search-photo" data-v="${r.id}">Chercher une photo en ligne</button>`}
       </div>
-    </div></div>`;
+    </div>
+    <input type="file" id="photo-file" accept="image/*" data-v="${r.id}" hidden>
+    ${openaiReady() ? `<div style="margin-top:12px"><label class="lbl" for="ed-img-note">Consignes pour l’image générée (facultatif)</label>
+      <textarea class="input img-note" id="ed-img-note" name="img-note" placeholder="Ex. : servi dans un bol bleu, avec du persil, vue du dessus, sans pain…">${esc(sh.draft.imgNote || '')}</textarea>
+      ${pending ? '' : `<button type="button" class="btn" style="margin-top:8px" data-act="gen-image" data-v="${r.id}">${ICONS.spark} Générer une nouvelle image</button>`}</div>` : ''}
+  </div>`;
 }
+/* Photo prise ou choisie dans la galerie du téléphone */
+function readFileAsDataUrl(file) { return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); }); }
+function compressPhoto(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const w = Math.min(1200, img.naturalWidth); const h = Math.round(img.naturalHeight * w / img.naturalWidth);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch (e) { resolve(dataUrl); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+async function useOwnPhoto(id, file) {
+  if (!file || !/^image\//.test(file.type || 'image/')) { toast('Ce fichier n’est pas une image'); return; }
+  try {
+    const src = await compressPhoto(await readFileAsDataUrl(file));
+    if (!src) throw new Error();
+    storeGenerated('own:' + id, src);
+    state.photos = state.photos || {}; setPhotoIdx(id, 0);
+    toast('Photo ajoutée'); render();
+  } catch (e) { toast('Impossible de lire cette photo'); }
+}
+function removeOwnPhoto(id) {
+  delete genCache['own:' + id];
+  try { if (idb) idb.transaction('images', 'readwrite').objectStore('images').delete('own:' + id); } catch (e) { /* ignore */ }
+  setPhotoIdx(id, 0); toast('Photo retirée'); render();
+}
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'photo-file' && e.target.files && e.target.files[0]) { if (ui.sheet && ui.sheet.kind === 'editor') readEditorForm(); useOwnPhoto(e.target.dataset.v, e.target.files[0]); e.target.value = ''; }
+});
 
-/* ---------- Liens TikTok : lecture de la description de la vidéo ---------- */
+/* ---------- Liens TikTok et sites de recettes ---------- */
 function findTikTok(text) {
   const m = String(text || '').match(/https?:\/\/(?:www\.|vm\.|vt\.|m\.)?tiktok\.com\/[^\s"'<>]+/i);
   return m ? m[0].replace(/[).,;!?]+$/, '') : null;
 }
+const BROWSER_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36';
+/* Requête « comme un navigateur » : dans l'appli, passe par le moteur natif (pas de blocage CORS, adresse finale connue) */
+async function httpGet(url, opts) {
+  opts = opts || {};
+  const headers = Object.assign({ 'User-Agent': BROWSER_UA, 'Accept-Language': 'fr-FR,fr;q=0.9' }, opts.headers || {});
+  const native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp;
+  if (native) {
+    const r = await native.request({ url, method: 'GET', headers, responseType: 'text', disableRedirects: !!opts.noRedirect, connectTimeout: 15000, readTimeout: 20000 });
+    const h = {}; Object.keys(r.headers || {}).forEach((k) => { h[k.toLowerCase()] = r.headers[k]; });
+    return { status: r.status, url: r.url || url, headers: h, text: typeof r.data === 'string' ? r.data : JSON.stringify(r.data) };
+  }
+  const r = await fetch(url, { redirect: opts.noRedirect ? 'manual' : 'follow' });
+  const h = {}; r.headers.forEach((v, k) => { h[k] = v; });
+  return { status: r.status, url: r.url || url, headers: h, text: await r.text() };
+}
+function decodeEntities(s) {
+  return String(s || '').replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n));
+}
 async function tiktokCaption(url) {
   const oembed = async (u) => {
-    const res = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(u));
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const j = await res.json();
+    const r = await httpGet('https://www.tiktok.com/oembed?url=' + encodeURIComponent(u), { headers: { Accept: 'application/json' } });
+    if (r.status !== 200) throw new Error('HTTP ' + r.status);
+    const j = JSON.parse(r.text);
     if (!j || (!j.title && !j.author_name)) throw new Error('vide');
-    return { caption: String(j.title || '').trim(), author: j.author_name ? '@' + String(j.author_unique_id || j.author_name).replace(/^@/, '') : '' };
+    return { caption: String(j.title || '').trim(), author: j.author_unique_id || j.author_name ? '@' + String(j.author_unique_id || j.author_name).replace(/^@/, '') : '' };
   };
-  let info = null;
-  try { info = await oembed(url); } catch (e) {
-    // Lien court (vm.tiktok.com) : on suit la redirection pour retrouver l'adresse complète de la vidéo
+  const fromHtml = (html) => {
+    // Description dans les données de la page, sinon dans la balise og:description
+    let m = html.match(/"desc":"((?:[^"\\]|\\.)*)"/);
+    if (m) { try { const d = JSON.parse('"' + m[1] + '"'); if (d.trim()) return { caption: d.trim(), author: ((html.match(/"uniqueId":"([^"]+)"/) || [])[1] ? '@' + html.match(/"uniqueId":"([^"]+)"/)[1] : '') }; } catch (e) { /* ignore */ } }
+    m = html.match(/<meta[^>]+(?:property|name)="og:description"[^>]+content="([^"]*)"/i) || html.match(/<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="og:description"/i);
+    if (m && decodeEntities(m[1]).trim()) return { caption: decodeEntities(m[1]).trim(), author: '' };
+    return null;
+  };
+  let full = /\/(video|photo)\/\d+/.test(url) ? url.split('?')[0] : null;
+  let html = '';
+  // Lien court (vm.tiktok.com…) : on récupère l'adresse complète de la vidéo
+  if (!full) {
     try {
-      const r = await fetch(url);
-      let full = r.url && r.url !== url && /\/video\/\d+/.test(r.url) ? r.url.split('?')[0] : null;
-      if (!full) { const m = (await r.text()).match(/https:\/\/www\.tiktok\.com\/@[\w.-]+\/video\/\d+/); if (m) full = m[0]; }
-      if (full) info = await oembed(full);
-    } catch (e2) { /* ignore */ }
+      const r = await httpGet(url, { noRedirect: true });
+      const loc = r.headers.location;
+      if (loc && /\/(video|photo)\/\d+/.test(loc)) full = loc.split('?')[0];
+    } catch (e) { /* on essaie autrement */ }
+    if (!full) {
+      try {
+        const r = await httpGet(url);
+        html = r.text || '';
+        if (r.url && /\/(video|photo)\/\d+/.test(r.url)) full = r.url.split('?')[0];
+        else { const m = html.match(/https:\/\/www\.tiktok\.com\/@[\w.-]+\/(?:video|photo)\/\d+/); if (m) full = m[0]; }
+      } catch (e) { /* ignore */ }
+    }
   }
-  if (!info) throw new Error('Impossible de lire cette vidéo TikTok (vidéo privée, supprimée, lien incomplet ou pas de connexion).');
-  if (!info.caption) throw new Error('La description de cette vidéo TikTok est vide : colle plutôt la recette en texte.');
-  return info;
+  const tries = [full, url].filter(Boolean);
+  for (const u of tries) { try { const info = await oembed(u); if (info.caption) return info; } catch (e) { /* suivant */ } }
+  if (!html && full) { try { html = (await httpGet(full)).text || ''; } catch (e) { /* ignore */ } }
+  const info = html ? fromHtml(html) : null;
+  if (info) return info;
+  throw new Error('Impossible de lire cette vidéo TikTok (vidéo privée ou supprimée, lien incomplet ou pas de connexion). Tu peux aussi copier sa description et utiliser « Écrire ma demande ».');
+}
+/* Page de recette (Marmiton, 750g, Cuisine AZ…) : on lit les données « Recipe » de la page */
+async function webRecipe(url) {
+  let r;
+  try { r = await httpGet(url); } catch (e) { throw new Error('Impossible d’ouvrir cette page. Vérifie le lien et ta connexion.'); }
+  if (r.status >= 400) throw new Error('La page n’est pas accessible (erreur ' + r.status + ').');
+  const html = r.text || '';
+  const site = (() => { try { return new URL(r.url || url).hostname.replace(/^www\./, ''); } catch (e) { return 'le site'; } })().replace(/^marmiton\.org$/, 'Marmiton');
+  const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  let recipe = null;
+  const visit = (o) => {
+    if (!o || recipe) return;
+    if (Array.isArray(o)) { o.forEach(visit); return; }
+    if (typeof o !== 'object') return;
+    const t = o['@type']; if (t === 'Recipe' || (Array.isArray(t) && t.includes('Recipe'))) { recipe = o; return; }
+    if (o['@graph']) visit(o['@graph']);
+  };
+  blocks.forEach((b) => { try { visit(JSON.parse(b.trim())); } catch (e) { /* bloc illisible */ } });
+  const isoMin = (d) => { const m = String(d || '').match(/PT(?:(\d+)H)?(?:(\d+)M)?/); return m ? (+(m[1] || 0)) * 60 + (+(m[2] || 0)) : 0; };
+  if (recipe) {
+    const steps = [];
+    const addStep = (s) => { if (!s) return; if (typeof s === 'string') steps.push(decodeEntities(s)); else if (s.itemListElement) [].concat(s.itemListElement).forEach(addStep); else if (s.text) steps.push(decodeEntities(s.text)); };
+    [].concat(recipe.recipeInstructions || []).forEach(addStep);
+    const text = [
+      'Nom : ' + decodeEntities(recipe.name || ''),
+      recipe.recipeYield ? 'Portions : ' + [].concat(recipe.recipeYield).join(' / ') : '',
+      isoMin(recipe.totalTime) ? 'Temps total : ' + isoMin(recipe.totalTime) + ' min' : (isoMin(recipe.cookTime) ? 'Cuisson : ' + isoMin(recipe.cookTime) + ' min' : ''),
+      'Ingrédients :', ...[].concat(recipe.recipeIngredient || []).map((x) => '- ' + decodeEntities(x)),
+      'Étapes :', ...steps.map((x, i) => (i + 1) + '. ' + x)
+    ].filter(Boolean).join('\n');
+    return { site, name: decodeEntities(recipe.name || ''), text: text.slice(0, 8000) };
+  }
+  // Pas de données structurées : on transmet le texte de la page
+  const plain = decodeEntities(html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')).trim();
+  if (plain.length < 200) throw new Error('Je n’ai pas trouvé de recette sur cette page.');
+  return { site, name: '', text: plain.slice(0, 8000) };
 }
 function sourceHtml(r) {
   return r.source && r.source.url ? `<div class="muted small">Source : <a href="${esc(r.source.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(r.source.label || r.source.url)}</a></div>` : '';
