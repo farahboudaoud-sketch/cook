@@ -74,6 +74,7 @@ function defaultState() {
     list: { checked: {}, have: {}, manual: [], showPantry: false, showHave: false },
     history: [],
     notes: {},
+    photos: {},
     ai: { key: '' },
     weekStart: mondayOf(new Date())
   };
@@ -87,7 +88,7 @@ function load() {
     if (raw) {
       const s = JSON.parse(raw);
       const d = defaultState();
-      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {} });
+      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {}, photos: s.photos || {} });
     }
   } catch (e) { /* stockage indisponible */ }
   return defaultState();
@@ -695,6 +696,7 @@ function saveDraft() {
   ui.sheet = { kind: 'recipe', id: rec.id, servings: state.profile.persons };
   toast('Recette enregistrée');
   render();
+  if (!photoList(rec).length) generateImageFor(rec.id);
 }
 
 function handle(act, v, el) {

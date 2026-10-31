@@ -29,96 +29,72 @@ function notesHtml(r) {
     <textarea class="input" id="note-text" data-v="${r.id}" placeholder="Ce que tu changerais, une variante, un avis…">${esc(n.text || '')}</textarea>`;
 }
 
-/* ---------- Images (générées par IA, gardées sur le téléphone) ---------- */
-const imgCache = {};
+/* ---------- Photos (Wikimedia Commons, chargées depuis internet) ---------- */
 const imgPending = {};
-let idb = null;
-function openDb() {
-  return new Promise((resolve) => {
-    try {
-      const req = indexedDB.open('carnet-cuisine', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('images');
-      req.onsuccess = () => { idb = req.result; resolve(idb); };
-      req.onerror = () => resolve(null);
-    } catch (e) { resolve(null); }
-  });
+function loadImages() { return Promise.resolve(); }
+function photoList(r) {
+  const own = state.photos && state.photos[r.id];
+  if (own && own.list && own.list.length) return own.list;
+  return (typeof IMAGES !== 'undefined' && IMAGES[r.id]) || [];
 }
-async function loadImages() {
-  const db = await openDb();
-  if (!db) return;
-  await new Promise((resolve) => {
-    try {
-      const tx = db.transaction('images', 'readonly');
-      const store = tx.objectStore('images');
-      const req = store.openCursor();
-      req.onsuccess = () => { const c = req.result; if (c) { imgCache[c.key] = c.value; c.continue(); } else resolve(); };
-      req.onerror = () => resolve();
-    } catch (e) { resolve(); }
-  });
+function photoOf(r) {
+  const list = photoList(r);
+  if (!list.length) return null;
+  const idx = ((state.photos && state.photos[r.id] && state.photos[r.id].idx) || 0) % list.length;
+  return list[idx];
 }
-function storeImage(id, src) {
-  imgCache[id] = src;
-  try { if (idb) idb.transaction('images', 'readwrite').objectStore('images').put(src, id); } catch (e) { /* ignore */ }
-}
-function imageSrc(r) {
-  if (imgCache[r.id]) return imgCache[r.id];
-  if (!r.custom && !r.preview) return (window.IMG_BASE || 'img/') + r.id + '.jpg';
-  return null;
-}
+function imageSrc(r) { const p = photoOf(r); return p ? p.src : null; }
 function imgTag(r, cls) {
   const src = imageSrc(r);
-  return src ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+  return src ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
 }
-async function compress(blob) {
-  try {
-    const bmp = await createImageBitmap(blob);
-    const w = Math.min(768, bmp.width); const h = Math.round(bmp.height * w / bmp.width);
-    const c = document.createElement('canvas'); c.width = w; c.height = h;
-    c.getContext('2d').drawImage(bmp, 0, 0, w, h);
-    return c.toDataURL('image/jpeg', 0.8);
-  } catch (e) {
-    return await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
-  }
+const COMMONS_BAD = /(logo|map|icon|diagram|drawing|menu|poster|label|packag|stamp|sign|advert|shop|store|market|restaurant|festival|cookbook)/i;
+const stripHtml = (h) => String(h || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+async function searchCommons(q) {
+  const params = new URLSearchParams({ action: 'query', format: 'json', formatversion: '2', origin: '*', generator: 'search', gsrnamespace: '6', gsrsearch: q + ' filetype:bitmap', gsrlimit: '20', prop: 'imageinfo', iiprop: 'url|extmetadata|size|mime', iiurlwidth: '800' });
+  const res = await fetch('https://commons.wikimedia.org/w/api.php?' + params);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return ((data.query && data.query.pages) || []).sort((a, b) => a.index - b.index).filter((p) => !COMMONS_BAD.test(p.title)).map((p) => {
+    const ii = p.imageinfo && p.imageinfo[0];
+    if (!ii || ii.mime !== 'image/jpeg' || ii.width < 500 || ii.height < 350) return null;
+    const m = ii.extmetadata || {};
+    return { src: ii.thumburl, page: ii.descriptionurl, author: stripHtml(m.Artist && m.Artist.value).slice(0, 80) || 'Auteur inconnu', license: stripHtml(m.LicenseShortName && m.LicenseShortName.value) || 'Licence libre' };
+  }).filter(Boolean).slice(0, 8);
 }
-const IMG_STYLE = 'professional food photography, appetizing home-cooked dish, served on a rustic ceramic plate on a wooden table, soft natural daylight, 45 degree angle, shallow depth of field, no text, no people';
+/* « Autre photo » : passe à la photo suivante ; pour une recette sans photo, lance une recherche en ligne. */
 async function generateImageFor(id, manual) {
   const r = recipeById(id);
   if (!r || imgPending[id]) return;
-  imgPending[id] = true;
-  if (manual) toast('Image en préparation (jusqu’à 1 minute)…');
-  render();
-  const prompt = `${r.imgPrompt || r.n}, ${IMG_STYLE}`;
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=576&seed=${Math.floor(Math.random() * 100000)}&nologo=true`;
-  let src = null;
-  for (let attempt = 0; attempt < 3 && !src; attempt++) {
-    try {
-      const res = await fetch(url);
-      if (res.status === 402 || res.status === 429) {
-        const wait = Math.min(70, parseInt(res.headers.get('retry-after') || '45', 10) + 2);
-        await new Promise((ok) => setTimeout(ok, wait * 1000));
-        continue;
-      }
-      const type = res.headers.get('content-type') || '';
-      if (!res.ok || !type.startsWith('image/')) throw new Error('HTTP ' + res.status);
-      src = await compress(await res.blob());
-    } catch (e) {
-      // Lecture impossible (réseau ou CORS) : on garde l'adresse, l'image s'affichera depuis internet
-      if (e instanceof TypeError) { src = url; break; }
-    }
+  state.photos = state.photos || {};
+  const cur = state.photos[id] || {};
+  const list = photoList(r);
+  if (list.length > 1 && manual) {
+    state.photos[id] = Object.assign({}, cur, { idx: ((cur.idx || 0) + 1) % list.length });
+    save(); render(); return;
   }
+  imgPending[id] = true; render();
+  const queries = [r.imgQuery, r.query, r.n].filter(Boolean);
+  let found = [];
+  try {
+    for (const q of queries) { found = await searchCommons(q); if (found.length) break; }
+  } catch (e) { found = null; }
   imgPending[id] = false;
-  if (src) { storeImage(id, src); if (manual) toast('Nouvelle image prête'); }
-  else toast('Image indisponible pour le moment, réessaie plus tard');
+  if (found && found.length) { state.photos[id] = { list: found, idx: 0 }; save(); if (manual) toast('Photo trouvée'); }
+  else toast(found === null ? 'Pas de connexion : la photo sera cherchée plus tard' : 'Aucune photo trouvée pour cette recette');
   render();
 }
+function creditHtml(p) {
+  return `Photo : ${esc(p.author)} · ${esc(p.license)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>`;
+}
 function heroHtml(r) {
-  const src = imageSrc(r);
+  const p = photoOf(r);
   const pending = imgPending[r.id];
-  const canGen = !r.preview;
-  return `<div class="hero" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${src ? `<img src="${esc(src)}" alt="${esc(r.n)}" onerror="this.remove()">` : ''}</div>
-    <div class="row between" style="margin-top:-6px">
-      <span class="muted" style="font-size:11px">${src ? 'Image générée par IA, illustration non contractuelle' : r.preview ? 'L’image sera générée à l’enregistrement' : 'Pas encore d’image'}</span>
-      ${canGen ? (pending ? '<span class="muted small">Image en cours…</span>' : `<button class="link" style="font-size:12px;min-height:36px" data-act="gen-image" data-v="${r.id}">${src ? 'Autre image' : 'Générer une image'}</button>`) : ''}
+  const n = photoList(r).length;
+  return `<div class="hero" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${p ? `<img src="${esc(p.src)}" alt="${esc(r.n)}" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
+    <div class="row between" style="margin-top:-6px;gap:10px;align-items:flex-start">
+      <span class="muted credit">${p ? creditHtml(p) : r.preview ? 'La photo sera cherchée à l’enregistrement' : 'Pas encore de photo'}</span>
+      ${r.preview ? '' : pending ? '<span class="muted small">Recherche…</span>' : `<button class="link" style="font-size:12px;min-height:36px;white-space:nowrap" data-act="gen-image" data-v="${r.id}">${p ? (n > 1 ? 'Autre photo' : 'Chercher une photo') : 'Chercher une photo'}</button>`}
     </div>`;
 }
 
@@ -337,7 +313,7 @@ Réponds avec ce JSON :
   "ingredients": [ { "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
   "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
   "astuces": [ "1 à 3 astuces utiles" ],
-  "image_prompt": "short English description of the finished dish for a food photo",
+  "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat (ex. : gnocchi tomato sauce)",
   "remarque": "adaptation éventuelle, sinon chaîne vide"
 }
 Rayons : fl fruits et légumes, bp boucherie et poissonnerie, cr crèmerie et frais, bo boulangerie, ep épicerie salée, es épices et condiments, su épicerie sucrée, sg surgelés, bs boissons, au autres.
@@ -366,7 +342,7 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
       i: ings,
       st: (Array.isArray(j.etapes) ? j.etapes : []).map(String).filter(Boolean),
       tips: (Array.isArray(j.astuces) ? j.astuces : []).map(String).filter(Boolean),
-      imgPrompt: String(j.image_prompt || '').slice(0, 300),
+      imgQuery: String(j.image_query || '').slice(0, 80),
       aiNote: String(j.remarque || '').trim(),
       query: sh.q
     };

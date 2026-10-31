@@ -1,5 +1,5 @@
 # Construit un fichier HTML unique pour tester l'appli dans un navigateur d'ordinateur.
-# Les images des recettes sont chargées depuis GitHub. Usage : python3 scripts/build-preview.py sortie.html
+# Les photos sont chargées depuis Wikimedia Commons. Usage : python3 scripts/build-preview.py sortie.html
 import base64, re, sys
 W = 'www/'
 css = open(W + 'css/style.css', encoding='utf8').read()
@@ -12,7 +12,7 @@ css += """
   .toast { bottom: 90px; }
 }
 """
-scripts = ''.join('<script>%s</script>\n' % open(W + 'js/' + f, encoding='utf8').read() for f in ['data.js', 'details.js', 'features.js', 'app.js'])
+scripts = ''.join('<script>%s</script>\n' % open(W + 'js/' + f, encoding='utf8').read() for f in ['data.js', 'details.js', 'images.js', 'features.js', 'app.js'])
 html = f"""<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -23,7 +23,6 @@ html = f"""<!DOCTYPE html>
 </head>
 <body>
 <div id="app"></div>
-<script>window.IMG_BASE = 'https://raw.githubusercontent.com/farahboudaoud-sketch/cook/main/www/img/';</script>
 {scripts}</body>
 </html>"""
 open(sys.argv[1] if len(sys.argv) > 1 else 'carnet-de-cuisine-apercu.html', 'w', encoding='utf8').write(html)

@@ -201,3 +201,6 @@ label.lbl { font-size: 13px; font-weight: 600; color: var(--muted); display: blo
 .help a { color: var(--accent); }
 .spinner { width: 34px; height: 34px; border: 3px solid var(--rule); border-top-color: var(--accent); border-radius: 999px; animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.credit { font-size: 11px; line-height: 1.4; }
+.credit a { color: var(--muted); }
