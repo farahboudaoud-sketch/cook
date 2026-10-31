@@ -30,6 +30,9 @@ const ICONS = {
   heart: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
   heartFull: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
   trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  star: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>',
+  starFull: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>',
+  spark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
   undo: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>'
 };
 
@@ -70,11 +73,13 @@ function defaultState() {
     customIngs: {},
     list: { checked: {}, have: {}, manual: [], showPantry: false, showHave: false },
     history: [],
+    notes: {},
+    ai: { key: '' },
     weekStart: mondayOf(new Date())
   };
 }
 let state = load();
-const ui = { tab: 'decouvrir', query: '', filter: 'tout', type: 'tous', sheet: null, dialog: null };
+const ui = { tab: 'decouvrir', query: '', filter: 'tout', type: 'tous', recFilter: 'toutes', sheet: null, dialog: null };
 
 function load() {
   try {
@@ -82,7 +87,7 @@ function load() {
     if (raw) {
       const s = JSON.parse(raw);
       const d = defaultState();
-      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}) });
+      return Object.assign(d, s, { profile: Object.assign(d.profile, s.profile || {}), list: Object.assign(d.list, s.list || {}), ai: Object.assign(d.ai, s.ai || {}), notes: s.notes || {} });
     }
   } catch (e) { /* stockage indisponible */ }
   return defaultState();
@@ -138,7 +143,7 @@ function fmtNum(x) {
 }
 function niceGram(q) {
   if (q < 20) return Math.max(1, Math.round(q));
-  if (q < 100) return Math.round(q / 5) * 5;
+  if (q < 250) return Math.round(q / 5) * 5;
   if (q < 1000) return Math.round(q / 10) * 10;
   return Math.round(q / 50) * 50;
 }
@@ -214,11 +219,11 @@ function render(resetScroll) {
   if (!$('.tabbar')) {
     app.innerHTML = '<div id="main"></div><nav class="tabbar" aria-label="Navigation"></nav>';
   }
-  const views = { decouvrir: renderDiscover, semaine: renderWeek, liste: renderList, profil: renderProfile };
+  const views = { decouvrir: renderDiscover, recettes: renderMyRecipes, semaine: renderWeek, liste: renderList, profil: renderProfile };
   main().innerHTML = views[ui.tab]();
   main().scrollTop = prev;
   const listCount = buildList().filter((i) => !i.pantry && !state.list.checked[i.id] && !state.list.have[i.id]).length;
-  $('.tabbar').innerHTML = [['decouvrir', 'Découvrir'], ['semaine', 'Semaine'], ['liste', 'Liste'], ['profil', 'Profil']]
+  $('.tabbar').innerHTML = [['decouvrir', 'Découvrir'], ['recettes', 'Recettes'], ['semaine', 'Semaine'], ['liste', 'Liste'], ['profil', 'Profil']]
     .map(([id, n]) => `<button class="${ui.tab === id ? 'on' : ''}" data-act="tab" data-v="${id}" aria-current="${ui.tab === id ? 'page' : 'false'}">${n}${id === 'liste' && listCount ? `<span class="pill">${listCount}</span>` : ''}</button>`).join('');
   renderOverlays();
 }
@@ -312,7 +317,7 @@ function guessAisle(name) {
 /* ---------- Découvrir ---------- */
 function renderDiscover() {
   const p = state.profile;
-  const filters = [['tout', 'Tout'], ['saison', 'De saison'], ['rapide', 'Rapide'], ['antigaspi', 'Anti-gaspi'], ['favoris', 'Favoris'], ['perso', 'Mes recettes']];
+  const filters = [['tout', 'Tout'], ['saison', 'De saison'], ['rapide', 'Rapide'], ['antigaspi', 'Anti-gaspi']];
   return `<div class="page">
     <div class="kicker">Semaine du ${fmtDate(state.weekStart)}</div>
     <div class="title-row"><h1>Découvrir</h1><span class="counter">${state.menu.length} sur ${p.target}</span></div>
@@ -333,8 +338,6 @@ function renderResults() {
   if (q) list = list.filter((r) => norm(r.n).includes(q) || r.i.some(([k]) => norm(ing(k).n).includes(q)));
   if (ui.filter === 'saison') list = list.filter(isSeason);
   if (ui.filter === 'rapide') list = list.filter((r) => r.t <= 30);
-  if (ui.filter === 'favoris') list = list.filter((r) => state.favorites.includes(r.id));
-  if (ui.filter === 'perso') list = list.filter((r) => r.custom);
   const scored = list.map((r) => ({ r, sh: shared(r), dis: dislikedIn(r) }));
   if (ui.filter === 'antigaspi') {
     const withShared = scored.filter((x) => x.sh.length > 0);
@@ -345,30 +348,13 @@ function renderResults() {
   }
   let html = '';
   if (!scored.length) {
-    let msg = 'Aucune recette ne correspond.';
-    if (ui.filter === 'favoris') msg = 'Pas encore de favoris. Touche le cœur sur une fiche recette pour l’ajouter ici.';
-    if (ui.filter === 'perso') msg = 'Tu n’as pas encore ajouté de recette.';
+    let msg = q ? 'Aucune recette de ton carnet ne correspond à « ' + esc(ui.query) + ' ».' : 'Aucune recette ne correspond.';
     if (ui.filter === 'antigaspi') msg = state.menu.length ? 'Aucune autre recette ne partage d’ingrédient avec ton menu.' : 'Ajoute d’abord une recette à ton menu : les recettes qui réutilisent ses ingrédients apparaîtront ici.';
-    html = `<div class="empty"><span>${msg}</span>${ui.filter === 'perso' ? '<button class="btn" data-act="new-recipe">Ajouter une recette</button>' : ''}</div>`;
+    html = `<div class="empty"><span>${msg}</span></div>`;
   } else {
-    html = '<div class="grid">' + scored.map(({ r, sh, dis }) => {
-      const added = !!inMenu(r.id);
-      const fav = state.favorites.includes(r.id);
-      return `<div class="card">
-        <div class="tile" style="background:${hashColor(r.id)}">
-          <button class="icon-btn" data-act="open" data-v="${r.id}" aria-label="Voir ${esc(r.n)}" style="width:100%;height:100%;border-radius:4px;font-size:54px">${r.e || '🍽️'}</button>
-          ${fav ? `<span class="fav" aria-label="Favori">${ICONS.heartFull}</span>` : ''}
-          <button class="add ${added ? 'on' : ''}" data-act="toggle-menu" data-v="${r.id}" aria-label="${added ? 'Retirer du menu' : 'Ajouter au menu'}" style="color:${added ? '#fff' : 'var(--ink)'}">${added ? ICONS.check : ICONS.plus}</button>
-        </div>
-        <button class="card" data-act="open" data-v="${r.id}" style="gap:4px">
-          <span class="card-name">${esc(r.n)}</span>
-          <span class="card-meta">${r.t} min · ${DIFF[r.d] || ''}${r.custom ? ' · Perso' : ''}</span>
-          ${sh.length ? `<span class="card-note">${sh.length} ${plural(sh.length, 'ingrédient', 'ingrédients')} en commun</span>` : ''}
-          ${dis.length ? `<span class="card-warn">Contient : ${esc(dis.join(', ').toLowerCase())}</span>` : ''}
-        </button>
-      </div>`;
-    }).join('') + '</div>';
+    html = '<div class="grid">' + scored.map(({ r, sh, dis }) => recipeCard(r, sh, dis)).join('') + '</div>';
   }
+  if (q) html += aiSuggest(ui.query);
   if (hiddenCount) html += `<p class="muted small" style="text-align:center;margin:24px 0 0">${hiddenCount} ${plural(hiddenCount, 'recette masquée', 'recettes masquées')} selon ton profil (régime, temps, équipement ou niveau).</p>`;
   return html;
 }
@@ -383,7 +369,7 @@ function renderWeek() {
   const dots = Array.from({ length: Math.max(p.target, items.length) }, (_, i) => `<i class="${i < items.length ? 'on' : ''}"></i>`).join('');
   const menuHtml = items.length ? items.map(({ m, r }) => `
     <div class="menu-item">
-      <div class="mini" style="background:${hashColor(r.id)}" aria-hidden="true">${r.e || '🍽️'}</div>
+      <div class="mini" style="background:${hashColor(r.id)}" aria-hidden="true">${r.e || '🍽️'}${imgTag(r, '')}</div>
       <div class="body">
         <button class="name" data-act="open" data-v="${r.id}">${esc(r.n)}</button>
         <div class="row" style="flex-wrap:wrap;gap:10px">
@@ -493,7 +479,6 @@ function renderProfile() {
   const allergies = p.allergies.map((a) => (ALLERGENS.find((x) => x.id === a) || {}).name).filter(Boolean);
   const diet = (DIETS.find((d) => d.id === p.diet) || {}).name;
   const pantry = state.pantry.map((k) => `<button class="chip" data-act="rm-pantry" data-v="${esc(k)}">${esc(ing(k).n)} <span class="x" aria-hidden="true">×</span></button>`).join('');
-  const customs = state.custom.map((r) => `<div class="rule-row row" style="padding:8px 0"><span aria-hidden="true" style="font-size:24px">${r.e}</span><button class="name serif" style="flex:1;text-align:left;background:none;border:none;font-size:16px;padding:8px 0" data-act="open" data-v="${r.id}">${esc(r.n)}</button><button class="link" data-act="edit-recipe" data-v="${r.id}">Modifier</button></div>`).join('');
   return `<div class="page">
     <div class="kicker">Mes réglages</div>
     <div class="title-row"><h1>Profil</h1></div>
@@ -518,9 +503,9 @@ function renderProfile() {
     <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
     <form class="field" data-form="pantry">${ICONS.plus}<input name="q" list="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>
 
-    <div class="section-title">Mes recettes</div>
-    <div>${customs || '<p class="muted small" style="margin:0">Aucune recette personnelle pour l’instant.</p>'}</div>
-    <button class="btn" data-act="new-recipe">Ajouter une recette</button>
+    <div class="section-title">Assistant IA (Gemini)</div>
+    <p class="muted small" style="margin:-8px 0 0">Pour générer des recettes qui ne sont pas dans le carnet. La clé est gratuite et reste sur ce téléphone.</p>
+    ${keyForm()}
 
     <div class="box" style="margin-top:20px">
       <span class="muted small">Résumé : ${allergies.length ? 'sans ' + esc(allergies.join(', ').toLowerCase()) : 'aucune allergie'} · ${esc(diet || '')}</span>
@@ -535,7 +520,7 @@ function renderOverlays() {
   if (!host) { host = document.createElement('div'); host.id = 'overlays'; document.body.appendChild(host); }
   let html = '';
   if (ui.sheet) {
-    const body = ui.sheet.kind === 'recipe' ? recipeSheet(ui.sheet) : editorSheet(ui.sheet);
+    const body = ui.sheet.kind === 'recipe' ? recipeSheet(ui.sheet) : ui.sheet.kind === 'ai' ? aiSheet(ui.sheet) : editorSheet(ui.sheet);
     html += `<div class="overlay ${ui.sheet.keepScroll ? '' : 'anim'}" data-act="close-sheet-bg">${body}</div>`;
   }
   if (ui.dialog) {
@@ -553,8 +538,9 @@ function renderOverlays() {
   if (ui.dialog) ui.dialog.shown = true;
 }
 function recipeSheet(sh) {
-  const r = recipeById(sh.id);
+  const r = sh.preview ? sh.preview : recipeById(sh.id);
   if (!r) return '';
+  if (sh.preview) return previewSheet(sh, r);
   const m = inMenu(r.id);
   const servings = m ? m.servings : sh.servings;
   const f = servings / r.p;
@@ -570,7 +556,7 @@ function recipeSheet(sh) {
       <button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button>
     </div>
     <div class="sheet-body has-foot">
-      <div class="hero" style="background:${hashColor(r.id)}" aria-hidden="true">${r.e || '🍽️'}</div>
+      ${heroHtml(r)}
       <div class="kicker">${esc((TYPES.find((t) => t.id === r.type) || {}).name || '')}${r.custom ? ' · Ma recette' : ''}</div>
       <h2>${esc(r.n)}</h2>
       <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · ${seasons}${cost > 0 && !r.custom ? ` · environ ${fmtEuro(cost)} par personne` : ''}</div>
@@ -580,7 +566,8 @@ function recipeSheet(sh) {
       <div class="row between" style="margin-top:6px"><span class="section-title">Ingrédients</span>${stepper('sheet-servings', servings, 'Portions')}</div>
       <div class="muted small" style="margin-top:-8px">Pour ${servings} ${plural(servings, 'personne', 'personnes')}</div>
       <div>${r.i.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}</div>
-      ${r.st && r.st.length ? `<div class="section-title" style="margin-top:6px">Préparation</div><ol class="steps">${r.st.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>` : ''}
+      ${stepsHtml(r)}
+      ${notesHtml(r)}
       ${r.custom ? `<div class="row" style="gap:16px"><button class="link" data-act="edit-recipe" data-v="${r.id}">Modifier</button><button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button></div>` : ''}
     </div>
     <div class="sheet-foot">
@@ -655,6 +642,7 @@ function removeFromMenu(id) { state.menu = state.menu.filter((m) => m.rid !== id
 function clampInt(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
 function startNewWeek() {
+  state.menu.forEach((m) => { const n = noteOf(m.rid); n.last = state.weekStart; n.lastWeek = true; });
   if (state.menu.length) state.history.push({ date: state.weekStart, items: state.menu.map((m) => ({ rid: m.rid, servings: m.servings })) });
   if (state.history.length > 20) state.history = state.history.slice(-20);
   state.menu = [];
@@ -779,6 +767,19 @@ function handle(act, v, el) {
     case 'ed-add-ing': readEditorForm(); ui.sheet.draft.i.push({ name: '', q: '', u: 'g', a: 'au' }); renderOverlays(); return;
     case 'ed-rm-ing': readEditorForm(); ui.sheet.draft.i.splice(+v, 1); if (!ui.sheet.draft.i.length) ui.sheet.draft.i.push({ name: '', q: '', u: 'g', a: 'au' }); renderOverlays(); return;
     case 'ed-save': saveDraft(); return;
+    case 'rec-filter': ui.recFilter = v; break;
+    case 'stars': { const n = noteOf(v.split(':')[0]); const k = +v.split(':')[1]; n.stars = n.stars === k ? 0 : k; break; }
+    case 'cooked-today': { const n = noteOf(v); n.last = todayIso(); n.lastWeek = false; toast('Date enregistrée'); break; }
+    case 'ai-open': ui.sheet = { kind: 'ai', q: v || ui.query || '', persons: p.persons, status: 'idle' }; renderOverlays(); return;
+    case 'ai-persons': ui.sheet.persons = clampInt(ui.sheet.persons + +v, 1, 20); readAiInput(); renderOverlays(); return;
+    case 'ai-generate': readAiInput(); aiGenerate(); return;
+    case 'ai-again': aiGenerate(true); return;
+    case 'ai-back': ui.sheet = { kind: 'ai', q: ui.sheet.q, persons: ui.sheet.persons, status: 'idle' }; renderOverlays(); return;
+    case 'ai-save': aiSave(false); return;
+    case 'ai-save-menu': aiSave(true); return;
+    case 'save-key': { const el2 = $('#ai-key'); state.ai.key = (el2 && el2.value || '').trim(); save(); toast(state.ai.key ? 'Clé enregistrée' : 'Clé supprimée'); if (ui.sheet && ui.sheet.kind === 'ai') { renderOverlays(); return; } break; }
+    case 'test-key': testKey(); return;
+    case 'gen-image': generateImageFor(v, true); return;
     case 'dialog-no': ui.dialog = null; renderOverlays(); return;
     case 'dialog-yes': { const fn = ui.dialog && ui.dialog.onYes; ui.dialog = null; if (fn) fn(); save(); render(); return; }
     case 'reset':
@@ -830,6 +831,9 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   handle(act, el.dataset.v, el);
 });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'ai-q') { e.preventDefault(); handle('ai-generate'); }
+});
 document.addEventListener('change', (e) => {
   const el = e.target.closest('[data-act="day"]');
   if (el) handle('day', el.dataset.v, el);
@@ -840,7 +844,13 @@ document.addEventListener('submit', (e) => {
   e.preventDefault();
   handleForm(form);
 });
+let noteTimer;
 document.addEventListener('input', (e) => {
+  if (e.target.id === 'note-text') {
+    const n = noteOf(e.target.dataset.v); n.text = e.target.value;
+    clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+    return;
+  }
   if (e.target.id === 'search') {
     ui.query = e.target.value;
     const res = $('#results');
@@ -855,6 +865,7 @@ function setupBackButton() {
     if (!App) return;
     App.addListener('backButton', () => {
       if (ui.dialog) { ui.dialog = null; renderOverlays(); return; }
+      if (ui.sheet && ui.sheet.kind === 'ai' && ui.sheet.status === 'done') { handle('ai-back'); return; }
       if (ui.sheet) { ui.sheet = null; renderOverlays(); return; }
       if (!state.onboarded && state.obStep > 0) { handle('ob-prev'); return; }
       if (state.onboarded && ui.tab !== 'decouvrir') { setTab('decouvrir'); return; }
@@ -863,5 +874,6 @@ function setupBackButton() {
   } catch (e) { /* hors application */ }
 }
 
+loadImages().then(() => render());
 render(true);
 setupBackButton();

@@ -41,10 +41,10 @@ h1, h2, h3 { font-family: var(--serif); margin: 0; font-weight: 700; }
 .italic { font-style: italic; }
 
 /* Barre d'onglets */
-.tabbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--ink); background: var(--paper); padding-bottom: var(--sab); }
-.tabbar button { background: none; border: none; height: 64px; font-family: var(--serif); font-size: 15px; color: #5E4B3F; position: relative; }
+.tabbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--ink); background: var(--paper); padding-bottom: var(--sab); }
+.tabbar button { background: none; border: none; height: 64px; padding: 0 2px; font-family: var(--serif); font-size: 14px; color: #5E4B3F; position: relative; }
 .tabbar button.on { color: var(--accent); font-style: italic; }
-.tabbar .pill { position: absolute; top: 12px; margin-left: 2px; font-family: var(--sans); font-style: normal; font-size: 10px; font-weight: 600; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 5px; }
+.tabbar .pill { position: absolute; top: 10px; right: 2px; font-family: var(--sans); font-style: normal; font-size: 10px; font-weight: 600; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 5px; }
 
 /* Champs */
 .field { display: flex; align-items: center; gap: 10px; border-bottom: 1.5px solid var(--ink); min-height: 46px; }
@@ -168,3 +168,36 @@ label.lbl { font-size: 13px; font-weight: 600; color: var(--muted); display: blo
 
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes up { from { transform: translateY(40px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+
+/* Images */
+.tile { overflow: hidden; }
+.tile-emoji { font-size: 54px; }
+.tile-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile-open { position: absolute; inset: 0; background: transparent; border: none; border-radius: 4px; z-index: 1; }
+.tile .add, .tile .fav { z-index: 2; }
+.tile .fav { background: var(--paper); border-radius: 999px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
+.tile .fav svg { width: 16px; height: 16px; }
+.hero { position: relative; overflow: hidden; }
+.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sheet .hero { height: 220px; }
+.menu-item .mini { position: relative; overflow: hidden; }
+.menu-item .mini img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.card-stars { font-size: 13px; color: var(--accent); letter-spacing: 1px; }
+
+/* Notes */
+.stars { display: flex; gap: 2px; margin: -6px 0 0 -8px; }
+.star { width: 44px; height: 44px; border: none; background: none; color: var(--rule); display: flex; align-items: center; justify-content: center; }
+.star.on { color: var(--accent); }
+
+/* Astuces */
+.tips { background: var(--paper-2); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.tips p { margin: 0; line-height: 1.45; font-size: 15px; }
+
+/* IA */
+.ai-box { margin-top: 26px; padding: 18px 16px; border: 1px dashed var(--ink); border-radius: 6px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.help { font-size: 14px; }
+.help summary { cursor: pointer; color: var(--accent); font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+.help ol { padding-left: 20px; margin: 4px 0 8px; line-height: 1.5; }
+.help a { color: var(--accent); }
+.spinner { width: 34px; height: 34px; border: 3px solid var(--rule); border-top-color: var(--accent); border-radius: 999px; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

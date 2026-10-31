@@ -50,11 +50,11 @@ const EQUIPMENT = [
 ];
 
 const TYPES = [
-  { id: 'plat', name: 'Plats' },
+  { id: 'brunch', name: 'Petit-déjeuner' },
+  { id: 'salade', name: 'Entrées et salades' },
   { id: 'soupe', name: 'Soupes' },
-  { id: 'salade', name: 'Salades' },
-  { id: 'dessert', name: 'Desserts' },
-  { id: 'brunch', name: 'Brunch' }
+  { id: 'plat', name: 'Plats' },
+  { id: 'dessert', name: 'Desserts' }
 ];
 
 const SEASONS = { pr: 'Printemps', et: 'Été', au: 'Automne', hi: 'Hiver' };
