@@ -209,3 +209,9 @@ label.lbl { font-size: 13px; font-weight: 600; color: var(--muted); display: blo
 .ideas-head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
 .idea-tag { position: absolute; left: 8px; top: 8px; z-index: 2; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; letter-spacing: .3px; }
 .small-spin { width: 16px; height: 16px; border-width: 2px; border-color: rgba(251,246,238,.4); border-top-color: var(--paper); display: inline-block; vertical-align: -3px; }
+
+/* Parties d'ingrédients */
+.part-title { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--accent); padding: 14px 0 2px; }
+.part-title:first-child { padding-top: 4px; }
+.part-block { display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px; }
+.part-block + .part-block { border-top: 1px dotted var(--rule); padding-top: 12px; }

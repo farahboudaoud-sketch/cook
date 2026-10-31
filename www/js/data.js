@@ -310,7 +310,7 @@ const RECIPES = [
     st: ['Faire dorer la viande en morceaux dans une cocotte, réserver.', 'Faire revenir lardons et oignons, saupoudrer de farine.', 'Remettre la viande, verser le vin, ajouter carottes, ail, thym et laurier.', 'Couvrir et mijoter 2 h 30 à feu doux. Ajouter les champignons 30 min avant la fin.', 'Servir avec des pommes de terre vapeur.'] },
 
   { id: 'blanquette', n: 'Blanquette de veau', e: '🍚', type: 'plat', t: 120, d: 3, s: ['au', 'hi'], eq: ['plaques'], p: 4,
-    i: [['veau', 1000, 'g'], ['carotte', 3, 'pc'], ['oignon', 1, 'pc'], ['champignons', 250, 'g'], ['creme', 200, 'ml'], ['oeufs', 1, 'pc'], ['citron', 1, 'pc'], ['bouillon', 1, 'pc'], ['beurre', 40, 'g'], ['farine', 40, 'g'], ['riz', 300, 'g'], ['laurier', 2, 'pc']],
+    i: [['veau', 1000, 'g', 'Viande et bouillon'], ['carotte', 3, 'pc', 'Viande et bouillon'], ['oignon', 1, 'pc', 'Viande et bouillon'], ['bouillon', 1, 'pc', 'Viande et bouillon'], ['laurier', 2, 'pc', 'Viande et bouillon'], ['champignons', 250, 'g', 'Sauce'], ['creme', 200, 'ml', 'Sauce'], ['oeufs', 1, 'pc', 'Sauce'], ['citron', 1, 'pc', 'Sauce'], ['beurre', 40, 'g', 'Sauce'], ['farine', 40, 'g', 'Sauce'], ['riz', 300, 'g', 'Accompagnement']],
     st: ['Mettre la viande dans une cocotte avec 1,5 L d’eau, le cube, l’oignon, les carottes et le laurier. Cuire 1 h 30.', 'Faire un roux avec le beurre et la farine, ajouter 750 ml de bouillon filtré.', 'Ajouter les champignons poêlés, la crème et le jaune d’œuf hors du feu, puis le jus de citron.', 'Remettre la viande et les carottes dans la sauce. Servir avec le riz.'] },
 
   { id: 'tartiflette', n: 'Tartiflette', e: '🧀', type: 'plat', t: 60, d: 1, s: ['hi'], eq: ['four', 'plaques'], p: 4,
@@ -343,7 +343,7 @@ const RECIPES = [
     st: ['Faire revenir l’oignon et les poivrons en lanières 10 min dans l’huile.', 'Ajouter ail, épices et tomates, laisser mijoter 15 min.', 'Creuser des puits, y casser les œufs, couvrir et cuire 6 min.', 'Parsemer de coriandre, servir avec du pain.'] },
 
   { id: 'fajitas', n: 'Fajitas de poulet', e: '🌯', type: 'plat', t: 30, d: 1, s: [], eq: ['plaques'], p: 4,
-    i: [['blanc_poulet', 500, 'g'], ['tortillas', 8, 'pc'], ['poivron', 2, 'pc'], ['oignon', 1, 'pc'], ['avocat', 1, 'pc'], ['creme', 150, 'ml'], ['citron_vert', 1, 'pc'], ['paprika', 1, 'cc'], ['cumin', 1, 'cc'], ['huile', 2, 'cs'], ['salade', 1, 'pc']],
+    i: [['blanc_poulet', 500, 'g', 'Poulet et légumes'], ['poivron', 2, 'pc', 'Poulet et légumes'], ['oignon', 1, 'pc', 'Poulet et légumes'], ['paprika', 1, 'cc', 'Poulet et légumes'], ['cumin', 1, 'cc', 'Poulet et légumes'], ['huile', 2, 'cs', 'Poulet et légumes'], ['avocat', 1, 'pc', 'Guacamole'], ['citron_vert', 1, 'pc', 'Guacamole'], ['tortillas', 8, 'pc', 'Pour servir'], ['creme', 150, 'ml', 'Pour servir'], ['salade', 1, 'pc', 'Pour servir']],
     st: ['Couper poulet, poivrons et oignon en lanières.', 'Saisir le poulet avec les épices, ajouter les légumes et cuire 8 min.', 'Écraser l’avocat avec le citron vert.', 'Garnir les tortillas chaudes de poulet, salade, guacamole et crème.'] },
 
   { id: 'burgers', n: 'Burgers maison et potatoes', e: '🍔', type: 'plat', t: 40, d: 1, s: [], eq: ['four', 'plaques'], p: 4,
@@ -386,11 +386,11 @@ const RECIPES = [
 
 
   { id: 'galettes_completes', n: 'Galettes de sarrasin complètes', e: '🥞', type: 'plat', t: 40, d: 2, s: [], eq: ['plaques'], p: 4,
-    i: [['farine_sarrasin', 250, 'g'], ['oeufs', 5, 'pc'], ['jambon', 4, 'pc'], ['gruyere', 150, 'g'], ['beurre', 40, 'g'], ['sel', 1, 'cc'], ['salade', 1, 'pc']],
+    i: [['farine_sarrasin', 250, 'g', 'Pâte'], ['sel', 1, 'cc', 'Pâte'], ['oeufs', 5, 'pc', 'Garniture'], ['jambon', 4, 'pc', 'Garniture'], ['gruyere', 150, 'g', 'Garniture'], ['beurre', 40, 'g', 'Garniture'], ['salade', 1, 'pc', 'Garniture']],
     st: ['Mélanger la farine, 1 œuf, le sel et 500 ml d’eau. Laisser reposer 30 min si possible.', 'Cuire une galette dans une poêle beurrée.', 'Garnir de jambon, de gruyère et casser un œuf au centre.', 'Replier les bords et cuire jusqu’à ce que l’œuf soit pris.'] },
 
   { id: 'salade_cesar', n: 'Salade César au poulet', e: '🥗', type: 'salade', t: 25, d: 1, s: [], eq: ['plaques'], p: 4,
-    i: [['blanc_poulet', 400, 'g'], ['salade', 2, 'pc'], ['parmesan', 50, 'g'], ['baguette', 1, 'pc'], ['mayonnaise', 4, 'cs'], ['citron', 1, 'pc'], ['ail', 1, 'pc'], ['huile_olive', 3, 'cs']],
+    i: [['blanc_poulet', 400, 'g', 'Salade'], ['salade', 2, 'pc', 'Salade'], ['baguette', 1, 'pc', 'Salade'], ['huile_olive', 3, 'cs', 'Salade'], ['parmesan', 50, 'g', 'Sauce'], ['mayonnaise', 4, 'cs', 'Sauce'], ['citron', 1, 'pc', 'Sauce'], ['ail', 1, 'pc', 'Sauce']],
     st: ['Faire dorer le poulet en lanières dans l’huile.', 'Couper la baguette en cubes et les faire griller à la poêle.', 'Mélanger mayonnaise, jus de citron, ail râpé et la moitié du parmesan.', 'Assembler salade, poulet, croûtons, sauce et copeaux de parmesan.'] },
 
   { id: 'pad_thai', n: 'Pad thaï aux crevettes', e: '🍜', type: 'plat', t: 30, d: 2, s: [], eq: ['plaques'], p: 4,
@@ -405,7 +405,7 @@ const RECIPES = [
 
   // Desserts et brunch
   { id: 'crumble_pommes', n: 'Crumble aux pommes', e: '🍎', type: 'dessert', t: 50, d: 1, s: ['au', 'hi'], eq: ['four'], p: 6,
-    i: [['pomme', 6, 'pc'], ['farine', 150, 'g'], ['beurre', 100, 'g'], ['sucre', 100, 'g'], ['cannelle', 1, 'cc']],
+    i: [['pomme', 6, 'pc', 'Fruits'], ['cannelle', 1, 'cc', 'Fruits'], ['farine', 150, 'g', 'Crumble'], ['beurre', 100, 'g', 'Crumble'], ['sucre', 100, 'g', 'Crumble']],
     st: ['Préchauffer le four à 180 °C.', 'Éplucher et couper les pommes en dés, les mettre dans un plat avec la cannelle.', 'Sabler du bout des doigts la farine, le sucre et le beurre froid.', 'Recouvrir les pommes et cuire 35 min.'] },
 
   { id: 'mousse_chocolat', n: 'Mousse au chocolat', e: '🍫', type: 'dessert', t: 20, d: 2, s: [], eq: ['micro'], p: 6,
@@ -435,7 +435,7 @@ const RECIPES = [
     st: [] },
 
   { id: 'lasagnes', n: 'Lasagnes à la bolognaise', e: '🍝', type: 'plat', t: 90, d: 2, s: [], eq: ['four', 'plaques'], p: 6,
-    i: [['lasagnes', 300, 'g'], ['boeuf_hache', 600, 'g'], ['tomates_concassees', 800, 'g'], ['concentre_tomate', 2, 'cs'], ['oignon', 1, 'pc'], ['carotte', 1, 'pc'], ['ail', 2, 'pc'], ['herbes_provence', 1, 'cs'], ['lait', 750, 'ml'], ['beurre', 60, 'g'], ['farine', 60, 'g'], ['gruyere', 100, 'g'], ['parmesan', 40, 'g'], ['muscade', 1, 'pincee'], ['huile_olive', 2, 'cs'], ['sel', 1, 'cc']],
+    i: [['boeuf_hache', 600, 'g', 'Bolognaise'], ['tomates_concassees', 800, 'g', 'Bolognaise'], ['concentre_tomate', 2, 'cs', 'Bolognaise'], ['oignon', 1, 'pc', 'Bolognaise'], ['carotte', 1, 'pc', 'Bolognaise'], ['ail', 2, 'pc', 'Bolognaise'], ['herbes_provence', 1, 'cs', 'Bolognaise'], ['huile_olive', 2, 'cs', 'Bolognaise'], ['sel', 1, 'cc', 'Bolognaise'], ['lait', 750, 'ml', 'Béchamel'], ['beurre', 60, 'g', 'Béchamel'], ['farine', 60, 'g', 'Béchamel'], ['muscade', 1, 'pincee', 'Béchamel'], ['lasagnes', 300, 'g', 'Montage'], ['gruyere', 100, 'g', 'Montage'], ['parmesan', 40, 'g', 'Montage']],
     st: [] },
 
   { id: 'risotto_poireaux', n: 'Risotto aux poireaux', e: '🍚', type: 'plat', t: 40, d: 2, s: ['au', 'hi', 'pr'], eq: ['plaques'], p: 4,
@@ -459,6 +459,6 @@ const RECIPES = [
     st: [] },
 
   { id: 'wraps_crevettes', n: 'Wraps aux crevettes', e: '🌯', type: 'plat', t: 20, d: 1, s: [], eq: ['plaques'], p: 4,
-    i: [['tortillas', 8, 'pc'], ['crevettes', 300, 'g'], ['avocat', 2, 'pc'], ['salade', 1, 'pc'], ['tomate', 2, 'pc'], ['citron_vert', 1, 'pc'], ['mayonnaise', 3, 'cs'], ['ail', 1, 'pc'], ['piment', 0.5, 'cc'], ['huile_olive', 1, 'cs']],
+    i: [['crevettes', 300, 'g', 'Crevettes'], ['ail', 1, 'pc', 'Crevettes'], ['piment', 0.5, 'cc', 'Crevettes'], ['huile_olive', 1, 'cs', 'Crevettes'], ['avocat', 2, 'pc', 'Guacamole et sauce'], ['citron_vert', 1, 'pc', 'Guacamole et sauce'], ['mayonnaise', 3, 'cs', 'Guacamole et sauce'], ['tortillas', 8, 'pc', 'Garniture'], ['salade', 1, 'pc', 'Garniture'], ['tomate', 2, 'pc', 'Garniture']],
     st: [] }
 ];

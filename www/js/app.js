@@ -584,7 +584,7 @@ function recipeSheet(sh) {
       ${sh2.length ? `<div class="card-note">Réutilise ${esc(sh2.map((k) => ing(k).n.toLowerCase()).join(', '))}, déjà dans ton menu.</div>` : ''}
       <div class="row between" style="margin-top:6px"><span class="section-title">Ingrédients</span>${stepper('sheet-servings', servings, 'Portions')}</div>
       <div class="muted small" style="margin-top:-8px">Pour ${yieldText(servings, r)}</div>
-      <div>${r.i.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}</div>
+      <div>${groupIngredients(r.i).map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${g.items.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}`).join('')}</div>
       ${stepsHtml(r)}
       ${notesHtml(r)}
       <div class="row" style="gap:16px;flex-wrap:wrap"><button class="link" data-act="edit-recipe" data-v="${r.id}">Modifier la recette</button>${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
@@ -597,6 +597,7 @@ function recipeSheet(sh) {
 }
 function editorSheet(sh) {
   const d = sh.draft;
+  const showParts = d.parts.length > 1 || d.parts.some((x) => x.name);
   const aisleOpts = (sel) => AISLES.map((a) => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''}>${a.name}</option>`).join('');
   return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Recette personnelle">
     <div class="sheet-head"><span class="grab" aria-hidden="true"></span><h2 style="font-size:22px">${sh.editId ? 'Modifier la recette' : 'Nouvelle recette'}</h2><button class="icon-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.close}</button></div>
@@ -612,15 +613,19 @@ function editorSheet(sh) {
         <div style="flex:1"><label class="lbl" for="ed-p">Pour</label><div class="row" style="gap:8px"><input class="input" id="ed-p" name="p" type="number" inputmode="numeric" min="1" value="${esc(d.p)}" style="width:64px"><select class="input" name="pu" aria-label="Unité des portions">${YIELDS.map((y) => `<option value="${y.id}" ${(d.pu || 'pers') === y.id ? 'selected' : ''}>${y.many}</option>`).join('')}</select></div></div>
       </div>
       <div class="section-title">Ingrédients</div>
-      ${d.i.map((row, idx) => `<div class="ing-row">
-        <div><label class="lbl" for="ed-in-${idx}">Ingrédient</label><input class="input" id="ed-in-${idx}" name="in-${idx}" list="ing-names" value="${esc(row.name)}" placeholder="Ex. : Carotte" autocomplete="off"></div>
-        <div><label class="lbl" for="ed-iq-${idx}">Qté</label><input class="input" id="ed-iq-${idx}" name="iq-${idx}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}"></div>
-        <div><label class="lbl" for="ed-iu-${idx}">Unité</label><select class="input unit-select" id="ed-iu-${idx}" name="iu-${idx}">${UNITS.map((u) => { const sel = KNOWN_UNITS.includes(row.u) ? row.u === u.id : u.id === 'autre'; return `<option value="${u.id}" ${sel ? 'selected' : ''}>${u.n}</option>`; }).join('')}</select></div>
-        <button type="button" class="icon-btn" data-act="ed-rm-ing" data-v="${idx}" aria-label="Retirer cet ingrédient" style="width:32px">${ICONS.close}</button>
-        ${KNOWN_UNITS.includes(row.u) ? '' : `<div style="grid-column:1 / span 3"><label class="lbl" for="ed-iux-${idx}">Unité (texte libre)</label><input class="input" id="ed-iux-${idx}" name="iux-${idx}" value="${esc(row.u === 'autre' ? '' : row.u)}" placeholder="Ex. : boîte, tranche, verre, poignée…" autocomplete="off"></div>`}
-        <div style="grid-column:1 / span 3"><label class="lbl" for="ed-ia-${idx}">Rayon</label><select class="input" id="ed-ia-${idx}" name="ia-${idx}" style="font-size:14px;padding:6px 0">${aisleOpts(row.a)}</select></div>
+      ${d.parts.map((part, pi) => `<div class="part-block">
+        ${showParts ? `<div class="row" style="gap:8px;align-items:flex-end"><div style="flex:1"><label class="lbl" for="ed-pn-${pi}">Partie ${pi + 1}</label><input class="input part-name" id="ed-pn-${pi}" name="pn-${pi}" value="${esc(part.name)}" placeholder="Ex. : Pâte, Garniture, Crumble…" autocomplete="off"></div>${d.parts.length > 1 ? `<button type="button" class="icon-btn" data-act="ed-rm-part" data-v="${pi}" aria-label="Supprimer la partie ${pi + 1}">${ICONS.trash}</button>` : ''}</div>` : ''}
+        ${part.rows.map((row, ri) => { const id = pi + '-' + ri; return `<div class="ing-row">
+          <div><label class="lbl" for="ed-in-${id}">Ingrédient</label><input class="input" id="ed-in-${id}" name="in-${id}" list="ing-names" value="${esc(row.name)}" placeholder="Ex. : Carotte" autocomplete="off"></div>
+          <div><label class="lbl" for="ed-iq-${id}">Qté</label><input class="input" id="ed-iq-${id}" name="iq-${id}" type="number" inputmode="decimal" step="any" min="0" value="${esc(row.q)}"></div>
+          <div><label class="lbl" for="ed-iu-${id}">Unité</label><select class="input unit-select" id="ed-iu-${id}" name="iu-${id}">${UNITS.map((u) => { const sel = KNOWN_UNITS.includes(row.u) ? row.u === u.id : u.id === 'autre'; return `<option value="${u.id}" ${sel ? 'selected' : ''}>${u.n}</option>`; }).join('')}</select></div>
+          <button type="button" class="icon-btn" data-act="ed-rm-ing" data-v="${pi}:${ri}" aria-label="Retirer cet ingrédient" style="width:32px">${ICONS.close}</button>
+          ${KNOWN_UNITS.includes(row.u) ? '' : `<div style="grid-column:1 / span 3"><label class="lbl" for="ed-iux-${id}">Unité (texte libre)</label><input class="input" id="ed-iux-${id}" name="iux-${id}" value="${esc(row.u === 'autre' ? '' : row.u)}" placeholder="Ex. : boîte, tranche, verre, poignée…" autocomplete="off"></div>`}
+          <div style="grid-column:1 / span 3"><label class="lbl" for="ed-ia-${id}">Rayon</label><select class="input" id="ed-ia-${id}" name="ia-${id}" style="font-size:14px;padding:6px 0">${aisleOpts(row.a)}</select></div>
+        </div>`; }).join('')}
+        <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-ing" data-v="${pi}">+ Ajouter un ingrédient${showParts ? (part.name ? ' (' + esc(part.name) + ')' : ' à cette partie') : ''}</button>
       </div>`).join('')}
-      <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-ing">+ Ajouter un ingrédient</button>
+      <button type="button" class="link" style="align-self:flex-start" data-act="ed-add-part">+ ${showParts ? 'Ajouter une partie' : 'Séparer en parties (ex. : pâte, garniture, crumble)'}</button>
       <div><label class="lbl" for="ed-st">Étapes (une par ligne)</label><textarea class="input" id="ed-st" name="st" placeholder="Préchauffer le four…" style="min-height:200px">${esc(d.st)}</textarea></div>
       <div><label class="lbl" for="ed-tips">Astuces (une par ligne)</label><textarea class="input" id="ed-tips" name="tips" placeholder="Facultatif">${esc(d.tips || '')}</textarea></div>
       ${sh.base ? '<p class="muted small" style="margin:0">Tes modifications sont gardées sur ce téléphone. Tu pourras toujours rétablir la recette d’origine.</p>' : ''}
@@ -635,13 +640,17 @@ function readEditorForm() {
   const d = ui.sheet.draft;
   const fd = new FormData(form);
   d.n = fd.get('n') || ''; d.type = fd.get('type'); d.d = +fd.get('d'); d.t = fd.get('t'); d.p = fd.get('p'); d.pu = fd.get('pu') || 'pers'; d.st = fd.get('st') || ''; d.tips = fd.get('tips') || '';
-  d.i.forEach((row, idx) => {
-    const name = fd.get('in-' + idx) || '';
-    const changedName = name !== row.name;
-    row.name = name; row.q = fd.get('iq-' + idx); row.a = fd.get('ia-' + idx);
-    const u = fd.get('iu-' + idx);
-    row.u = u === 'autre' ? (String(fd.get('iux-' + idx) || '').trim() || 'autre') : u;
-    if (changedName && name && row.a === 'au') row.a = guessAisle(name);
+  d.parts.forEach((part, pi) => {
+    if (fd.has('pn-' + pi)) part.name = String(fd.get('pn-' + pi) || '');
+    part.rows.forEach((row, ri) => {
+      const id = pi + '-' + ri;
+      const name = fd.get('in-' + id) || '';
+      const changedName = name !== row.name;
+      row.name = name; row.q = fd.get('iq-' + id); row.a = fd.get('ia-' + id);
+      const u = fd.get('iu-' + id);
+      row.u = u === 'autre' ? (String(fd.get('iux-' + id) || '').trim() || 'autre') : u;
+      if (changedName && name && row.a === 'au') row.a = guessAisle(name);
+    });
   });
 }
 
@@ -689,14 +698,23 @@ async function copyList() {
   toast(ok ? 'Liste copiée : colle-la dans un message' : 'Copie impossible sur cet appareil');
 }
 
-function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, pu: 'pers', i: [{ name: '', q: '', u: 'g', a: 'au' }], st: '', tips: '' }; }
+function newDraft() { return { n: '', e: EMOJIS[0], type: 'plat', d: 1, t: 30, p: state.profile.persons, pu: 'pers', parts: [{ name: '', rows: [emptyRow()] }], st: '', tips: '' }; }
+function emptyRow() { return { name: '', q: '', u: 'g', a: 'au' }; }
+/* Regroupe les ingrédients par partie (4e élément), dans l'ordre d'apparition */
+function groupIngredients(list) {
+  const parts = [];
+  list.forEach((x) => { const g = x[3] || ''; let p = parts.find((y) => y.name === g); if (!p) { p = { name: g, items: [] }; parts.push(p); } p.items.push(x); });
+  return parts;
+}
 function draftFrom(r) {
-  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, pu: r.pu || 'pers', i: r.i.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })), st: stepsOf(r).join('\n'), tips: tipsOf(r).join('\n') };
+  return { n: r.n, e: r.e, type: r.type, d: r.d, t: r.t, p: r.p, pu: r.pu || 'pers', parts: groupIngredients(r.i).map((g) => ({ name: g.name, rows: g.items.map(([k, q, u]) => ({ name: ing(k).n, q, u, a: ing(k).a || 'au' })) })), st: stepsOf(r).join('\n'), tips: tipsOf(r).join('\n') };
 }
 function saveDraft() {
   readEditorForm();
   const d = ui.sheet.draft;
-  const rows = d.i.filter((row) => row.name.trim());
+  const named = d.parts.length > 1 || d.parts.some((x) => x.name.trim());
+  const rows = [];
+  d.parts.forEach((part) => part.rows.forEach((row) => { if (row.name.trim()) rows.push(Object.assign({}, row, { g: named ? part.name.trim() : '' })); }));
   if (!d.n.trim()) { toast('Donne un nom à ta recette'); return; }
   if (!rows.length) { toast('Ajoute au moins un ingrédient'); return; }
   const i = rows.map((row) => {
@@ -708,7 +726,9 @@ function saveDraft() {
       state.customIngs[key].a = row.a || state.customIngs[key].a;
     }
     const q = parseFloat(String(row.q).replace(',', '.'));
-    return [key, isFinite(q) && q > 0 ? q : 1, (!row.u || row.u === 'autre') ? 'pc' : row.u];
+    const line = [key, isFinite(q) && q > 0 ? q : 1, (!row.u || row.u === 'autre') ? 'pc' : row.u];
+    if (row.g) line.push(row.g);
+    return line;
   });
   const lines = (txt) => String(txt || '').split('\n').map((x) => x.trim()).filter(Boolean);
   const fields = { n: d.n.trim(), e: d.e, type: d.type, t: clampInt(parseInt(d.t, 10) || 30, 1, 999), d: +d.d || 1, p: clampInt(parseInt(d.p, 10) || 4, 1, 200), pu: d.pu || 'pers', i, st: lines(d.st), tips: lines(d.tips) };
@@ -804,8 +824,15 @@ function handle(act, v, el) {
       });
       return;
     case 'ed-emoji': readEditorForm(); ui.sheet.draft.e = v; renderOverlays(); return;
-    case 'ed-add-ing': readEditorForm(); ui.sheet.draft.i.push({ name: '', q: '', u: 'g', a: 'au' }); renderOverlays(); return;
-    case 'ed-rm-ing': readEditorForm(); ui.sheet.draft.i.splice(+v, 1); if (!ui.sheet.draft.i.length) ui.sheet.draft.i.push({ name: '', q: '', u: 'g', a: 'au' }); renderOverlays(); return;
+    case 'ed-add-ing': readEditorForm(); ui.sheet.draft.parts[+v || 0].rows.push(emptyRow()); renderOverlays(); return;
+    case 'ed-rm-ing': { readEditorForm(); const [pi, ri] = v.split(':').map(Number); const part = ui.sheet.draft.parts[pi]; part.rows.splice(ri, 1); if (!part.rows.length) part.rows.push(emptyRow()); renderOverlays(); return; }
+    case 'ed-add-part': {
+      readEditorForm(); const parts = ui.sheet.draft.parts;
+      parts.push({ name: '', rows: [emptyRow()] }); renderOverlays();
+      const el2 = document.getElementById('ed-pn-' + (parts.length > 1 && !parts[0].name ? 0 : parts.length - 1)); if (el2) el2.focus();
+      return;
+    }
+    case 'ed-rm-part': readEditorForm(); if (ui.sheet.draft.parts.length > 1) ui.sheet.draft.parts.splice(+v, 1); renderOverlays(); return;
     case 'ed-save': saveDraft(); return;
     case 'rec-filter': ui.recFilter = v; break;
     case 'stars': { const n = noteOf(v.split(':')[0]); const k = +v.split(':')[1]; n.stars = n.stars === k ? 0 : k; break; }

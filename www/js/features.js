@@ -422,7 +422,7 @@ function previewSheet(sh, r) {
       ${reason ? `<div class="card-warn">Attention : cette recette ne correspond pas entièrement à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</div>` : ''}
       ${dis.length ? `<div class="card-warn">Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</div>` : ''}
       <div class="section-title" style="margin-top:6px">Ingrédients</div>
-      <div>${r.i.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}</span><span>${fmtQty(q, u, k, false)}</span></div>`).join('')}</div>
+      <div>${groupIngredients(r.i).map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${g.items.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}</span><span>${fmtQty(q, u, k, false)}</span></div>`).join('')}`).join('')}</div>
       ${stepsHtml(r)}
       <p class="muted small" style="margin:0">Recette générée automatiquement : vérifie les cuissons et les quantités avant de te lancer.</p>
     </div>
@@ -551,7 +551,7 @@ Réponds avec ce JSON :
   "portions": nombre (${sh.persons} si la recette se compte en personnes),
   "unite_portions": "personnes" | "pièces" | "parts" (pièces pour ce qui se compte à l'unité : cookies, muffins, crêpes… ; parts pour un gâteau ou une tarte),
   "equipement": liste parmi ["plaques", "four", "micro", "mixeur", "airfryer"],
-  "ingredients": [ { "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
+  "ingredients": [ { "partie": "nom de la partie si la recette en a plusieurs (ex. : Pâte, Garniture, Crumble), sinon chaîne vide", "nom": "…", "quantite": nombre, "unite": "g" | "ml" | "pc" | "sachet" | "cs" | "cc" | "pincee", "rayon": "fl" | "bp" | "cr" | "bo" | "ep" | "es" | "su" | "sg" | "bs" | "au" } ],
   "etapes": [ "de 5 à 9 étapes détaillées, avec temps, températures et repères visuels" ],
   "astuces": [ "1 à 3 astuces utiles" ],
   "image_query": "2 à 4 mots-clés en anglais pour trouver une photo du plat (ex. : gnocchi tomato sauce)",
@@ -571,7 +571,9 @@ Unités : "pc" pour ce qui se compte (œufs, oignons, gousses d'ail, citrons, tr
         if (!state.customIngs[key]) state.customIngs[key] = { n: x.nom.charAt(0).toUpperCase() + x.nom.slice(1), a: AISLE_IDS().includes(x.rayon) ? x.rayon : 'au' };
       }
       const q = parseFloat(String(x.quantite).replace(',', '.'));
-      return [key, isFinite(q) && q > 0 ? q : 1, units.includes(x.unite) ? x.unite : 'pc'];
+      const line = [key, isFinite(q) && q > 0 ? q : 1, units.includes(x.unite) ? x.unite : 'pc'];
+      if (x.partie && String(x.partie).trim()) line.push(String(x.partie).trim());
+      return line;
     });
     if (!j.nom || !ings.length) throw new Error('La recette reçue est incomplète. Réessaie.');
     sh.recipe = {
