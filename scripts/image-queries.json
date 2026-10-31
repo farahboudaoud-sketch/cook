@@ -23,7 +23,10 @@
  "ratatouille": "ratatouille dish",
  "salade_nicoise": "salade niçoise",
  "croque_monsieur": "croque monsieur",
- "hachis_parmentier": "hachis parmentier",
+ "hachis_parmentier": [
+  "hachis parmentier",
+  "cottage pie"
+ ],
  "lasagnes_epinards": {
   "q": "spinach lasagne",
   "pick": 2
@@ -84,7 +87,10 @@
   "q": "lentil stew",
   "pick": 3
  },
- "petits_pois_carottes": "chicken peas carrots",
+ "petits_pois_carottes": {
+  "q": "chicken peas carrots",
+  "pick": 1
+ },
  "crumble_pommes": "apple crumble",
  "mousse_chocolat": "chocolate mousse",
  "gateau_yaourt": {
