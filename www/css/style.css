@@ -355,3 +355,6 @@ select.input { appearance: none; -webkit-appearance: none; background: transpare
 .budget-bar i { background: var(--accent); }
 .budget-detail { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
 .aisle-cost { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; text-transform: none; font-style: normal; }
+.sync-state { font-size: 14px; background: var(--paper-2); border-radius: 6px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+.sync-state.err { background: var(--accent-soft); color: var(--accent); }
+.dark-spin { border-color: var(--rule); border-top-color: var(--accent); }

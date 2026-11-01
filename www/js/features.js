@@ -45,7 +45,7 @@ function openDb() {
 }
 async function loadImages() {
   const db = await openDb();
-  if (!db) return;
+  if (!db) { window.imagesReady = true; return; }
   await new Promise((resolve) => {
     try {
       const req = db.transaction('images', 'readonly').objectStore('images').openCursor();
@@ -53,6 +53,7 @@ async function loadImages() {
       req.onerror = () => resolve();
     } catch (e) { resolve(); }
   });
+  window.imagesReady = true;
 }
 function storeGenerated(id, src) {
   genCache[id] = src;
