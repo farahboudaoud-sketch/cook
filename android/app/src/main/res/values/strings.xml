@@ -5,5 +5,8 @@
     <string name="package_name">fr.carnetcuisine.app</string>
     <string name="custom_url_scheme">fr.carnetcuisine.app</string>
     <string name="widget_launcher_label">Carnet de cuisine</string>
-    <string name="widget_launcher_desc">Ouvre ton carnet de cuisine d’un appui</string>
+    <string name="widget_launcher_desc">Ta semaine et tes courses en un coup d’œil</string>
+    <string name="widget_week_title">Ma semaine</string>
+    <string name="widget_week_label">recettes\nchoisies</string>
+    <string name="widget_open">Ouvre l’appli</string>
 </resources>

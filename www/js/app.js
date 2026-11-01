@@ -156,8 +156,35 @@ function load() {
 }
 function saveRaw() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+  pushWidget();
 }
 function save() { saveRaw(); if (typeof syncAfterSave === 'function') syncAfterSave(); }
+/* Widget d'écran d'accueil : résumé de la semaine et des courses */
+let widgetTimer = null; let widgetLast = '';
+function pushWidget() {
+  clearTimeout(widgetTimer);
+  widgetTimer = setTimeout(() => {
+    try {
+      const C = window.Capacitor;
+      const plug = C && ((C.Plugins && C.Plugins.RecapWidget) || (C.registerPlugin && (pushWidget.p = pushWidget.p || C.registerPlugin('RecapWidget'))));
+      if (!plug || !state.onboarded) return;
+      const L = state.list;
+      const items = buildList().filter((i) => !i.pantry && !L.have[i.id]);
+      const left = items.filter((i) => !L.checked[i.id]);
+      const euros = left.reduce((t, i) => t + itemCostEstimate(i), 0);
+      const data = {
+        done: state.menu.filter((m) => recipeById(m.rid)).length,
+        target: state.profile.target,
+        todo: left.length,
+        budget: euros > 0 ? fmtEuro(euros < 10 ? Math.round(euros * 2) / 2 : Math.round(euros)) : ''
+      };
+      const key = JSON.stringify(data);
+      if (key === widgetLast) return;
+      widgetLast = key;
+      plug.update(data).catch(() => { widgetLast = ''; });
+    } catch (e) { /* hors application */ }
+  }, 600);
+}
 
 /* ---------- Données dérivées ---------- */
 /* Recettes de base (avec les modifications faites à la main), puis recettes personnelles */
@@ -1360,6 +1387,7 @@ function setupBackButton() {
 }
 
 loadImages().then(() => { render(); if (syncOn()) syncNow(); });
+pushWidget();
 render(true);
 setupBackButton();
 /* Fin de l'animation d'ouverture */
