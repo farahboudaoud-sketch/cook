@@ -540,7 +540,7 @@ function renderProfile() {
     ${sec('pantry', 'Mon placard de base', state.pantry.length + ' ' + plural(state.pantry.length, 'produit', 'produits'), `<p class="muted small" style="margin:0">Ces produits sont toujours chez toi : ils sont masqués de la liste de courses.</p>
       <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
       <form class="field" data-form="pantry">${ICONS.plus}<input name="q" data-suggest="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>`)}
-    ${sec('sync', 'Synchronisation', syncSummary(), syncHtml())}
+    ${sec('sync', 'Sauvegarde sur GitHub', syncSummary(), syncHtml())}
     ${sec('ai', 'Assistant IA', aiReady() ? 'Clé enregistrée' : 'Pas de clé', `<p class="muted small" style="margin:0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>${keyForm()}`)}
     </div>
     ${(state.hidden || []).length ? `<div class="row between"><span class="muted small">${state.hidden.length} ${plural(state.hidden.length, 'recette masquée', 'recettes masquées')}</span><button class="link" data-act="unhide-all">Tout réafficher</button></div>` : ''}
@@ -978,7 +978,7 @@ function handle(act, v, el) {
     case 'ed-rm-part': readEditorForm(); if (ui.sheet.draft.parts.length > 1) ui.sheet.draft.parts.splice(+v, 1); renderOverlays(); return;
     case 'ed-save': saveDraft(); return;
     case 'sync-on': syncEnable(); return;
-    case 'sync-off': confirmBox('Arrêter la synchronisation sur ce téléphone ? Tes recettes restent ici et sur tes autres téléphones.', 'Désactiver', () => syncDisable()); renderOverlays(); return;
+    case 'sync-off': confirmBox('Arrêter la sauvegarde ? Tes recettes restent sur ce téléphone et la copie déjà faite reste sur GitHub.', 'Désactiver', () => syncDisable()); renderOverlays(); return;
     case 'sync-now': syncNow(true); return;
     case 'prof-sec': ui.profOpen = ui.profOpen || {}; ui.profOpen[v] = !ui.profOpen[v]; render(); return;
     case 'ed-add-step': readEditorForm(); ui.sheet.draft.steps.push(''); renderOverlays(); setTimeout(() => { const t = $('#ed-st-' + (ui.sheet.draft.steps.length - 1)); if (t) { t.focus(); t.scrollIntoView({ block: 'center' }); } }, 50); return;

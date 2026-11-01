@@ -3,7 +3,7 @@
    recettes masquées, favoris, notes, choix de photo, images générées et photos perso.
    Chaque élément porte une date de modification : en cas de conflit, la modification la plus récente gagne. */
 const SYNC_FILE = 'carnet-cuisine-sync.json';
-const SYNC_DESC = 'Carnet de cuisine – synchronisation (ne pas supprimer)';
+const SYNC_DESC = 'Carnet de cuisine – sauvegarde (ne pas supprimer)';
 const GH_API = 'https://api.github.com';
 let syncTimer = null; let syncBusy = false; let syncAgain = false; let syncApplying = false;
 
@@ -24,6 +24,7 @@ function syncEntries() {
   (state.favorites || []).forEach((id) => { e['f:' + id] = true; });
   Object.entries(state.notes || {}).forEach(([k, v]) => { if (v && (v.text || v.stars || v.last)) e['n:' + k] = v; });
   Object.entries(state.photos || {}).forEach(([k, v]) => { e['p:' + k] = v; });
+  if (state.onboarded) { e['P:profile'] = state.profile; e['P:pantry'] = state.pantry; }
   return e;
 }
 function syncImageKeys() { return Object.keys(genCache).filter((k) => genCache[k]); }
@@ -59,7 +60,7 @@ async function gh(path, opts) {
   });
   if (res.status === 401) throw new Error('Clé GitHub refusée : vérifie-la (ou crée-en une nouvelle) dans le Profil.');
   if (res.status === 403 || res.status === 404) {
-    if (path.startsWith('/gists/')) { const e = new Error('Synchronisation introuvable.'); e.notFound = true; throw e; }
+    if (path.startsWith('/gists/')) { const e = new Error('Sauvegarde introuvable.'); e.notFound = true; throw e; }
     throw new Error('Accès refusé : la clé GitHub doit avoir l’autorisation « gist ».');
   }
   if (!res.ok) throw new Error('GitHub ne répond pas correctement (erreur ' + res.status + '). Réessaie plus tard.');
@@ -88,6 +89,7 @@ function syncApply(k, v, del) {
     case 'f': state.favorites = state.favorites.filter((x) => x !== id); if (!del) state.favorites.push(id); break;
     case 'n': if (del) delete state.notes[id]; else state.notes[id] = v; break;
     case 'p': if (del) delete state.photos[id]; else state.photos[id] = v; break;
+    case 'P': if (!del && v) { if (id === 'profile') state.profile = Object.assign({}, state.profile, v); if (id === 'pantry') state.pantry = v; } break;
   }
 }
 
@@ -144,12 +146,12 @@ async function syncNow(manual) {
       await gh('/gists/' + c.gistId, { method: 'PATCH', body: { files: { [SYNC_FILE]: { content: JSON.stringify(remote) } } } });
     }
     c.last = Date.now(); c.status = 'ok';
-    if (localChanged) { saveRaw(); render(); if (manual) toast('Recettes mises à jour depuis ton autre téléphone'); }
-    else if (manual) toast('Tout est à jour');
+    if (localChanged) { saveRaw(); render(); toast('Recettes récupérées depuis ta sauvegarde'); }
+    else if (manual) toast('Sauvegarde à jour');
   } catch (e) {
     syncApplying = false;
-    c.status = 'error'; c.error = e.message || 'Synchronisation impossible';
-    if (e.notFound) { c.gistId = ''; c.error = 'La synchronisation a été supprimée sur GitHub. Réactive-la.'; }
+    c.status = 'error'; c.error = e.message || 'Sauvegarde impossible pour le moment';
+    if (e.notFound) { c.gistId = ''; c.error = 'La sauvegarde a été supprimée sur GitHub. Réactive-la.'; }
     if (manual) toast(c.error);
   }
   saveRaw(); syncBusy = false; syncRefreshUi();
@@ -173,18 +175,18 @@ async function syncEnable() {
       c.gistId = found.id; c.stamps = {};
       // Ce qui existe déjà sur ce téléphone passe après ce qui est déjà synchronisé, sans rien perdre
       syncMark(1);
-      toast('Synchronisation retrouvée : récupération des recettes…');
+      toast('Sauvegarde retrouvée : récupération de tes recettes…');
     } else {
       const g = await gh('/gists', { method: 'POST', body: { description: SYNC_DESC, public: false, files: { [SYNC_FILE]: { content: JSON.stringify({ v: 1, entries: {} }) } } } });
       c.gistId = g.id; c.stamps = {}; syncMark();
-      toast('Synchronisation activée');
+      toast('Sauvegarde activée');
     }
     saveRaw(); syncBusy = false; await syncNow();
   } catch (e) { c.status = 'error'; c.error = e.message; saveRaw(); syncRefreshUi(); toast(e.message); }
 }
 function syncDisable() {
   const c = syncCfg(); c.token = ''; c.gistId = ''; c.stamps = {}; c.status = ''; c.error = ''; saveRaw(); render();
-  toast('Synchronisation désactivée sur ce téléphone');
+  toast('Sauvegarde désactivée sur ce téléphone');
 }
 
 function fmtAgo(t) {
@@ -196,27 +198,27 @@ function fmtAgo(t) {
 function syncSummary() {
   const c = syncCfg();
   if (!syncOn()) return 'Désactivée';
-  if (c.status === 'running') return 'En cours…';
+  if (c.status === 'running') return 'Envoi en cours…';
   if (c.status === 'error') return 'Problème : touche pour voir';
-  return 'Active · ' + fmtAgo(c.last);
+  return 'Active · dernière ' + fmtAgo(c.last);
 }
 function syncHtml() {
   const c = syncCfg();
   if (syncOn()) {
-    return `<p class="muted small" style="margin:0">Tes recettes (perso, IA, modifiées, masquées), favoris, notes et images sont partagés avec tes autres téléphones où la synchronisation est activée avec la même clé.</p>
-      <div class="sync-state ${c.status === 'error' ? 'err' : ''}" id="sync-state">${c.status === 'running' ? '<span class="spinner small-spin dark-spin" aria-hidden="true"></span> Synchronisation…' : c.status === 'error' ? esc(c.error) : 'Dernière synchronisation : ' + fmtAgo(c.last)}</div>
-      <button class="btn" data-act="sync-now">Synchroniser maintenant</button>
-      <button class="link" style="align-self:flex-start" data-act="sync-off">Désactiver sur ce téléphone</button>`;
+    return `<p class="muted small" style="margin:0">Chaque nouvelle recette ou modification est envoyée sur ton compte GitHub (espace privé) : recettes perso et IA, recettes modifiées ou masquées, favoris, notes, images, profil et placard. Si tu changes de téléphone, réinstalle l’appli et colle une clé GitHub ici : tout revient.</p>
+      <div class="sync-state ${c.status === 'error' ? 'err' : ''}" id="sync-state">${c.status === 'running' ? '<span class="spinner small-spin dark-spin" aria-hidden="true"></span> Sauvegarde…' : c.status === 'error' ? esc(c.error) : 'Dernière sauvegarde : ' + fmtAgo(c.last)}</div>
+      <button class="btn" data-act="sync-now">Sauvegarder maintenant</button>
+      <button class="link" style="align-self:flex-start" data-act="sync-off">Désactiver la sauvegarde</button>`;
   }
-  return `<p class="muted small" style="margin:0">Retrouve tes recettes sur un autre téléphone. Elles sont rangées dans un espace privé de ton compte GitHub (gratuit).</p>
-    <details class="help"><summary>Créer ta clé GitHub (une seule fois)</summary><ol>
+  return `<p class="muted small" style="margin:0">Garde une copie de tes recettes sur ton compte GitHub (espace privé, gratuit). En cas de perte ou de changement de téléphone, tu réinstalles l’appli, tu colles une clé GitHub ici et tout revient.</p>
+    <details class="help"><summary>Créer ta clé GitHub</summary><ol>
       <li>Sur github.com, ouvre <a href="https://github.com/settings/tokens/new?scopes=gist&description=Carnet%20de%20cuisine" target="_blank" rel="noopener">Settings › Developer settings › Tokens (classic) › Generate new token</a>.</li>
       <li>Nom : « Carnet de cuisine ». Expiration : « No expiration ». Coche uniquement <b>gist</b>.</li>
       <li>Clique « Generate token », copie la clé (elle commence par ghp_) et colle-la ci-dessous.</li>
-      <li>Sur ton autre téléphone, colle la même clé : les recettes arrivent toutes seules.</li></ol></details>
+      <li>Nouveau téléphone : une nouvelle clé créée de la même façon suffit, l’appli retrouve ta sauvegarde toute seule.</li></ol></details>
     <div><label class="lbl" for="sync-token">Clé GitHub</label><input class="input" id="sync-token" type="password" autocomplete="off" placeholder="ghp_…" value="${esc(c.token || '')}"></div>
     ${c.status === 'error' ? `<p class="card-warn" style="margin:0;font-size:14px">${esc(c.error)}</p>` : ''}
-    <button class="btn primary" data-act="sync-on">${c.status === 'running' ? 'Activation…' : 'Activer la synchronisation'}</button>`;
+    <button class="btn primary" data-act="sync-on">${c.status === 'running' ? 'Activation…' : 'Activer la sauvegarde'}</button>`;
 }
 function syncRefreshUi() {
   if (ui.tab === 'profil' && !ui.sheet) { const y = ($('#main') || {}).scrollTop; render(); const m = $('#main'); if (m && y) m.scrollTop = y; }
