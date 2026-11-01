@@ -20,13 +20,20 @@ function starsLabel(id) {
 }
 function notesHtml(r) {
   const n = state.notes[r.id] || {};
-  const last = n.last ? (n.lastWeek ? `Cuisinée la semaine du ${fmtDate(n.last)}` : `Cuisinée le ${fmtDate(n.last)}`) : 'Pas encore cuisinée';
+  const last = n.last ? (n.lastWeek ? `Semaine du ${fmtDate(n.last)}` : fmtDate(n.last)) : 'Pas encore faite';
   const stars = [1, 2, 3, 4, 5].map((k) => `<button class="star ${n.stars >= k ? 'on' : ''}" data-act="stars" data-v="${r.id}:${k}" aria-label="${k} ${k > 1 ? 'étoiles' : 'étoile'}" aria-pressed="${n.stars === k}">${n.stars >= k ? ICONS.starFull : ICONS.star}</button>`).join('');
-  return `<div class="section-title" style="margin-top:8px">Mes notes</div>
-    <div class="stars" role="group" aria-label="Ma note">${stars}</div>
-    <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="muted small">${last}</span><button class="link" data-act="cooked-today" data-v="${r.id}">Je l’ai cuisinée aujourd’hui</button></div>
-    <label class="lbl" for="note-text">Mes commentaires</label>
-    <textarea class="input" id="note-text" data-v="${r.id}" placeholder="Ce que tu changerais, une variante, un avis…">${esc(n.text || '')}</textarea>`;
+  return `<section class="notes-card" id="sec-notes">
+    <h2 class="h2">Mes notes</h2>
+    <div class="notes-grid">
+      <div><span class="mini-lbl">Ma note</span><div class="stars" role="group" aria-label="Ma note">${stars}</div></div>
+      <div><span class="mini-lbl">Dernière fois</span><span class="last-date">${svgI(IC.calendar, 'ic-s')}${last}</span></div>
+    </div>
+    <button class="btn" style="min-height:44px;border-color:var(--accent);color:var(--accent);font-size:14px" data-act="cooked-today" data-v="${r.id}">${svgI(IC.check, 'ic-s')}Je l’ai faite aujourd’hui</button>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <label class="mini-lbl" for="note-text">Mes commentaires</label>
+      <textarea class="input" id="note-text" data-v="${r.id}" placeholder="Ce que tu changerais, une variante, un avis…">${esc(n.text || '')}</textarea>
+    </div>
+  </section>`;
 }
 
 /* ---------- Images : générées (IA) puis vraies photos (Wikimedia Commons) ---------- */
@@ -179,13 +186,13 @@ function stepsHtml(r, sh) {
   const editable = sh && sh.kind === 'recipe' && !r.preview;
   let tipsBlock = '';
   if (editable && sh.tipsEdit) {
-    tipsBlock = `<div class="tips"><div class="serif italic" style="font-size:18px;color:var(--accent)">Astuces</div>
+    tipsBlock = `<div class="tips"><div class="tips-title"><span class="bulb">${svgI(IC.bulb)}</span>Astuces</div>
       <textarea class="input tips-text" id="tips-text" placeholder="Une astuce par ligne">${esc(tips.join('\n'))}</textarea>
       <div class="row" style="gap:10px;justify-content:flex-end"><button class="btn small-btn" data-act="tips-cancel">Annuler</button><button class="btn primary small-btn" data-act="tips-save" data-v="${r.id}">Enregistrer</button></div></div>`;
   } else if (tips.length || editable) {
-    tipsBlock = `<div class="tips"><div class="row between"><span class="serif italic" style="font-size:18px;color:var(--accent)">Astuces</span>${editable ? `<button class="icon-btn tips-pen" data-act="tips-edit" aria-label="Modifier les astuces"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</div>${tips.length ? tips.map((t) => `<p>${esc(t)}</p>`).join('') : '<p class="muted">Pas encore d’astuce : touche le crayon pour en ajouter une.</p>'}</div>`;
+    tipsBlock = `<div class="tips"><div class="row between"><span class="tips-title"><span class="bulb">${svgI(IC.bulb)}</span>Astuces</span>${editable ? `<button class="icon-btn tips-pen" data-act="tips-edit" aria-label="Modifier les astuces"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}</div>${tips.length ? tips.map((t) => `<p>${esc(t)}</p>`).join('') : '<p class="muted">Pas encore d’astuce : touche le crayon pour en ajouter une.</p>'}</div>`;
   }
-  return `${st.length ? `<div class="section-title" style="margin-top:6px">Préparation</div><ol class="steps">${st.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>` : ''}
+  return `${st.length ? `<h2 class="h2" id="sec-prep" style="margin-top:6px">Préparation</h2><ol class="steps">${st.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>` : ''}
     ${tipsBlock}`;
 }
 /* Crayon des astuces : modification directe depuis la fiche */
@@ -207,20 +214,20 @@ function recipeCard(r, sh, dis) {
   sh = sh || []; dis = dis || [];
   const added = !!inMenu(r.id);
   const fav = state.favorites.includes(r.id);
-  const stars = starsLabel(r.id);
+  const n = state.notes[r.id];
   return `<div class="card">
     <div class="tile" style="background:${hashColor(r.id)}">
       <span class="tile-emoji" aria-hidden="true">${r.e || '🍽️'}</span>
       ${imgTag(r, 'tile-img')}
       <button class="tile-open" data-act="open" data-v="${r.id}" aria-label="Voir ${esc(r.n)}"></button>
-      ${fav ? `<span class="fav" aria-label="Favori">${ICONS.heartFull}</span>` : ''}
-      <button class="add ${added ? 'on' : ''}" data-act="toggle-menu" data-v="${r.id}" aria-label="${added ? 'Retirer du menu' : 'Ajouter au menu'}" style="color:${added ? '#fff' : 'var(--ink)'}">${added ? ICONS.check : ICONS.plus}</button>
+      ${fav ? `<span class="fav" aria-label="Favori" style="color:var(--accent)">${ICONS.heartFull}</span>` : ''}
+      ${added ? '<span class="time" style="background:var(--accent);color:#FBF6EE">Au menu</span>' : `<span class="time">${r.t} min</span>`}
+      <button class="add ${added ? 'on' : ''}" data-act="toggle-menu" data-v="${r.id}" aria-label="${added ? 'Retirer du menu' : 'Ajouter au menu'}">${added ? svgI(IC.check, 'ic-s') : svgI(IC.plus, 'ic-s')}</button>
     </div>
     <button class="card" data-act="open" data-v="${r.id}" style="gap:4px">
       <span class="card-name">${esc(r.n)}</span>
-      <span class="card-meta">${r.t} min · ${DIFF[r.d] || ''}${r.ai ? ' · IA' : r.custom ? ' · Perso' : ''}</span>
-      ${stars ? `<span class="card-stars" aria-label="${state.notes[r.id].stars} sur 5">${stars}</span>` : ''}
-      ${sh.length ? `<span class="card-note">${sh.length} ${plural(sh.length, 'ingrédient', 'ingrédients')} en commun</span>` : ''}
+      <span class="card-meta">${added ? r.t + ' min · ' : ''}${DIFF[r.d] || ''}${r.ai ? ' · IA' : r.custom ? ' · Perso' : ''}${n && n.stars ? ` · <span style="color:var(--accent)">★ ${n.stars}/5</span>` : ''}</span>
+      ${sh.length ? `<span class="badge sage" style="align-self:flex-start;margin-top:2px">${sh.length} ${plural(sh.length, 'ingrédient', 'ingrédients')} en commun</span>` : ''}
       ${dis.length ? `<span class="card-warn">Contient : ${esc(dis.join(', ').toLowerCase())}</span>` : ''}
     </button>
   </div>`;
@@ -228,31 +235,35 @@ function recipeCard(r, sh, dis) {
 
 /* ---------- Onglet « Mes recettes » ---------- */
 function renderMyRecipes() {
-  const filters = [['toutes', 'Toutes'], ['favoris', 'Favoris'], ['perso', 'Écrites par moi'], ['ia', 'Générées par l’IA']];
-  let list = allRecipes().filter((r) => state.favorites.includes(r.id) || r.custom);
+  const base = allRecipes().filter((r) => state.favorites.includes(r.id) || r.custom);
+  const count = { toutes: base.length, favoris: base.filter((r) => state.favorites.includes(r.id)).length, perso: base.filter((r) => r.custom && !r.ai).length, ia: base.filter((r) => r.ai).length };
+  const filters = [['toutes', 'Toutes', ''], ['favoris', 'Favoris', ICONS.heart], ['perso', 'Écrites par moi', svgI(IC.pen, 'ic-s')], ['ia', 'Générées par l’IA', svgI(IC.spark, 'ic-s')]];
+  let list = base;
   if (ui.recFilter === 'favoris') list = list.filter((r) => state.favorites.includes(r.id));
   if (ui.recFilter === 'perso') list = list.filter((r) => r.custom && !r.ai);
   if (ui.recFilter === 'ia') list = list.filter((r) => r.ai);
+  const q = norm(ui.recQuery || '');
+  if (q) list = list.filter((r) => norm(r.n).includes(q) || r.i.some(([k]) => norm(ing(k).n).includes(q)));
   const sections = TYPES.map((t) => {
     const its = list.filter((r) => (r.type || 'plat') === t.id).sort((a, b) => ((state.notes[b.id] || {}).stars || 0) - ((state.notes[a.id] || {}).stars || 0) || a.n.localeCompare(b.n, 'fr'));
     if (!its.length) return '';
-    return `<div class="section-title">${t.name} <span class="muted small" style="font-style:normal;font-family:var(--sans)">${its.length}</span></div><div class="grid">${its.map((r) => recipeCard(r)).join('')}</div>`;
+    return `<section style="display:flex;flex-direction:column;gap:12px"><div class="row" style="gap:8px;align-items:baseline"><h2 class="h2">${t.name}</h2><span class="serif italic" style="color:var(--accent);font-size:16px">${its.length}</span></div><div class="grid">${its.map((r) => recipeCard(r)).join('')}</div></section>`;
   }).join('');
-  const empty = {
-    toutes: 'Ton carnet est vide pour l’instant. Touche le cœur sur une recette pour la mettre en favori, écris tes propres recettes ou demande-en une à l’IA.',
+  const empty = q ? 'Aucune recette de ton carnet ne correspond à « ' + esc(ui.recQuery) + ' ».' : {
+    toutes: 'Touche le cœur sur une recette pour la mettre en favori, écris tes propres recettes ou demande-en une à l’IA.',
     favoris: 'Pas encore de favoris. Touche le cœur sur une fiche recette pour l’ajouter ici.',
     perso: 'Tu n’as pas encore écrit de recette.',
     ia: 'Aucune recette générée pour l’instant.'
   }[ui.recFilter];
   return `<div class="page">
-    <div class="kicker">Mon carnet</div>
-    <div class="title-row"><h1>Mes recettes</h1></div>
-    <div class="row" style="gap:10px;flex-wrap:wrap">
-      <button class="btn dark" style="flex:1" data-act="ai-open">${ICONS.spark} Générer avec l’IA</button>
-      <button class="btn" style="flex:1" data-act="new-recipe">Écrire une recette</button>
+    <div><div class="kicker">Mon carnet</div><div class="title-row" style="margin-top:6px"><h1>Mes recettes</h1></div></div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <button class="action-tile dark" data-act="ai-open"><span class="at-ic">${svgI(IC.spark)}</span><span><b>Générer avec l’IA</b><small>Décris une envie, ou colle un lien TikTok</small></span></button>
+      <button class="action-tile" data-act="new-recipe"><span class="at-ic">${svgI(IC.pen)}</span><span><b>Écrire une recette</b><small>Celle de famille, par exemple</small></span></button>
     </div>
-    <div class="filters" role="tablist">${filters.map(([id, n]) => `<button role="tab" class="${ui.recFilter === id ? 'on' : ''}" data-act="rec-filter" data-v="${id}" aria-selected="${ui.recFilter === id}">${n}</button>`).join('')}</div>
-    ${sections || `<div class="empty"><span>${empty}</span></div>`}
+    ${base.length > 3 ? `<label class="search-box">${svgI(IC.search)}<input id="rec-search" type="search" placeholder="Chercher dans mon carnet" value="${esc(ui.recQuery || '')}" autocomplete="off" enterkeyhint="search" aria-label="Chercher dans mon carnet"></label>` : ''}
+    <div class="chips scroll pills" role="tablist">${filters.map(([id, n, icn]) => `<button role="tab" class="chip ${ui.recFilter === id ? 'on' : 'soft'}" data-act="rec-filter" data-v="${id}" aria-selected="${ui.recFilter === id}">${icn}${n}${count[id] ? ` · ${count[id]}` : ''}</button>`).join('')}</div>
+    <div id="rec-results" style="display:flex;flex-direction:column;gap:24px">${sections || `<div class="empty"><span class="empty-ic">${svgI(IC.book)}</span><span class="big" style="font-size:18px">${base.length ? 'Rien ici' : 'Ton carnet t’attend'}</span><span>${empty}</span></div>`}</div>
   </div>`;
 }
 

@@ -44,6 +44,55 @@ const ICONS = {
   undo: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>'
 };
 
+/* Icônes du nouveau style (trait, couleur héritée) */
+const svgI = (d, cls) => `<svg class="ic ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+const IC = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  book: '<path d="M4 19V5a2 2 0 012-2h13v14H6a2 2 0 00-2 2 2 2 0 002 2h13"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  basket: '<path d="M3 9h18l-2 10a2 2 0 01-2 1.6H7A2 2 0 015 19z"/><path d="M8 9l3-6M16 9l-3-6"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.3-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 010 6.8M18.5 14.8c1.5.8 2.6 2.6 3 5.2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  bars: '<path d="M6 18v-4M12 18V9M18 18V5"/>',
+  euro: '<path d="M17 6.5A7 7 0 1017 17.5"/><path d="M4 10.5h9M4 13.5h9"/>',
+  leaf: '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l8-8"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.4 1 1.1 1 1.9V16h5v-.2c0-.8.4-1.5 1-1.9A6 6 0 0012 3z"/>',
+  chevR: '<path d="M9 5l7 7-7 7"/>',
+  chevD: '<path d="M6 9l6 6 6-6"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16v4M17 18h4"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  meh: '<circle cx="12" cy="12" r="9"/><path d="M8.5 15.5c1-1 2.2-1.5 3.5-1.5s2.5.5 3.5 1.5M9 9.5h.01M15 9.5h.01"/>',
+  oven: '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17"/><circle cx="12" cy="14.5" r="2.5"/>',
+  house: '<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/>',
+  jar: '<path d="M9 3h6v4l2 3v10a1 1 0 01-1 1H8a1 1 0 01-1-1V10l2-3z"/><path d="M7 13h10"/>',
+  cloud: '<path d="M7 18a4.5 4.5 0 01-.6-9 6 6 0 0111.4 1.5A3.8 3.8 0 0117.5 18z"/><path d="M12 11v6M9.5 13.5L12 11l2.5 2.5"/>',
+  fish: '<path d="M3 12c3-4 7-6 11-6 3 0 5 2 7 6-2 4-4 6-7 6-4 0-8-2-11-6z"/><path d="M3 12l-1-3M3 12l-1 3"/><circle cx="16" cy="11" r="1"/>',
+  milk: '<path d="M8 3h8v3l2 3v11a1 1 0 01-1 1H7a1 1 0 01-1-1V9l2-3z"/><path d="M6 13h12"/>',
+  bread: '<path d="M5 11a4 4 0 01-1-7.5C6 2.5 9 3 12 3s6-.5 8 .5A4 4 0 0119 11v8a1 1 0 01-1 1H6a1 1 0 01-1-1z"/>',
+  can: '<path d="M7 4h10v3H7z"/><path d="M6 7h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 12h6"/>',
+  candy: '<path d="M12 21s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.6-7 10-7 10z"/>',
+  snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
+  bottle: '<path d="M10 2h4v4l1.5 3V20a1 1 0 01-1 1h-5a1 1 0 01-1-1V9L10 6z"/><path d="M8.5 13h7"/>',
+  box: '<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+  photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/>'
+};
+/* Rayons : icône et couleurs */
+const AISLE_STYLE = {
+  fl: ['leaf', '#E7EFE0', '#3D5A2A'], bp: ['fish', '#F4E6DC', '#A93F26'], cr: ['milk', '#E4ECF1', '#2F5873'],
+  bo: ['bread', '#F6E9D2', '#8A5A12'], ep: ['can', '#F1E8DA', '#7A5A2E'], es: ['jar', '#F6E9D2', '#8A5A12'],
+  su: ['candy', '#F4E1E6', '#8A3350'], sg: ['snow', '#E4ECF1', '#2F5873'], bs: ['bottle', '#E4ECF1', '#2F5873'], au: ['box', '#F1E8DA', '#5C4D40']
+};
+function aisleIcon(id) { const a = AISLE_STYLE[id] || AISLE_STYLE.au; return `<span class="aisle-ic" style="background:${a[1]};color:${a[2]}">${svgI(IC[a[0]])}</span>`; }
+
 function mondayOf(date) {
   const d = new Date(date);
   const day = (d.getDay() + 6) % 7;
@@ -249,8 +298,8 @@ function render(resetScroll) {
   main().innerHTML = views[ui.tab]();
   main().scrollTop = prev;
   const listCount = buildList().filter((i) => !i.pantry && !state.list.checked[i.id] && !state.list.have[i.id]).length;
-  $('.tabbar').innerHTML = [['decouvrir', 'Découvrir'], ['recettes', 'Recettes'], ['semaine', 'Semaine'], ['liste', 'Liste'], ['profil', 'Profil']]
-    .map(([id, n]) => `<button class="${ui.tab === id ? 'on' : ''}" data-act="tab" data-v="${id}" aria-current="${ui.tab === id ? 'page' : 'false'}">${n}${id === 'liste' && listCount ? `<span class="pill">${listCount}</span>` : ''}</button>`).join('');
+  $('.tabbar').innerHTML = [['decouvrir', 'Découvrir', 'compass'], ['recettes', 'Recettes', 'book'], ['semaine', 'Semaine', 'calendar'], ['liste', 'Liste', 'basket'], ['profil', 'Profil', 'user']]
+    .map(([id, n, icn]) => `<button class="${ui.tab === id ? 'on' : ''}" data-act="tab" data-v="${id}" aria-current="${ui.tab === id ? 'page' : 'false'}"><span class="tab-ic">${svgI(IC[icn])}</span><span>${n}</span>${id === 'liste' && listCount ? `<span class="pill">${listCount}</span>` : ''}</button>`).join('');
   renderOverlays();
 }
 
@@ -341,17 +390,118 @@ function guessAisle(name) {
 }
 
 /* ---------- Découvrir ---------- */
+const CAT_NAMES = { brunch: 'Petit-déj', salade: 'Salades', soupe: 'Soupes', plat: 'Plats', dessert: 'Desserts' };
+function catImage(typeId) {
+  const list = allRecipes().filter((r) => (typeId === 'tous' || r.type === typeId) && !hiddenReason(r));
+  const withImg = list.filter((r) => isSeason(r) && imageSrc(r)).concat(list.filter((r) => imageSrc(r)));
+  return withImg[0] || list[0];
+}
 function renderDiscover() {
-  const p = state.profile;
   const filters = [['tout', 'Tout'], ['idees', 'Idées IA'], ['saison', 'De saison'], ['rapide', 'Rapide'], ['antigaspi', 'Anti-gaspi']];
+  const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const cats = [['tous', 'Tout']].concat(TYPES.map((t) => [t.id, CAT_NAMES[t.id] || t.name])).map(([id, n]) => {
+    if (id === 'tous') return `<button class="cat ${ui.type === id ? 'on' : ''}" data-act="type" data-v="tous" aria-pressed="${ui.type === id}"><span class="cat-img">${svgI(IC.book)}</span>${n}</button>`;
+    const r = catImage(id);
+    const src = r && imageSrc(r);
+    return `<button class="cat ${ui.type === id ? 'on' : ''}" data-act="type" data-v="${id}" aria-pressed="${ui.type === id}">
+      <span class="cat-img" style="${src ? '' : `background:${r ? hashColor(r.id) : 'var(--tint)'}`}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : (r ? r.e || '🍽️' : '')}</span>${n}</button>`;
+  }).join('');
   return `<div class="page">
-    <div class="kicker">Semaine du ${fmtDate(state.weekStart)}</div>
-    <div class="title-row"><h1>Découvrir</h1><span class="counter">${state.menu.length} sur ${p.target}</span></div>
-    <label class="field">${ICONS.search}<input id="search" type="search" placeholder="Chercher une recette, un ingrédient" value="${esc(ui.query)}" autocomplete="off" enterkeyhint="search" aria-label="Rechercher"></label>
-    <div class="filters" role="tablist">${filters.map(([id, n]) => `<button role="tab" class="${ui.filter === id ? 'on' : ''}" data-act="filter" data-v="${id}" aria-selected="${ui.filter === id}">${n}</button>`).join('')}</div>
-    <div class="chips scroll">${[['tous', 'Tous les types']].concat(TYPES.map((t) => [t.id, t.name])).map(([id, n]) => `<button class="chip ${ui.type === id ? 'on' : 'soft'}" data-act="type" data-v="${id}">${n}</button>`).join('')}</div>
+    <div class="home-head">
+      <div><div class="kicker">${esc(today)}</div><h1>Qu’est-ce qu’on mange cette semaine&nbsp;?</h1></div>
+      <button class="round-btn" data-act="ai-open" aria-label="Générer une recette avec l’IA">${svgI(IC.spark)}</button>
+    </div>
+    <label class="search-box">${svgI(IC.search)}<input id="search" type="search" placeholder="Une recette, un ingrédient…" value="${esc(ui.query)}" autocomplete="off" enterkeyhint="search" aria-label="Rechercher"></label>
+    <div class="scroll-x cats">${cats}</div>
+    <div class="chips scroll pills" role="tablist">${filters.map(([id, n]) => `<button role="tab" class="chip ${ui.filter === id ? 'on' : 'soft'}" data-act="filter" data-v="${id}" aria-selected="${ui.filter === id}">${n}</button>`).join('')}</div>
     <div id="results">${renderResults()}</div>
   </div>`;
+}
+/* Petite carte (carrousels) */
+function recipeCardSm(r) {
+  const added = !!inMenu(r.id);
+  return `<div class="card sm">
+    <div class="tile" style="background:${hashColor(r.id)}">
+      <span class="tile-emoji" aria-hidden="true">${r.e || '🍽️'}</span>${imgTag(r, 'tile-img')}
+      <button class="tile-open" data-act="open" data-v="${r.id}" aria-label="Voir ${esc(r.n)}"></button>
+      <span class="time">${r.t} min</span>
+      <button class="add ${added ? 'on' : ''}" data-act="toggle-menu" data-v="${r.id}" aria-label="${added ? 'Retirer du menu' : 'Ajouter au menu'}">${added ? svgI(IC.check, 'ic-s') : svgI(IC.plus, 'ic-s')}</button>
+    </div>
+    <button class="card" data-act="open" data-v="${r.id}"><span class="card-name">${esc(r.n)}</span></button>
+  </div>`;
+}
+/* Blocs de l'accueil (sans recherche ni filtre) */
+function homeBlocks(visible) {
+  const p = state.profile;
+  const menu = state.menu.map((m) => recipeById(m.rid)).filter(Boolean);
+  const nSlots = Math.max(5, Math.min(7, p.target));
+  const slots = Array.from({ length: nSlots }, (_, i) => {
+    const r = menu[i];
+    if (!r) return i < p.target ? `<span class="week-slot free">${svgI(IC.plus)}</span>` : '';
+    return `<span class="week-slot" style="background:${hashColor(r.id)}">${r.e || ''}${imgTag(r, '')}</span>`;
+  }).join('');
+  const left = Math.max(0, p.target - menu.length);
+  const listCount = buildList().filter((i) => !i.pantry && !state.list.checked[i.id] && !state.list.have[i.id]).length;
+  const week = `<div class="dark-block">
+    <button class="row between" style="background:none;border:0;padding:0;color:inherit;text-align:left;align-items:baseline" data-act="tab" data-v="semaine">
+      <span style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Ma semaine</span><span class="big">${menu.length} ${plural(menu.length, 'recette', 'recettes')} sur ${p.target}</span></span>
+      <span class="serif italic" style="color:#E9B9A6;font-size:15px">${left ? `plus que ${left}&nbsp;!` : 'complet&nbsp;!'}</span>
+    </button>
+    <div class="week-slots" style="grid-template-columns:repeat(${nSlots},minmax(0,1fr))">${slots}</div>
+    ${listCount ? `<button class="dark-link" data-act="tab" data-v="liste"><span>${svgI(IC.basket)}${listCount} ${plural(listCount, 'article', 'articles')} dans ma liste</span>${svgI(IC.chevR, 'ic-s')}</button>` : ''}
+  </div>`;
+
+  // Idée du jour : change chaque jour, de saison et pas déjà au menu
+  const pool = visible.filter((r) => !inMenu(r.id) && r.type !== 'brunch');
+  const seasonal = pool.filter((r) => r.s && r.s.includes(currentSeason()));
+  const src = seasonal.length ? seasonal : pool;
+  let idea = '';
+  if (src.length) {
+    const d = new Date(); const dayN = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5);
+    const r = src[dayN % src.length];
+    const n = state.notes[r.id];
+    const added = !!inMenu(r.id);
+    idea = `<section style="display:flex;flex-direction:column;gap:12px"><h2 class="h2">L’idée du jour</h2>
+      <div class="feature">
+        <div class="feature-img" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${imgTag(r, '')}
+          <button class="tile-open" data-act="open" data-v="${r.id}" aria-label="Voir ${esc(r.n)}"></button>
+          ${r.s && r.s.includes(currentSeason()) ? `<span class="float-tag">${svgI(IC.leaf, 'ic-s')}De saison</span>` : ''}
+        </div>
+        <div class="feature-body">
+          <button class="card" data-act="open" data-v="${r.id}"><h3>${esc(r.n)}</h3></button>
+          <div class="row" style="justify-content:space-between;gap:8px">
+            <div class="row" style="gap:8px;flex-wrap:wrap">
+              <span class="badge">${svgI(IC.clock, 'ic-s')}${r.t} min</span>
+              <span class="badge">${svgI(IC.bars, 'ic-s')}${DIFF[r.d] || ''}</span>
+              ${n && n.stars ? `<span class="badge">${svgI(IC.star, 'ic-s')}${n.stars}/5</span>` : ''}
+            </div>
+            <button class="outline-add ${added ? 'on' : ''}" data-act="toggle-menu" data-v="${r.id}" aria-label="${added ? 'Retirer du menu' : 'Ajouter au menu'}">${svgI(added ? IC.check : IC.plus, 'ic-s')}</button>
+          </div>
+        </div>
+      </div></section>`;
+  }
+
+  const quick = visible.filter((r) => r.t <= 30).sort((a, b) => isSeason(b) - isSeason(a) || a.t - b.t).slice(0, 10);
+  const quickHtml = quick.length ? `<section style="display:flex;flex-direction:column;gap:12px">
+      <div class="sec-head"><h2 class="h2">Prêt en 30 min max</h2><button class="link" data-act="filter" data-v="rapide">Tout voir</button></div>
+      <div class="scroll-x" style="gap:12px">${quick.map(recipeCardSm).join('')}</div></section>` : '';
+
+  let gaspi = '';
+  if (state.menu.length) {
+    const sc = visible.map((r) => ({ r, sh: shared(r) })).filter((x) => x.sh.length).sort((a, b) => b.sh.length - a.sh.length).slice(0, 3);
+    if (sc.length) {
+      gaspi = `<section style="display:flex;flex-direction:column;gap:12px">
+        <div class="sec-head"><div><h2 class="h2">Avec ce qui est déjà dans ta liste</h2><div class="sec-sub">Moins de courses, moins de gaspi</div></div></div>
+        ${sc.map(({ r, sh }) => `<div class="row-card">
+          <span class="thumb" style="background:${hashColor(r.id)}">${r.e || ''}${imgTag(r, '')}</span>
+          <button class="body" data-act="open" data-v="${r.id}"><span class="name">${esc(r.n)}</span><span class="badge sage" style="align-self:flex-start">${sh.length} ${plural(sh.length, 'ingrédient', 'ingrédients')} en commun</span></button>
+          <button class="outline-add" data-act="toggle-menu" data-v="${r.id}" aria-label="Ajouter au menu">${svgI(IC.plus, 'ic-s')}</button>
+        </div>`).join('')}
+        <button class="link" style="align-self:flex-start;text-decoration:none" data-act="filter" data-v="antigaspi">Voir toutes les recettes anti-gaspi</button>
+      </section>`;
+    }
+  }
+  return week + idea + quickHtml + gaspi;
 }
 function renderResults() {
   if (ui.filter === 'idees') return renderIdeas();
@@ -380,6 +530,9 @@ function renderResults() {
     html = `<div class="empty"><span>${msg}</span></div>`;
   } else {
     html = '<div class="grid">' + scored.map(({ r, sh, dis }) => recipeCard(r, sh, dis)).join('') + '</div>';
+    if (!q && ui.filter === 'tout' && ui.type === 'tous') {
+      html = `<div style="display:flex;flex-direction:column;gap:26px">${homeBlocks(list)}<section style="display:flex;flex-direction:column;gap:14px"><h2 class="h2">Toutes les recettes</h2>${html}</section></div>`;
+    }
   }
   if (q) html += aiSuggest(ui.query);
   if (hiddenCount) html += `<p class="muted small" style="text-align:center;margin:24px 0 0">${hiddenCount} ${plural(hiddenCount, 'recette masquée', 'recettes masquées')} selon ton profil (régime, temps, équipement ou niveau).</p>`;
@@ -393,22 +546,24 @@ function renderWeek() {
   const slotIndex = (d) => { const i = SLOTS.findIndex((s) => s.id === d); return i < 0 ? 999 : i; };
   items.sort((a, b) => slotIndex(a.m.day) - slotIndex(b.m.day));
   const missing = Math.max(0, p.target - items.length);
-  const dots = Array.from({ length: Math.max(p.target, items.length) }, (_, i) => `<i class="${i < items.length ? 'on' : ''}"></i>`).join('');
+  const dayName = (id) => { const sl = SLOTS.find((x) => x.id === id); if (!sl) return ''; const [d, w] = sl.name.split(' '); return d.slice(0, 3) + '. ' + w; };
   const menuHtml = items.length ? items.map(({ m, r }) => `
-    <div class="menu-item">
-      <div class="mini" style="background:${hashColor(r.id)}" aria-hidden="true">${r.e || '🍽️'}${imgTag(r, '')}</div>
+    <div class="menu-card">
+      <button class="mini" style="background:${hashColor(r.id)};border:0;padding:0" data-act="open" data-v="${r.id}" aria-label="Voir ${esc(r.n)}">${r.e || '🍽️'}${imgTag(r, '')}</button>
       <div class="body">
-        <button class="name" data-act="open" data-v="${r.id}">${esc(r.n)}</button>
-        <div class="row" style="flex-wrap:wrap;gap:10px">
-          <span class="row" style="gap:6px">${stepper('servings:' + r.id, m.servings, 'Quantité')}<span class="muted small">${plural(m.servings, yieldOf(r).one, yieldOf(r).many)}</span></span>
-          <select class="day-select" data-act="day" data-v="${r.id}" aria-label="Jour">
-            <option value="">Jour non choisi</option>
-            ${SLOTS.map((s) => `<option value="${s.id}" ${m.day === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
-          </select>
+        <div class="row" style="align-items:flex-start;gap:6px"><button class="name" data-act="open" data-v="${r.id}">${esc(r.n)}</button>
+        <button class="icon-btn x" data-act="toggle-menu" data-v="${r.id}" aria-label="Retirer ${esc(r.n)} du menu">${ICONS.close}</button></div>
+        <span class="muted small">${r.t} min · ${DIFF[r.d] || ''}</span>
+        <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:auto">
+          <label class="day-pick ${m.day ? '' : 'none'}">${svgI(m.day ? IC.calendar : IC.plus, 'ic-s')}${m.day ? esc(dayName(m.day)) : 'Jour'}
+            <select data-act="day" data-v="${r.id}" aria-label="Jour">
+              <option value="">Jour non choisi</option>
+              ${SLOTS.map((sl) => `<option value="${sl.id}" ${m.day === sl.id ? 'selected' : ''}>${sl.name}</option>`).join('')}
+            </select></label>
+          ${stepper('servings:' + r.id, m.servings, 'Quantité')}
         </div>
       </div>
-      <button class="icon-btn" data-act="toggle-menu" data-v="${r.id}" aria-label="Retirer ${esc(r.n)} du menu">${ICONS.close}</button>
-    </div>`).join('') : `<div class="empty"><span class="big">Ton menu est vide</span><span>Choisis des recettes dans l’onglet Découvrir.</span><button class="btn primary" data-act="tab" data-v="decouvrir">Découvrir des recettes</button></div>`;
+    </div>`).join('') : '';
 
   const hist = state.history.slice().reverse().map((h, i) => {
     const names = h.items.map((x) => recipeById(x.rid)).filter(Boolean).map((r) => r.n);
@@ -418,21 +573,45 @@ function renderWeek() {
       <button class="link" data-act="reuse-week" data-v="${state.history.length - 1 - i}">Reprendre</button></div>`;
   }).join('');
 
+  const pct = Math.min(100, Math.round(items.length / Math.max(1, p.target) * 100));
+  const budget = listBudget();
+  const start = new Date(state.weekStart + 'T12:00:00');
+  const todayStr = todayIso();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const has = items.some(({ m }) => m.day && m.day.startsWith(i + '-'));
+    return `<div class="day ${has ? 'has' : ''} ${iso === todayStr ? 'today' : ''}"><small>${DAYS[i].slice(0, 3)}</small><b>${d.getDate()}</b><i></i></div>`;
+  }).join('');
+  const listCount = buildList().filter((i) => !i.pantry && !state.list.checked[i.id] && !state.list.have[i.id]).length;
+
   return `<div class="page">
-    <div class="kicker">Semaine du ${fmtDate(state.weekStart)}</div>
-    <div class="title-row"><h1>Ma semaine</h1><span class="counter">${items.length} sur ${p.target}</span></div>
-    <div class="box">
-      <div class="row between"><span>Je cuisine pour</span>${stepper('persons', p.persons, 'Nombre de personnes')}</div>
-      <div class="row between"><span>Recettes cette semaine</span>${stepper('target', p.target, 'Nombre de recettes')}</div>
-      ${items.some(({ m, r }) => yieldOf(r).id === 'pers' && m.servings !== p.persons) ? `<button class="link" style="align-self:flex-start" data-act="apply-persons">Mettre toutes les recettes à ${p.persons} ${plural(p.persons, 'personne', 'personnes')}</button>` : ''}
-    </div>
-    <div class="dots" aria-label="${items.length} recettes choisies sur ${p.target}">${dots}</div>
-    <div>${menuHtml}</div>
-    ${items.length && missing ? `<button class="btn" data-act="tab" data-v="decouvrir">Choisir encore ${missing} ${plural(missing, 'recette', 'recettes')}</button>` : ''}
-    ${items.length ? `<button class="btn primary" data-act="tab" data-v="liste">Voir la liste de courses</button>` : ''}
+    <div><div class="kicker">Semaine du ${fmtDate(state.weekStart)}</div><div class="title-row" style="margin-top:6px"><h1>Ma semaine</h1></div></div>
+    <section class="panel" style="padding:18px;display:flex;flex-direction:column;gap:16px">
+      <div class="row" style="gap:16px">
+        <div class="ring" style="background:conic-gradient(var(--accent) 0 ${pct}%, #F1E8DA ${pct}% 100%)" aria-label="${items.length} recettes choisies sur ${p.target}"><span>${items.length}/${p.target}</span></div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span class="serif" style="font-size:19px;font-weight:700;line-height:1.2">${missing ? `Encore ${missing} ${plural(missing, 'recette', 'recettes')} à choisir` : 'Ta semaine est complète'}</span>
+          ${budget > 0 ? `<span class="muted" style="font-size:14px">≈ ${fmtEuro(budget < 10 ? Math.round(budget * 2) / 2 : Math.round(budget))} de courses</span>` : ''}
+        </div>
+      </div>
+      <div class="set-grid">
+        <div class="set-box"><span class="lab">${svgI(IC.users, 'ic-s')}Je cuisine pour</span>${stepper('persons', p.persons, 'Nombre de personnes')}</div>
+        <div class="set-box"><span class="lab">${svgI(IC.book, 'ic-s')}Recettes / sem.</span>${stepper('target', p.target, 'Nombre de recettes')}</div>
+      </div>
+      ${items.some(({ m, r }) => yieldOf(r).id === 'pers' && m.servings !== p.persons) ? `<button class="link" style="align-self:flex-start;min-height:32px;padding:0" data-act="apply-persons">Mettre toutes les recettes à ${p.persons} ${plural(p.persons, 'personne', 'personnes')}</button>` : ''}
+    </section>
+    <div class="days" aria-hidden="true">${days}</div>
+    ${menuHtml}
+    ${missing || !items.length ? `<button class="add-slot" data-act="tab" data-v="decouvrir"><span class="plus">${svgI(IC.plus)}</span><span><b>${items.length ? `Ajouter ${missing} ${plural(missing, 'recette', 'recettes')}` : 'Choisir mes recettes'}</b><small>${state.menu.length ? 'Les recettes qui réutilisent tes ingrédients sont mises en avant' : 'Parcours le carnet dans Découvrir'}</small></span></button>` : ''}
+    ${items.length ? `<button class="dark-link" style="min-height:54px;padding:0 18px;font-size:16px;font-weight:600;background:var(--ink)" data-act="tab" data-v="liste"><span>${svgI(IC.basket)}Voir ma liste de courses</span>${listCount ? `<span class="badge solid" style="padding:3px 9px;border-radius:999px">${listCount}</span>` : svgI(IC.chevR, 'ic-s')}</button>` : ''}
     <button class="btn" data-act="new-week">Commencer une nouvelle semaine</button>
     ${hist ? `<div class="section-title" style="margin-top:10px">Semaines précédentes</div><div>${hist}</div>` : ''}
   </div>`;
+}
+function listBudget() {
+  const L = state.list;
+  return buildList().filter((i) => !i.pantry && !L.have[i.id]).reduce((t, i) => t + itemCostEstimate(i), 0);
 }
 
 /* ---------- Liste ---------- */
@@ -460,38 +639,56 @@ function renderList() {
         : `<button class="icon-btn" data-act="have" data-v="${esc(i.id)}" aria-label="Je l’ai déjà : ${esc(i.name)}" title="Je l’ai déjà">${ICONS.home}</button>`}
     </div>`;
   };
+  const view = ui.listView || 'tout';
+  const doneCount = visible.length - todo;
+  const closed = ui.aisleClosed || (ui.aisleClosed = {});
   const sections = AISLES.map((a) => {
-    const its = visible.filter((i) => i.aisle === a.id);
+    const all = visible.filter((i) => i.aisle === a.id);
+    if (!all.length) return '';
+    const its = all.filter((i) => view === 'tout' || (view === 'todo' ? !L.checked[i.id] : L.checked[i.id]));
     if (!its.length) return '';
     its.sort((x, y) => (!!L.checked[x.id]) - (!!L.checked[y.id]) || x.name.localeCompare(y.name, 'fr'));
-    const sub = its.reduce((t, i) => t + itemCostEstimate(i), 0);
-    return `<div><div class="section-title row between"><span>${a.name}</span>${sub > 0 ? `<span class="aisle-cost">≈ ${fmtEuro(round(sub))}</span>` : ''}</div>${its.map(itemHtml).join('')}</div>`;
+    const sub = all.reduce((t, i) => t + itemCostEstimate(i), 0);
+    const got = all.filter((i) => L.checked[i.id]).length;
+    const open = !closed[a.id];
+    return `<section class="aisle ${open ? 'open' : ''}">
+      <button class="aisle-head" data-act="aisle" data-v="${a.id}" aria-expanded="${open}">${aisleIcon(a.id)}
+        <span class="aisle-t"><b>${a.name}</b><small>${got === all.length ? 'Tout est pris' : `${got} / ${all.length} ${plural(got, 'pris', 'pris')}`}</small></span>
+        ${sub > 0 ? `<span class="aisle-cost">≈ ${fmtEuro(round(sub))}</span>` : ''}${svgI(IC.chevD, 'ic-s aisle-chev')}
+      </button>
+      ${open ? `<div class="aisle-body">${its.map(itemHtml).join('')}</div>` : ''}
+    </section>`;
   }).join('');
 
-  const addForm = `<form class="field" data-form="manual" style="flex-wrap:nowrap">${ICONS.plus}
+  const addForm = `<form class="field" data-form="manual" style="flex-wrap:nowrap">${svgI(IC.plus)}
       <input name="name" placeholder="Ajouter un article" autocomplete="off" data-suggest="ing-names" enterkeyhint="done" aria-label="Article">
-      <input name="qty" placeholder="Qté" autocomplete="off" style="max-width:62px;text-align:right" aria-label="Quantité">
-      <button class="link" type="submit">Ajouter</button></form>${ingredientDatalist()}`;
+      <input name="qty" placeholder="Qté" autocomplete="off" style="max-width:52px;text-align:right" aria-label="Quantité">
+      <button class="btn primary" style="min-height:38px;padding:0 14px;font-size:14px;box-shadow:none" type="submit">Ajouter</button></form>${ingredientDatalist()}`;
 
   const empty = !visible.length && !pantryItems.length && !haveItems.length;
+  const pct = visible.length ? Math.round(doneCount / visible.length * 100) : 0;
   return `<div class="page">
-    <div class="kicker">${todo} ${plural(todo, 'article', 'articles')} à prendre · ${recipesCount} ${plural(recipesCount, 'recette', 'recettes')}</div>
-    <div class="title-row"><h1>Les courses</h1>${visible.length ? '<button class="link" data-act="copy">Copier</button>' : ''}</div>
-    ${budget > 0 ? `<div class="budget">
-      <div class="row between" style="align-items:baseline"><span class="budget-lbl">Estimation du panier</span><span class="budget-total">≈ ${fmtEuro(round(budget))}</span></div>
-      <div class="budget-bar" aria-hidden="true">${byAisle.map((x, k) => `<i style="flex:${x.v};opacity:${Math.max(0.35, 1 - k * 0.12)}"></i>`).join('')}</div>
-      <div class="budget-detail">${byAisle.slice(0, 4).map((x) => `<span>${esc(x.a.name)} ${fmtEuro(round(x.v))}</span>`).join('')}${byAisle.length > 4 ? '<span>…</span>' : ''}</div>
-      ${left < budget - 0.01 ? `<div class="muted small">Reste à acheter : ≈ ${fmtEuro(round(left))}</div>` : ''}
-      <div class="muted small" style="font-size:11px">Prix moyens indicatifs, hors placard et articles « déjà à la maison ».</div>
-    </div>` : ''}
+    <div class="home-head" style="align-items:flex-end">
+      <div><div class="kicker">${visible.length} ${plural(visible.length, 'article', 'articles')} · ${recipesCount} ${plural(recipesCount, 'recette', 'recettes')}</div><h1 style="font-size:32px;margin-top:6px">Les courses</h1></div>
+      ${visible.length ? `<button class="round-btn" style="color:var(--ink)" data-act="copy" aria-label="Copier la liste">${svgI(IC.copy)}</button>` : ''}
+    </div>
+    ${visible.length ? `<section class="dark-block">
+      <div class="row between" style="align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:#E9B9A6">Dans le panier</span><span class="serif" style="font-size:26px;font-weight:700">${doneCount} <span style="font-size:17px;font-weight:500;color:#CDBBAA">/ ${visible.length}</span></span></div>
+        ${budget > 0 ? `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="font-size:13px;color:#E9B9A6">${left < budget - 0.01 ? 'Reste à acheter' : 'Budget estimé'}</span><span class="serif" style="font-size:26px;font-weight:700">≈ ${fmtEuro(round(left < budget - 0.01 ? left : budget))}</span></div>` : ''}
+      </div>
+      <div class="prog" aria-hidden="true"><i style="width:${pct}%"></i></div>
+      ${budget > 0 ? `<span style="font-size:11px;color:#CDBBAA">Prix moyens indicatifs${left < budget - 0.01 ? ` · panier complet ≈ ${fmtEuro(round(budget))}` : ''}, hors placard et articles « déjà à la maison ».</span>` : ''}
+    </section>` : ''}
     ${addForm}
-    ${empty ? `<div class="empty"><span class="big">Ta liste est vide</span><span>Ajoute des recettes à ton menu : leurs ingrédients s’afficheront ici, regroupés par rayon.</span><button class="btn primary" data-act="tab" data-v="decouvrir">Choisir des recettes</button></div>` : sections}
-    ${pantryItems.length ? `<div class="box">
-      <div class="row between"><span class="serif italic" style="font-size:18px">Dans ton placard</span><button class="link" data-act="toggle-pantry">${L.showPantry ? 'Masquer' : `Afficher (${pantryItems.length})`}</button></div>
+    ${visible.length ? `<div class="chips scroll pills">${[['tout', 'Tout', visible.length], ['todo', 'À acheter', todo], ['done', 'Pris', doneCount]].map(([id, n, c]) => `<button class="chip dark ${view === id ? 'on' : 'soft'}" data-act="list-view" data-v="${id}" aria-pressed="${view === id}">${n} · ${c}</button>`).join('')}</div>` : ''}
+    ${empty ? `<div class="empty"><span class="empty-ic">${svgI(IC.basket)}</span><span class="big" style="font-size:18px">Ta liste est vide</span><span>Ajoute des recettes à ta semaine : leurs ingrédients s’afficheront ici, regroupés par rayon.</span><button class="btn primary" data-act="tab" data-v="decouvrir">Choisir des recettes</button></div>` : sections || (visible.length ? `<p class="muted" style="text-align:center;margin:8px 0">${view === 'todo' ? 'Tout est dans le panier !' : 'Rien de coché pour l’instant.'}</p>` : '')}
+    ${pantryItems.length ? `<div class="side-card">
+      <div class="row between"><span class="serif" style="font-size:17px;font-weight:700">Dans ton placard</span><button class="link" style="text-decoration:none" data-act="toggle-pantry">${L.showPantry ? 'Masquer' : `Afficher (${pantryItems.length})`}</button></div>
       ${L.showPantry ? pantryItems.map(itemHtml).join('') : '<span class="muted small">Sel, huile, épices… considérés comme déjà chez toi.</span>'}
     </div>` : ''}
-    ${haveItems.length ? `<div class="box">
-      <div class="row between"><span class="serif italic" style="font-size:18px">Déjà à la maison</span><button class="link" data-act="toggle-have">${L.showHave ? 'Masquer' : `Afficher (${haveItems.length})`}</button></div>
+    ${haveItems.length ? `<div class="side-card">
+      <div class="row between"><span class="serif" style="font-size:17px;font-weight:700">Déjà à la maison</span><button class="link" style="text-decoration:none" data-act="toggle-have">${L.showHave ? 'Masquer' : `Afficher (${haveItems.length})`}</button></div>
       ${L.showHave ? haveItems.map((i) => `<div class="item"><div class="body"><span class="name">${esc(i.name)}</span></div><span class="qty">${esc(i.qty)}</span><button class="icon-btn" data-act="unhave" data-v="${esc(i.id)}" aria-label="Remettre ${esc(i.name)} dans la liste">${ICONS.undo}</button></div>`).join('') : ''}
     </div>` : ''}
     ${Object.keys(L.checked).length ? '<button class="link" style="align-self:center" data-act="uncheck-all">Tout décocher</button>' : ''}
@@ -521,32 +718,45 @@ function renderProfile() {
   const levelName = (LEVELS.find((l) => l.id === p.level) || {}).n || '';
   const dislikes = (p.dislikes || []).map((k) => ing(k).n).concat((p.dislikesText || []).filter(Boolean));
   const short = (arr, n) => arr.length ? arr.slice(0, n).join(', ') + (arr.length > n ? ` +${arr.length - n}` : '') : '';
-  const sec = (id, title, summary, body) => `<section class="prof-sec ${open[id] ? 'open' : ''}">
+  const sec = (id, icn, colors, title, summary, body, stateTag) => `<section class="prof-sec ${open[id] ? 'open' : ''}">
       <button class="prof-head" data-act="prof-sec" data-v="${id}" aria-expanded="${!!open[id]}">
-        <span class="prof-title">${title}</span><span class="prof-sum">${esc(summary)}</span>
-        <svg class="prof-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="prof-ic" style="background:${colors[0]};color:${colors[1]}">${svgI(IC[icn])}</span>
+        <span class="prof-txt"><span class="prof-title">${title}</span><span class="prof-sum">${esc(summary)}</span></span>
+        ${stateTag || ''}${svgI(open[id] ? IC.chevD : IC.chevR, 'ic-s prof-chev')}
       </button>
       ${open[id] ? `<div class="prof-body">${body}</div>` : ''}
     </section>`;
+  const T = ['#F4E6DC', '#A93F26'], S = ['#E7EFE0', '#3D5A2A'], B = ['#F1E8DA', '#7A5A2E'], J = ['#F6E9D2', '#8A5A12'], D = ['#2B211A', '#FBF6EE'];
+  const chips = [allergies.length ? 'Sans ' + allergies.join(', ').toLowerCase() : 'Aucune allergie', diet && p.diet !== 'aucun' ? diet : 'Pas de régime', `${p.persons} ${plural(p.persons, 'personne', 'personnes')}`, `${p.target} ${plural(p.target, 'recette', 'recettes')} / semaine`, levelName ? 'Niveau ' + levelName.toLowerCase() : '', p.maxTime ? 'Max ' + timeName : ''].filter(Boolean);
+  const syncOk = typeof syncOn === 'function' && syncOn();
   return `<div class="page">
-    <div class="kicker">Mes réglages</div>
-    <div class="title-row"><h1>Profil</h1></div>
-    <div class="prof-list">
-    ${sec('allergies', 'À éviter absolument', short(allergies, 3) || 'Aucune allergie', `<p class="muted small" style="margin:0">Les recettes qui en contiennent ne sont jamais proposées.</p>${allergyPicker()}`)}
-    ${sec('diet', 'Régime', diet || 'Aucun', dietPicker())}
-    ${sec('dislikes', 'Ce que je n’aime pas', short(dislikes, 3) || 'Rien de particulier', dislikePicker())}
-    ${sec('cooking', 'En cuisine', [timeName, levelName, (p.equipment || []).length + ' équipement' + ((p.equipment || []).length > 1 ? 's' : '')].filter(Boolean).join(' · '), cookingPicker())}
-    ${sec('household', 'Mon foyer', `${p.persons} ${plural(p.persons, 'personne', 'personnes')} · ${p.target} ${plural(p.target, 'recette', 'recettes')} par semaine`, householdPicker())}
-    ${sec('pantry', 'Mon placard de base', state.pantry.length + ' ' + plural(state.pantry.length, 'produit', 'produits'), `<p class="muted small" style="margin:0">Ces produits sont toujours chez toi : ils sont masqués de la liste de courses.</p>
+    <div><div class="kicker">Mes réglages</div><div class="title-row" style="margin-top:6px"><h1>Profil</h1></div></div>
+    <section class="dark-block">
+      <div class="row" style="gap:14px">
+        <span style="flex:none;width:54px;height:54px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center">${svgI('<path d="M6 13.5V19a1 1 0 001 1h10a1 1 0 001-1v-5.5"/><path d="M6 13.5a4 4 0 01-.6-7.9A4.5 4.5 0 0112 3.6a4.5 4.5 0 016.6 2 4 4 0 01-.6 7.9z"/><path d="M6 16.5h12"/>')}</span>
+        <span style="display:flex;flex-direction:column;gap:2px"><span class="serif" style="font-size:20px;font-weight:700">Ma cuisine</span><span style="font-size:13px;color:#D9C8B8">Ce qui guide les recettes proposées</span></span>
+      </div>
+      <div class="sum-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</div>
+    </section>
+    <div class="prof-group"><div class="mini-lbl">Mes goûts</div><div class="prof-list">
+    ${sec('allergies', 'ban', T, 'À éviter absolument', short(allergies, 3) || 'Aucune allergie', `<p class="muted small" style="margin:0">Les recettes qui en contiennent ne sont jamais proposées.</p>${allergyPicker()}`)}
+    ${sec('diet', 'leaf', S, 'Régime', diet || 'Aucun', dietPicker())}
+    ${sec('dislikes', 'meh', B, 'Ce que je n’aime pas', short(dislikes, 3) || 'Rien de particulier', dislikePicker())}
+    </div></div>
+    <div class="prof-group"><div class="mini-lbl">Ma cuisine</div><div class="prof-list">
+    ${sec('cooking', 'oven', T, 'Temps, niveau et équipement', [timeName, levelName, (p.equipment || []).length + ' équipement' + ((p.equipment || []).length > 1 ? 's' : '')].filter(Boolean).join(' · '), cookingPicker())}
+    ${sec('household', 'house', T, 'Mon foyer', `${p.persons} ${plural(p.persons, 'personne', 'personnes')} · ${p.target} ${plural(p.target, 'recette', 'recettes')} par semaine`, householdPicker())}
+    ${sec('pantry', 'jar', J, 'Mon placard de base', state.pantry.length + ' ' + plural(state.pantry.length, 'produit', 'produits') + ' toujours à la maison', `<p class="muted small" style="margin:0">Ces produits sont toujours chez toi : ils sont masqués de la liste de courses.</p>
       <div class="chips">${pantry || '<span class="muted small">Placard vide.</span>'}</div>
-      <form class="field" data-form="pantry">${ICONS.plus}<input name="q" data-suggest="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>`)}
-    ${sec('sync', 'Sauvegarde sur GitHub', syncSummary(), syncHtml())}
-    ${sec('ai', 'Assistant IA', aiReady() ? 'Clé enregistrée' : 'Pas de clé', `<p class="muted small" style="margin:0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>${keyForm()}`)}
-    </div>
+      <form class="field" data-form="pantry">${svgI(IC.plus)}<input name="q" data-suggest="ing-names" placeholder="Ajouter au placard" autocomplete="off" enterkeyhint="done"><button class="link" type="submit">Ajouter</button></form>`)}
+    </div></div>
+    <div class="prof-group"><div class="mini-lbl">Appli</div><div class="prof-list">
+    ${sec('ai', 'spark', D, 'Assistant IA', 'Recettes et images générées', `<p class="muted small" style="margin:0">Pour générer des recettes qui ne sont pas dans le carnet, et des images.</p>${keyForm()}`, `<span class="prof-state ${aiReady() ? 'ok' : ''}">${aiReady() ? 'Activé' : 'Pas de clé'}</span>`)}
+    ${sec('sync', 'cloud', B, 'Sauvegarde sur GitHub', syncOk ? syncSummary() : 'Pour tout retrouver sur un autre téléphone', syncHtml(), `<span class="prof-state ${syncOk ? 'ok' : ''}" style="${syncOk ? '' : 'background:#F1E8DA;color:#5C4D40'}">${syncOk ? 'Activée' : 'Désactivée'}</span>`)}
+    </div></div>
     ${(state.hidden || []).length ? `<div class="row between"><span class="muted small">${state.hidden.length} ${plural(state.hidden.length, 'recette masquée', 'recettes masquées')}</span><button class="link" data-act="unhide-all">Tout réafficher</button></div>` : ''}
-    <div class="box" style="margin-top:20px">
-      <span class="muted small">Résumé : ${allergies.length ? 'sans ' + esc(allergies.join(', ').toLowerCase()) : 'aucune allergie'} · ${esc(diet || '')}</span>
-      <button class="btn" data-act="reset" style="border-color:var(--accent);color:var(--accent)">Tout réinitialiser</button>
+    <div style="display:flex;justify-content:center;margin-top:6px">
+      <button class="btn" data-act="reset" style="border-color:var(--accent);color:var(--accent);min-height:44px;border-radius:999px">Tout réinitialiser</button>
     </div>
   </div>`;
 }
@@ -588,33 +798,53 @@ function recipeSheet(sh) {
   const reason = hiddenReason(r);
   const seasons = (r.s && r.s.length ? r.s.map((x) => SEASONS[x]).join(', ') : 'Toute l’année');
   const cost = recipeCostPerPerson(r);
-  return `<div class="sheet full" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
+  const ph = photoOf(r);
+  const note = state.notes[r.id] || {};
+  const typeName = (TYPES.find((t) => t.id === r.type) || {}).name || '';
+  const groups = groupIngredients(r.i).map((g) => ({ name: g.name, items: g.items.filter(([k]) => !state.pantry.includes(k)) })).filter((g) => g.items.length);
+  const pantryLines = r.i.filter(([k]) => state.pantry.includes(k));
+  const info3 = cost > 0 && !r.custom
+    ? [svgI(IC.euro), fmtEuro(cost), 'par ' + yieldOf(r).one]
+    : [svgI(IC.leaf), r.s && r.s.length ? r.s.map((x) => SEASONS[x]).join(', ') : 'Toute l’année', 'Saison'];
+  const tiles = (items) => `<div class="ing-tiles">${items.map(([k, q, u]) => `<div class="ing-tile"><b>${fmtQty(q * f, u, k, false)}</b><span>${esc(ing(k).n)}</span></div>`).join('')}</div>`;
+  return `<div class="sheet full recipe" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
     <div class="sheet-head">
-      <button class="icon-btn" data-act="close-sheet" aria-label="Fermer" style="margin-left:-12px">${ICONS.back}</button>
-      <div class="row" style="gap:4px">
-        <button class="head-btn" data-act="edit-recipe" data-v="${r.id}">${ICONS.edit} Modifier</button>
-        <button class="icon-btn" data-act="fav" data-v="${r.id}" aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" style="color:var(--accent)">${fav ? ICONS.heartFull : ICONS.heart}</button>
+      <button class="float-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.back}</button>
+      <div class="row" style="gap:10px">
+        <button class="float-btn" data-act="edit-recipe" data-v="${r.id}" aria-label="Modifier la recette">${svgI(IC.pen)}</button>
+        <button class="float-btn accent" data-act="fav" data-v="${r.id}" aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${fav ? ICONS.heartFull : ICONS.heart}</button>
       </div>
     </div>
     <div class="sheet-body has-foot">
-      ${heroHtml(r)}
-      <div class="kicker">${esc((TYPES.find((t) => t.id === r.type) || {}).name || '')}${r.custom ? ' · Ma recette' : ''}</div>
-      <h2>${esc(r.n)}</h2>
-      <div class="muted small">${r.t} min · ${DIFF[r.d] || ''} · ${seasons}${cost > 0 && !r.custom ? ` · environ ${fmtEuro(cost)} par ${yieldOf(r).one}` : ''}</div>
+      <div class="r-hero" style="background:${hashColor(r.id)}"><span aria-hidden="true">${r.e || '🍽️'}</span>${ph ? `<img src="${esc(ph.src)}" alt="${esc(r.n)}" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}
+        ${ph ? `<span class="credit-tag">${creditHtml(ph)}</span>` : imgPending[r.id] ? '<span class="credit-tag">Image en cours…</span>' : ''}
+      </div>
+      <div class="r-sheet">
+        <div class="kicker">${esc(typeName)}${r.custom ? ' · Ma recette' : ''}${r.edited ? ' · Modifiée' : ''}</div>
+        <h2>${esc(r.n)}</h2>
+        ${note.stars ? `<div class="r-stars" aria-label="Ma note : ${note.stars} sur 5">${[1, 2, 3, 4, 5].map((k) => svgI(IC.star, k <= note.stars ? 'on' : '')).join('')}<span>Ma note${note.last ? ' · faite le ' + fmtDate(note.last) : ''}</span></div>` : ''}
+      </div>
       ${sourceHtml(r)}
-      ${reason ? `<div class="card-warn">Cette recette ne correspond pas à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</div>` : ''}
-      ${dis.length ? `<div class="card-warn">Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</div>` : ''}
-      ${sh2.length ? `<div class="card-note">Réutilise ${esc(sh2.map((k) => ing(k).n.toLowerCase()).join(', '))}, déjà dans ton menu.</div>` : ''}
-      <div class="row between" style="margin-top:6px"><span class="section-title">Ingrédients</span>${stepper('sheet-servings', servings, 'Portions')}</div>
-      <div class="muted small" style="margin-top:-8px">Pour ${yieldText(servings, r)}</div>
-      <div>${groupIngredients(r.i).map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${g.items.map(([k, q, u]) => `<div class="ing-line"><span>${esc(ing(k).n)}${state.pantry.includes(k) ? ' <span class="muted small">(placard)</span>' : ''}</span><span>${fmtQty(q * f, u, k, false)}</span></div>`).join('')}`).join('')}</div>
+      <div class="info-grid">
+        <div class="info"><span class="info-ic">${svgI(IC.clock)}</span><b>${r.t} min</b><small>Temps total</small></div>
+        <div class="info"><span class="info-ic">${svgI(IC.bars)}</span><b>${DIFF[r.d] || '—'}</b><small>Niveau</small></div>
+        <div class="info"><span class="info-ic">${info3[0]}</span><b>${esc(info3[1])}</b><small>${esc(info3[2])}</small></div>
+      </div>
+      ${reason ? `<div class="callout warn">${svgI(IC.ban)}<span>Cette recette ne correspond pas à ton profil (${{ regime: 'régime ou allergie', equipement: 'équipement', niveau: 'niveau', temps: 'temps' }[reason]}).</span></div>` : ''}
+      ${dis.length ? `<div class="callout warn">${svgI(IC.meh)}<span>Contient ${esc(dis.join(', ').toLowerCase())}, que tu n’aimes pas.</span></div>` : ''}
+      ${sh2.length ? `<div class="callout sage">${svgI(IC.leaf)}<span><b style="font-weight:600">${sh2.length} ${plural(sh2.length, 'ingrédient déjà', 'ingrédients déjà')} dans ton menu</b> : ${esc(sh2.map((k) => ing(k).n.toLowerCase()).join(', '))}.</span></div>` : ''}
+      <div class="jump"><button data-act="jump" data-v="sec-ing">Ingrédients</button><button data-act="jump" data-v="sec-prep">Préparation</button><button data-act="jump" data-v="sec-notes">Mes notes</button></div>
+      <section id="sec-ing" style="display:flex;flex-direction:column;gap:12px">
+        <div class="row between"><span style="font-size:15px;color:var(--muted)">Pour <b style="color:var(--ink)">${yieldText(servings, r)}</b></span>${stepper('sheet-servings', servings, 'Portions')}</div>
+        ${groups.map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${tiles(g.items)}`).join('')}
+        ${pantryLines.length ? `<div class="pantry-box"><span class="mini-lbl">Dans ton placard</span><span>${pantryLines.map(([k, q, u]) => `${esc(ing(k).n)} · ${fmtQty(q * f, u, k, false)}`).join(' &nbsp;—&nbsp; ')}</span></div>` : ''}
+      </section>
       ${stepsHtml(r, sh)}
       ${notesHtml(r)}
-      <div class="row" style="gap:16px;flex-wrap:wrap">${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
-      ${r.edited ? '<p class="muted small" style="margin:-8px 0 0">Recette modifiée par toi.</p>' : ''}
+      <div class="r-links">${r.custom ? `<button class="link" data-act="delete-recipe" data-v="${r.id}">Supprimer</button>` : `${r.edited ? `<button class="link" data-act="restore-recipe" data-v="${r.id}">Rétablir l’original</button>` : ''}<button class="link" data-act="hide-recipe" data-v="${r.id}">Masquer du carnet</button>`}</div>
     </div>
     <div class="sheet-foot">
-      ${m ? `<button class="btn" data-act="toggle-menu" data-v="${r.id}">Retirer du menu</button>` : `<button class="btn primary" data-act="add-from-sheet" data-v="${r.id}">Ajouter au menu · ${yieldOf(r).id === 'pers' ? servings + ' pers.' : yieldText(servings, r)}</button>`}
+      ${m ? `<button class="btn" data-act="toggle-menu" data-v="${r.id}">Retirer de ma semaine</button>` : `<button class="btn primary" data-act="add-from-sheet" data-v="${r.id}">${svgI(IC.calendar)}Ajouter à ma semaine · ${yieldOf(r).id === 'pers' ? servings + ' pers.' : yieldText(servings, r)}</button>`}
     </div>
   </div>`;
 }
@@ -914,6 +1144,7 @@ function handle(act, v, el) {
     case 'filter': ui.filter = v; break;
     case 'type': ui.type = v; break;
     case 'open': ui.sheet = { kind: 'recipe', id: v, servings: (inMenu(v) || {}).servings || defaultServings(recipeById(v)) }; save(); renderOverlays(); return;
+    case 'jump': { const t = document.getElementById(v); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     case 'close-sheet': ui.sheet = null; renderOverlays(); return;
     case 'close-sheet-bg': if (el === ui._target) { ui.sheet = null; renderOverlays(); } return;
     case 'sheet-servings': {
@@ -948,6 +1179,8 @@ function handle(act, v, el) {
     case 'rm-manual': state.list.manual = state.list.manual.filter((m) => 'm:' + m.id !== v); delete state.list.checked[v]; break;
     case 'toggle-pantry': state.list.showPantry = !state.list.showPantry; break;
     case 'toggle-have': state.list.showHave = !state.list.showHave; break;
+    case 'list-view': ui.listView = v; render(); return;
+    case 'aisle': ui.aisleClosed = ui.aisleClosed || {}; ui.aisleClosed[v] = !ui.aisleClosed[v]; render(); return;
     case 'uncheck-all': state.list.checked = {}; break;
     case 'copy': copyList(); return;
     case 'rm-pantry': state.pantry = state.pantry.filter((x) => x !== v); break;
@@ -1093,6 +1326,12 @@ document.addEventListener('input', (e) => {
   if (e.target.id === 'note-text') {
     const n = noteOf(e.target.dataset.v); n.text = e.target.value;
     clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+    return;
+  }
+  if (e.target.id === 'rec-search') {
+    ui.recQuery = e.target.value;
+    const box = $('#rec-results'); const tmp = document.createElement('div'); tmp.innerHTML = renderMyRecipes();
+    const fresh = tmp.querySelector('#rec-results'); if (box && fresh) box.innerHTML = fresh.innerHTML;
     return;
   }
   if (e.target.id === 'search') {
