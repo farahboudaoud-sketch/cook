@@ -34,6 +34,10 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
 
+      - name: Numéro de version
+        # 1.1.0 à partir de la compilation n° 22, puis 1.1.1, 1.1.2…
+        run: echo "APP_VERSION=1.1.$((GITHUB_RUN_NUMBER - 22))" >> "$GITHUB_ENV"
+
       - name: Installer les dépendances
         run: npm ci
 
@@ -49,7 +53,7 @@ jobs:
       - name: Renommer l'APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/carnet-de-cuisine-1.0.${{ github.run_number }}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/carnet-de-cuisine-${{ env.APP_VERSION }}.apk"
           ls -la dist
 
       - name: Garder l'APK comme artefact
@@ -61,10 +65,10 @@ jobs:
       - name: Publier une version téléchargeable
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Carnet de cuisine 1.0.${{ github.run_number }}
+          tag_name: v${{ env.APP_VERSION }}
+          name: Carnet de cuisine ${{ env.APP_VERSION }}
           body: |
-            Télécharge le fichier **carnet-de-cuisine-1.0.${{ github.run_number }}.apk** ci-dessous depuis ton téléphone Android, puis ouvre-le pour l'installer.
+            Télécharge le fichier **carnet-de-cuisine-${{ env.APP_VERSION }}.apk** ci-dessous depuis ton téléphone Android, puis ouvre-le pour l'installer.
             Les mises à jour s'installent par-dessus la version précédente, sans perdre tes données.
           files: dist/*.apk
           make_latest: true
