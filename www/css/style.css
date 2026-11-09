@@ -618,3 +618,7 @@ textarea.input { border: 1px solid var(--line-2); border-radius: 14px; backgroun
 .menu-card .stepper span { min-width: 22px; font-size: 15px; }
 .cat-img .ic { width: 28px; height: 28px; }
 .prof-body .section-title { font-size: 17px; }
+.ing-tile.pantry { background: transparent; border-style: dashed; border-color: #D9C9B3; }
+.ing-tile.pantry b { color: var(--muted); }
+.ing-tile small { font-size: 11px; color: var(--muted); margin-top: 2px; }
+#sec-ing, #sec-prep, #sec-notes { scroll-margin-top: calc(var(--sat) + 72px); }

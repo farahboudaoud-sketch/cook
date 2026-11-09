@@ -828,12 +828,11 @@ function recipeSheet(sh) {
   const ph = photoOf(r);
   const note = state.notes[r.id] || {};
   const typeName = (TYPES.find((t) => t.id === r.type) || {}).name || '';
-  const groups = groupIngredients(r.i).map((g) => ({ name: g.name, items: g.items.filter(([k]) => !state.pantry.includes(k)) })).filter((g) => g.items.length);
-  const pantryLines = r.i.filter(([k]) => state.pantry.includes(k));
+  const groups = groupIngredients(r.i);
   const info3 = cost > 0 && !r.custom
     ? [svgI(IC.euro), fmtEuro(cost), 'par ' + yieldOf(r).one]
     : [svgI(IC.leaf), r.s && r.s.length ? r.s.map((x) => SEASONS[x]).join(', ') : 'Toute l’année', 'Saison'];
-  const tiles = (items) => `<div class="ing-tiles">${items.map(([k, q, u]) => `<div class="ing-tile"><b>${fmtQty(q * f, u, k, false)}</b><span>${esc(ing(k).n)}</span></div>`).join('')}</div>`;
+  const tiles = (items) => `<div class="ing-tiles">${items.map(([k, q, u]) => { const pl = state.pantry.includes(k); return `<div class="ing-tile${pl ? ' pantry' : ''}"><b>${fmtQty(q * f, u, k, false)}</b><span>${esc(ing(k).n)}</span>${pl ? '<small>Dans ton placard</small>' : ''}</div>`; }).join('')}</div>`;
   return `<div class="sheet full recipe" role="dialog" aria-modal="true" aria-label="${esc(r.n)}">
     <div class="sheet-head">
       <button class="float-btn" data-act="close-sheet" aria-label="Fermer">${ICONS.back}</button>
@@ -864,7 +863,6 @@ function recipeSheet(sh) {
       <section id="sec-ing" style="display:flex;flex-direction:column;gap:12px">
         <div class="row between"><span style="font-size:15px;color:var(--muted)">Pour <b style="color:var(--ink)">${yieldText(servings, r)}</b></span>${stepper('sheet-servings', servings, 'Portions')}</div>
         ${groups.map((g) => `${g.name ? `<div class="part-title">${esc(g.name)}</div>` : ''}${tiles(g.items)}`).join('')}
-        ${pantryLines.length ? `<div class="pantry-box"><span class="mini-lbl">Dans ton placard</span><span>${pantryLines.map(([k, q, u]) => `${esc(ing(k).n)} · ${fmtQty(q * f, u, k, false)}`).join(' &nbsp;—&nbsp; ')}</span></div>` : ''}
       </section>
       ${stepsHtml(r, sh)}
       ${notesHtml(r)}
